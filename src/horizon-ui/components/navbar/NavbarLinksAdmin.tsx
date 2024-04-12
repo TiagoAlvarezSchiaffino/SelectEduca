@@ -134,7 +134,7 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 							fontSize='sm'
 							fontWeight='700'
 							color={textColor}>
-							，{userInfo.email} 👋
+							，{userInfo.name} 👋
 						</Text>
 					</Flex>
 					<Flex flexDirection='column' p='10px'>
