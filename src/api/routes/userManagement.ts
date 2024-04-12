@@ -8,7 +8,7 @@ import { zRoleArr } from "../../shared/RBAC";
 import User from "../database/models/User";
 import { TRPCError } from "@trpc/server";
 import { Op } from "sequelize";
-import { TiagoUser } from "../../shared/user";
+import { IUser } from "../../shared/user";
 import { presentPublicUser } from "../../shared/publicModels/PublicUser";
 
 const managementClient = new ManagementClient({
@@ -105,11 +105,11 @@ const userManagement = router({
             roles: found.roles,
             clientId: found.clientId,
             email: found.email,
-          } as TiagoUser;
+          } as IUser;
         } else {
           return false;
         }
-      }).filter(Boolean) as TiagoUser[]
+      }).filter(Boolean) as IUser[]
     };
   })
 });

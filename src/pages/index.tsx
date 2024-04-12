@@ -23,7 +23,7 @@ import {
   import React, { useState } from 'react';
   import { NextPageWithLayout } from "../NextPageWithLayout";
   import AppLayout from "../layouts";
-  import useUserInfo from "../useUserInfo";
+  import useUserContext from "../useUserContext";
   import tClientBrowser from "../tClientBrowser";
   import tClientNext from "../tClientNext";
   import PublicUser from '../shared/publicModels/PublicUser';
@@ -35,7 +35,7 @@ import {
 
   
   const Index: NextPageWithLayout = () => {
-    const [user] = useUserInfo();
+    const [user] = useUserContext();
     return <Box paddingTop={'80px'}> {user.name ? <></> : <SetNameModal />} <Meetings /></Box>
   }
   
@@ -44,13 +44,13 @@ import {
   export default Index;
 
   function SetNameModal() {
-    const [u, setUser] = useUserInfo();
+    const [user, setUser] = useUserContext();
     const [isOpen, setOpen] = useState(true);
     const [name, setName] = useState('');
   
     const handleSubmit = async () => {
       if (name) {
-        const updatedUser = structuredClone(u);
+        const updatedUser = structuredClone(user);
         updatedUser.name = name;
   
         tClientBrowser.user.updateProfile.mutate(updatedUser).then(
@@ -103,7 +103,7 @@ import {
   
   function Meetings() {
     const { data } = tClientNext.myMeetings.list.useQuery({});
-    const [user] = useUserInfo();
+    const [user] = useUserContext();
   
     return (
       <Card>
