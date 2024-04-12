@@ -2,9 +2,9 @@
 import {
 	Avatar,
 	Flex,
-	Icon,
 	Menu,
 	MenuButton,
+	MenuDivider,
 	MenuItem,
 	MenuList,
 	Text,
@@ -15,11 +15,9 @@ import { SidebarResponsive } from 'horizon-ui/components/sidebar/Sidebar';
 import PropTypes from 'prop-types';
 import React from 'react';
 // Assets
-import { MdNotificationsNone } from 'react-icons/md';
-import { FaEthereum } from 'react-icons/fa';
 import routes from 'routes';
 import { Guard, useGuard } from "@authing/guard-react18";
-import useUserInfo from '../../../useUserInfo';
+import useUserContext from '../../../useUserContext';
 import { isPermitted } from "../../../shared/RBAC";
 
 const logoutMod = async function (this: Guard) {
@@ -38,7 +36,7 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 	);
 
 	const guard = useGuard();
-	const [userInfo] = useUserInfo();
+	const [user] = useUserContext();
 
 	return (
 		<Flex
@@ -52,14 +50,14 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 			boxShadow={shadow}
 			>
 			<SidebarResponsive routes={
-				routes.filter(r => isPermitted(userInfo.roles, r.resource))
+				routes.filter(r => isPermitted(user.roles, r.resource))
 			} />
 			<Menu>
 				<MenuButton p='0px'>
 					<Avatar
 						_hover={{ cursor: 'pointer' }}
 						color='white'
-						name={userInfo.name || userInfo.email || ""}
+						name={user.name || user.email || ""}
 						bg='#11047A'
 						size='sm'
 						w='40px'
@@ -67,41 +65,23 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 					/>
 				</MenuButton>
 				<MenuList boxShadow={shadow} p='0px' mt='10px' borderRadius='20px' bg={menuBg} border='none'>
-					<Flex w='100%' mb='0px'>
-						<Text
-							ps='20px'
-							pt='16px'
-							pb='10px'
-							w='100%'
-							borderBottom='1px solid'
-							borderColor={borderColor}
-							fontSize='sm'
-							fontWeight='700'
-							color={textColor}>
-							，{userInfo.name} 👋
-						</Text>
-					</Flex>
-					<Flex flexDirection='column' p='10px'>
-						{/*<MenuItem _hover={{ bg: 'none' }} _focus={{ bg: 'none' }} borderRadius='8px' px='14px'>*/}
-						{/*	<Text fontSize='sm'>Profile Settings</Text>*/}
-						{/*</MenuItem>*/}
-						{/*<MenuItem _hover={{ bg: 'none' }} _focus={{ bg: 'none' }} borderRadius='8px' px='14px'>*/}
-						{/*	<Text fontSize='sm'>Newsletter Settings</Text>*/}
-						{/*</MenuItem>*/}
-						<MenuItem
-							_hover={{ bg: 'none' }}
-							_focus={{ bg: 'none' }}
-							color='red.400'
-							borderRadius='8px'
-							px='14px'
-							onClick={async () => {
-								await logoutMod.call(guard);
-								location.href = '/';
-							}}
-						>
-							<Text fontSize='sm'></Text>
-						</MenuItem>
-					</Flex>
+				<MenuItem as='a' href='/user-profile'>
+            <Text fontSize='sm'></Text>
+          </MenuItem>
+          <MenuDivider />
+          <MenuItem
+            _hover={{ bg: 'none' }}
+            _focus={{ bg: 'none' }}
+            color='red.400'
+            borderRadius='8px'
+            px='14px'
+            onClick={async () => {
+              await logoutMod.call(guard);
+              location.href = '/';
+            }}
+          >
+            <Text fontSize='sm'></Text>
+          </MenuItem>
 				</MenuList>
 			</Menu>
 		</Flex>
