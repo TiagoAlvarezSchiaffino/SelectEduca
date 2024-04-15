@@ -20,16 +20,14 @@ import {
     Input,
     FormControl,
   } from '@chakra-ui/react';
-  import React, { useState } from 'react';
+  import React, { Fragment, useState } from 'react';
   import { NextPageWithLayout } from "../NextPageWithLayout";
   import AppLayout from "../layouts";
   import useUserContext from "../useUserContext";
   import tClientBrowser from "../tClientBrowser";
   import tClientNext from "../tClientNext";
-  import PublicUser from '../shared/publicModels/PublicUser';
   import PublicGroup from '../shared/publicModels/PublicGroup';
   import { MdVideocam } from 'react-icons/md';
-  import { HSeparator } from 'horizon-ui/components/separator/Separator';
   import { toast } from "react-toastify";
   import pinyin from 'tiny-pinyin';
 
@@ -113,7 +111,8 @@ import {
         <CardBody>
           <VStack divider={<StackDivider />} align='left' spacing='6'>
             {data &&
-              data.groupList.map((group: PublicGroup, idx: any) => Meeting(user.id, group, data.userMap))
+              data.groupList.map((group: PublicGroup, idx: any) => 
+              <Meeting key={idx} user={user} group={group} userMap={data.userMap} />)
             }
           </VStack>
         </CardBody>
@@ -121,20 +120,22 @@ import {
     );
   }
   
-  function Meeting(myUserId: string, group: PublicGroup, userMap: Record<string, PublicUser>): React.JSX.Element {
+  // @ts-ignore type checking for props is anonying
+  function Meeting(props) {
     const textColor = useColorModeValue('secondaryGray.700', 'white');
     return (
       <Flex flexWrap='wrap' gap={4}>
-        <Button variant='outline' leftIcon={<MdVideocam />} onClick={async () => launchMeeting(group.id)}></Button>
+        <Button variant='outline' leftIcon={<MdVideocam />} 
+          onClick={async () => launchMeeting(props.group.id)}>进入会议
+        </Button>
         {
-          group.userIdList.filter(id => id !== myUserId).map(id => {
-              const name = userMap[id].name;
-              return <>
+          props.group.userIdList.filter((id: string) => id !== props.user).map((id: string) => {
+            const name = props.userMap[id].name;
+            return <Fragment key={id}>
                 <Avatar name={name} />
                 <Text color={textColor}>{name}</Text>
-              </>;
-         }
-          )
+                </Fragment>;
+          })
         }
       </Flex>
     );
