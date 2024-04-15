@@ -15,13 +15,14 @@ import {
 
 
 import { GuardProvider, User, Guard } from '@authing/guard-react18';
-import { UserInfoContext } from "../useUserInfo";
+import { UserContext } from "../useUserContext";
 import browserEnv from "../browserEnv";
 import tClientBrowser from "../tClientBrowser";
-import { TiagoUser } from "../shared/user";
+import { IUser } from "../shared/user";
 import { useRouter } from "next/router";
 import { isPermitted } from "../shared/RBAC";
-import { BeatLoader } from 'react-spinners'
+import { BeatLoader } from 'react-spinners';
+import { toast } from 'react-toastify';
 
 interface DashboardLayoutProps extends PropsWithChildren {
   [x: string]: any
@@ -37,23 +38,15 @@ const Guarded: FC<{ children: (userInfo: TiagoUser) => ReactNode }> = (props) =>
   const [user, setUser] = useState<IUser | null>(null);
 
   useEffect(() => {
-    guard.trackSession().then((res: User | null) => {
-      //console.log('res', res);
-      if (!res) {
-        location.href = '/login'
+    const fetchUser = async () => {
+      if (await guard.trackSession()) {
+        setUser(await tClientBrowser.user.profile.mutate({}));
+      } else {
+        location.href = '/login';
       }
-    }).then(
-      
-      () => tClientBrowser.user.onEnterApp.mutate({}).then(res => {
-        if (res === "ok") {
-          return tClientBrowser.user.profile.query({}).then((user) => {
-            setUser(user);
-          })
-        } else {
-          return;
-        }
-      }));
-  }, [])
+      };
+      fetchUser().catch(toast.error);
+    }, []);
 
   if (!user) {
     return <BeatLoader
