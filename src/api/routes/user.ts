@@ -1,6 +1,6 @@
 import { procedure, router } from "../tServer";
 import { z } from "zod";
-import auth from "../auth";
+import auth, { invalidateLocalUserCache } from "../auth";
 import { IUser } from "../../shared/user";
 import pinyin from 'tiny-pinyin';
 
@@ -24,6 +24,7 @@ const user = router({
 
       pinyin: pinyin.convertToPinyin(input.name),
     });
+    invalidateLocalUserCache();
   })
 });
 
