@@ -10,6 +10,7 @@ const sequelizeInstance = new Sequelize(apiEnv.DATABASE_URI, {
 
   dialectModule: require('pg'),
   retry: {
+        // Error types: https://sequelize.org/api/v6/identifiers.html#errors
     match: [
       /ConnectionError/
     ],
