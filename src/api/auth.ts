@@ -15,7 +15,7 @@ const auth = (resource: Resource) => middleware(async ({ ctx, next }) => {
   const user = await userCache.fetch(ctx.authToken);
   invariant(user);
   if (!isPermitted(user.roles, resource)) throw forbidden();
-  return await next({ ctx: { user: user }});
+  return await next({ ctx: { user: user } });
 });
 
 export default auth;
