@@ -36,7 +36,7 @@ export default function Footer() {
 						base: '20px',
 						md: '44px'
 					}}>
-					<Link fontWeight='500' color={textColor} href=''>
+					<Link fontWeight='500' color={textColor} target='_blank' href=''>
 						
 					</Link>
 				</ListItem>
@@ -45,12 +45,12 @@ export default function Footer() {
 						base: '20px',
 						md: '44px'
 					}}>
-					<Link fontWeight='500' color={textColor} href=''>
+					<Link fontWeight='500' color={textColor} target='_blank' href=''>
 						
 					</Link>
 				</ListItem>
 				<ListItem>
-				<Link fontWeight='500' color={textColor} href=''>
+				<Link fontWeight='500' color={textColor} target='_blank' href=''>
 						
 					</Link>
 				</ListItem>
