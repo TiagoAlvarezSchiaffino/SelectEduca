@@ -23,18 +23,13 @@ import { useRouter } from "next/router";
 import { isPermitted } from "../shared/RBAC";
 import { BeatLoader } from 'react-spinners';
 import { toast } from 'react-toastify';
+import guard from '../guard';
 
 interface DashboardLayoutProps extends PropsWithChildren {
   [x: string]: any
 }
 
-const Guarded: FC<{ children: (userInfo: TiagoUser) => ReactNode }> = (props) => {
-  const guard = new Guard({
-    appId: browserEnv.NEXT_PUBLIC_AUTHING_APP_ID,
-    redirectUri:
-      typeof window !== 'undefined' ? (location.origin + '/callback') : '',
-  });
-  
+const Guarded: FC<{ children: (userInfo: IUser) => ReactNode }> = (props) => {
   const [user, setUser] = useState<IUser | null>(null);
   const userFetchedRef = useRef(false);
 
