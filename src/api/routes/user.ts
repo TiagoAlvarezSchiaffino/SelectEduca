@@ -16,13 +16,10 @@ async function findUser(ctx: { email: string; authingUser: authingUser; }){
 }
 
 const user = router({
-  profile: procedure.use(
-    auth('profile:read')
-  ).input(
-    z.object({
-    }),
+  profile: procedure.input(
+    z.object({}),
   ).query(async ({ input, ctx }) => {
-    return findUser(ctx).then(u => u as IUser);
+    // Return null when the user is logged out.
   }),
 
   onEnterApp: procedure.input(z.object({})).mutation(async ({ input, ctx }) => {
