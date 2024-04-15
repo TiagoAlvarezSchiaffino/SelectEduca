@@ -158,15 +158,11 @@ const myMeetings = router({
         }
       }
     })).filter(g => {
-      console.log('comparing', new Set(g.users.map(u => u.id)),
-        userIdSet);
       return isSubset(
         new Set(g.users.map(u => u.id)),
         userIdSet
       );
     });
-
-    // console.log('result', groupList);
 
     const userMap = {} as Record<string, PublicUser>;
     for (const g of groupList) {

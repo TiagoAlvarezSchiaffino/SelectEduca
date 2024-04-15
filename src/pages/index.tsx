@@ -100,7 +100,7 @@ import {
   
   
   function Meetings() {
-    const { data } = tClientNext.myMeetings.list.useQuery({});
+    const { data, isLoading } = tClientNext.myMeetings.list.useQuery({});
     const [user] = useUserContext();
   
     return (
@@ -109,10 +109,23 @@ import {
           <Heading size='md'></Heading>
         </CardHeader>
         <CardBody>
+          {!data
+          && isLoading
+          && <Text align='center'>
+              ...
+          </Text>}
+
+          {data
+          && data.groupList.length == 0
+          && !isLoading
+          && <Text align='center'>
+            
+            </Text>}
+
           <VStack divider={<StackDivider />} align='left' spacing='6'>
             {data &&
               data.groupList.map((group: PublicGroup, idx: any) => 
-              <Meeting key={idx} user={user} group={group} userMap={data.userMap} />)
+                <Meeting key={idx} userId={user.id} group={group} userMap={data.userMap} />)
             }
           </VStack>
         </CardBody>
@@ -126,10 +139,10 @@ import {
     return (
       <Flex flexWrap='wrap' gap={4}>
         <Button variant='outline' leftIcon={<MdVideocam />} 
-          onClick={async () => launchMeeting(props.group.id)}>进入会议
+          onClick={async () => launchMeeting(props.group.id)}>
         </Button>
         {
-          props.group.userIdList.filter((id: string) => id !== props.user).map((id: string) => {
+          props.group.userIdList.filter((id: string) => id !== props.userId).map((id: string) => {
             const name = props.userMap[id].name;
             return <Fragment key={id}>
                 <Avatar name={name} />
