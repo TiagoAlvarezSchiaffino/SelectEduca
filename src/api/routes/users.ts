@@ -11,11 +11,6 @@ import { Op } from "sequelize";
 import { IUser } from "../../shared/user";
 import { presentPublicUser } from "../../shared/publicModels/PublicUser";
 
-const managementClient = new ManagementClient({
-  userPoolId: apiEnv.AUTHING_USER_POOL_ID,
-  secret: apiEnv.AUTHING_USER_POOL_SECRET
-});
-
 const users = router({
   createInOurDb: procedure.use(
     authUser('users:write')
@@ -79,7 +74,7 @@ const users = router({
     ).query(async () => {
 
     return {
-      userList: await User.findAll() as IUser[]
+      userList: await User.findAll({ order: [['pinyin', 'ASC']] }) as IUser[]
     };
   })
 });
