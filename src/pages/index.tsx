@@ -53,7 +53,7 @@ import {
   
       // TODO: Handle error display globally. Redact server-side errors.
       try {
-        await tClientBrowser.user.updateProfile.mutate(updatedUser);
+        await tClientBrowser.me.updateProfile.mutate(updatedUser);
         console.log("user name update succeeded");
         setUser(updatedUser);
         setOpen(false);
@@ -100,7 +100,7 @@ import {
   
   
   function Meetings() {
-    const { data, isLoading } = tClientNext.myMeetings.list.useQuery({});
+    const { data } = tClientNext.myGroups.list.useQuery({});
     const [user] = useUserContext();
   
     return (
@@ -155,6 +155,6 @@ import {
   }
   
   async function launchMeeting(groupId: string) {
-    const meetingLink = await tClientBrowser.myMeetings.generateMeetingLink.mutate({ groupId: groupId });
+    const meetingLink = await tClientBrowser.myGroups.generateMeetingLink.mutate({ groupId: groupId });
     window.location.href = meetingLink;
   }

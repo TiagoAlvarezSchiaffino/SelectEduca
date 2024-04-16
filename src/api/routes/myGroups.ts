@@ -84,7 +84,7 @@ const zCreateMeetingRes = z.object({
   meeting_info_list: z.array(zMeetingInfo),
 });
 
-const myMeetings = router({
+const myGroups = router({
   generateMeetingLink: procedure.use(
     auth('my-meetings:create')
   ).input(z.object({
@@ -170,4 +170,4 @@ const myMeetings = router({
   }),
 });
 
-export default myMeetings;
+export default myGroups;

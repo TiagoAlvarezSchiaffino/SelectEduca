@@ -28,7 +28,7 @@ function areStringSetsEqual(set1: Set<string>, set2: Set<string>): boolean {
 
 const dedupe = <T>(list: T[]) => [...new Set(list)];
 
-const groupManagement = router({
+const groups = router({
   create: procedure.use(
     auth('group-management:write')
   ).input(z.object({
@@ -114,8 +114,6 @@ const groupManagement = router({
       );
     });
 
-    // console.log('result', groupList);
-
     const userMap = {} as Record<string, PublicUser>;
     for (const g of groupList) {
       g.users.forEach(u => {
@@ -132,4 +130,4 @@ const groupManagement = router({
   }),
 });
 
-export default groupManagement;
+export default groups;
