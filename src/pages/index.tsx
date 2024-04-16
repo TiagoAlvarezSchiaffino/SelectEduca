@@ -26,7 +26,6 @@ import {
   import useUserContext from "../useUserContext";
   import tClientBrowser from "../tClientBrowser";
   import tClientNext from "../tClientNext";
-  import PublicGroup from '../shared/publicModels/PublicGroup';
   import { MdVideocam } from 'react-icons/md';
   import { toast } from "react-toastify";
   import pinyin from 'tiny-pinyin';
@@ -100,7 +99,7 @@ import {
   
   
   function Meetings() {
-    const { data } = tClientNext.myGroups.list.useQuery({});
+    const { data: groups, isLoading } = tClientNext.myGroups.list.useQuery();
     const [user] = useUserContext();
   
     return (
@@ -109,23 +108,23 @@ import {
           <Heading size='md'></Heading>
         </CardHeader>
         <CardBody>
-          {!data
+          {!groups
           && isLoading
           && <Text align='center'>
               ...
           </Text>}
 
-          {data
-          && data.groupList.length == 0
+          {groups
+          && groups.length == 0
           && !isLoading
           && <Text align='center'>
             
             </Text>}
 
           <VStack divider={<StackDivider />} align='left' spacing='6'>
-            {data &&
-              data.groupList.map((group: PublicGroup, idx: any) => 
-                <Meeting key={idx} userId={user.id} group={group} userMap={data.userMap} />)
+            {groups &&
+              groups.map((group, idx) => 
+                <Meeting key={idx} userId={user.id} group={group} />)
             }
           </VStack>
         </CardBody>
@@ -142,12 +141,13 @@ import {
           onClick={async () => launchMeeting(props.group.id)}>
         </Button>
         {
-          props.group.userIdList.filter((id: string) => id !== props.userId).map((id: string) => {
-            const name = props.userMap[id].name;
-            return <Fragment key={id}>
-                <Avatar name={name} />
-                <Text color={textColor}>{name}</Text>
-                </Fragment>;
+          props.group.users
+          .filter((user: any) => user.id != props.userId)
+          .map((user: any) => {
+            return <Fragment key={user.name}>
+              <Avatar name={user.name} />
+              <Text color={textColor}>{user.name}</Text>
+            </Fragment>;
           })
         }
       </Flex>
