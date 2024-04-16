@@ -10,7 +10,7 @@ const transcripts = router({
    * 
    * Example:
    * 
-   *  $ curl -H "Authorization: Bearer ${INTEGRATION_AUTH_TOKEN}" http://${HOST}/api/trpc/transcripts.list | jq .
+   *  $ curl -H "Authorization: Bearer ${INTEGRATION_AUTH_TOKEN}" https://${HOST}/api/v1/transcripts.list | jq .
    *  {
    *    "result": {
    *      "data": [
