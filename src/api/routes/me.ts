@@ -6,7 +6,7 @@ import pinyin from 'tiny-pinyin';
 
 const me = router({
   profile: procedure.use(
-    auth('profile:read')
+    auth('me:read')
   ).input(
     z.object({}),
   ).query(async ({ input, ctx }) => {
@@ -14,7 +14,7 @@ const me = router({
   }),
 
   updateProfile: procedure.use(
-    auth('profile:write')
+    auth('me:write')
   ).input(
     z.object( { name: z.string().min(2, "required") })
 
