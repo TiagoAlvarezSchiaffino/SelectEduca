@@ -13,10 +13,8 @@ import {
     Tr,
     Td,
     Select,
-    Textarea,
-    Center,
   } from '@chakra-ui/react';
-  import React, { useState } from 'react';
+  import React, { useMemo, useState } from 'react';
   import { NextPageWithLayout } from "../../../../NextPageWithLayout";
   import AppLayout from "../../../../layouts";
   import useUserContext from "../../../../useUserContext";
@@ -97,7 +95,23 @@ import {
             </Tr>
           </Tbody>
         </Table>
-        <Textarea isReadOnly height='30em' value={t.summaries[summaryIndex].summary} />
+        <Editor value={t.summaries[summaryIndex].summary} />;
       </Stack>
     );
   }
+
+import "easymde/dist/easymde.min.css";
+import dynamic from "next/dynamic";
+const SimpleMdeEditor = dynamic(
+	() => import("react-simplemde-editor"),
+	{ ssr: false }
+);
+
+function Editor(props : { value: string }) {
+  // See https://www.npmjs.com/package/react-simplemde-editor#options on why using memo here.
+  const options = useMemo(() => ({
+      spellChecker: false,
+      readOnly: true,
+    }), []);
+  return <SimpleMdeEditor value={props.value} options={options} />;
+}
