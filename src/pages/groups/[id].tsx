@@ -19,16 +19,16 @@ import {
     Tbody,
     Tr,
     Td,
-    Icon,
+    Heading,
   } from '@chakra-ui/react';
-  import { ArrowForwardIcon } from '@chakra-ui/icons';
+  import { ArrowForwardIcon, ChevronRightIcon } from '@chakra-ui/icons';
   import React, { Fragment } from 'react';
   import { NextPageWithLayout } from "../../NextPageWithLayout";
   import AppLayout from "../../layouts";
   import useUserContext from "../../useUserContext";
   import tClientBrowser from "../../tClientBrowser";
   import tClientNext from "../../tClientNext";
-  import { MdOutlineArrowCircleRight, MdVideocam } from 'react-icons/md';
+  import { MdVideocam } from 'react-icons/md';
   import { useRouter } from 'next/router';
   import Link from 'next/link';
   import { GetGroupResponse } from 'api/routes/groups';
@@ -51,12 +51,12 @@ import {
     return (
       <Card>
         <CardHeader>
-          <Breadcrumb>
+          <Breadcrumb separator={<ChevronRightIcon />}>
             <BreadcrumbItem>
-              <BreadcrumbLink as={Link} href='/'></BreadcrumbLink>
+              <BreadcrumbLink as={Link} href='/'><Heading size="md"></Heading></BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbItem isCurrentPage>
-              <BreadcrumbLink></BreadcrumbLink>
+              <BreadcrumbLink><Heading size="md"></Heading></BreadcrumbLink>
             </BreadcrumbItem>
           </Breadcrumb>
         </CardHeader>

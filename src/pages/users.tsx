@@ -77,10 +77,9 @@ import {
           spacing={{ base: '20px', xl: '20px' }}
         > 
               {data &&
-              <Table variant="simple">
+              <Table variant="striped">
               <Thead>
                 <Tr>
-                  <Th></Th>
                   <Th></Th>
                   <Th></Th>
                   <Th></Th>
@@ -93,7 +92,6 @@ import {
                   <Tr key={item.id}>
                     <Td>{item.email}</Td>
                     <Td>{item.name}</Td>
-                    <Td>{item.pinyin}</Td>
                     <Td>
                       {item.roles ?
                         <Badge variant='outline' colorScheme='blue' fontSize='sm'>
