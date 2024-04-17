@@ -28,10 +28,10 @@ import {
     group: Group;
   
     @Column(DATE)
-    startedAt: string;
+    startedAt: Date;
   
     @Column(DATE)
-    endedAt: string;
+    endedAt: Date;
   
     @HasMany(() => Summary)
     summaries: Summary[];
