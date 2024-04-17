@@ -17,3 +17,7 @@ export const stringOrEmpty = (value: string | undefined) => {
   // export const toBoolean = (value: string) => {
   //   return value ? !!JSON.parse(value) : false;
   // }
+
+  export function capitalizeFirstChar(str : string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
