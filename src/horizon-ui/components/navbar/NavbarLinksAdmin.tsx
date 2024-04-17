@@ -65,7 +65,7 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 					/>
 				</MenuButton>
 				<MenuList boxShadow={shadow} p='0px' mt='10px' borderRadius='20px' bg={menuBg} border='none'>
-				<MenuItem as='a' href='/user-profile'>
+				<MenuItem as='a' href='/profile'>
             <Text fontSize='sm'></Text>
           </MenuItem>
           <MenuDivider />

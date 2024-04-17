@@ -18,7 +18,7 @@ const routes: IRoute[] = [
   {
     name: '',
     layout: '/',
-    path: '/user-profile',
+    path: '/profile',
     icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
     resource: 'me:write',
     hiddenFromSidebar: true,
@@ -26,14 +26,14 @@ const routes: IRoute[] = [
   {
     name: '',
     layout: '/',
-    path: '/user-management',
+    path: '/users',
     icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
     resource: 'users:write',
   },
   {
     name: '',
     layout: '/',
-    path: '/group-management',
+    path: '/groups',
     icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
     resource: 'groups:write',
   },
