@@ -7,13 +7,13 @@ import {
   } from '@chakra-ui/react'
   import React, { useState } from 'react'
   import AppLayout from 'layouts'
-  import { NextPageWithLayout } from '../NextPageWithLayout'
-  import NormalTable from "../horizon-ui/components/NormalTable";
-  import tClientBrowser from "../tClientBrowser";
+  import { NextPageWithLayout } from '../../NextPageWithLayout'
+  import NormalTable from "../../horizon-ui/components/NormalTable";
+  import tClientBrowser from "../../tClientBrowser";
   import { toast } from "react-toastify";
   import AsyncSelect from "react-select/async";
   import invariant from "tiny-invariant";
-  import tClientNext from "../tClientNext";
+  import tClientNext from "../../tClientNext";
   
   type Option = {
     label: string;
@@ -70,7 +70,7 @@ import {
             />
             <Button
               isLoading={isCreating}
-              loadingText='创建分组中...'
+              loadingText='...'
               fontSize='sm' variant='brand' fontWeight='500' mb='24px' onClick={async () => {
                 createGroup();
             }}>
@@ -83,13 +83,12 @@ import {
           spacing={{ base: '20px', xl: '20px' }}
         >
           {data && <NormalTable
-            tableTitle={'小组管理'}
+            tableTitle={''}
             columnsData={[
               {
-                Header: "用户",
+                Header: "",
                 accessor: "userIdList",
                 Cell: ({ value, row }) => {
-                  // console.log('value', value);
                   invariant(data.userMap);
                   const userList = (value as string[]).map(id => data.userMap[id]);
                   return <div>
@@ -98,13 +97,13 @@ import {
                 }
               },
               {
-                Header: "会议链接",
+                Header: "",
                 accessor: "meetingLink",
               },
             ]}
             tableData={data.groupList}
           />}
-          {!data && <Button isLoading={true} loadingText={'载入组员信息中...'} disabled={true}/>}
+          {!data && <Button isLoading={true} loadingText={'...'} disabled={true}/>}
         </SimpleGrid>
       </Box>
     )
