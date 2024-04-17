@@ -35,6 +35,15 @@ const routes: IRoute[] = [
   {
     name: '',
     layout: '/',
+    path: '/groups/[groupId]/transcripts/[transcriptId]',
+    icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
+    // Permission varies based on `id`.
+    resource: 'open-to-all',
+    hiddenFromSidebar: true,
+  },
+  {
+    name: '',
+    layout: '/',
     path: '/users',
     icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
     resource: 'users:write',
