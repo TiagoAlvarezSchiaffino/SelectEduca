@@ -41,7 +41,7 @@ import {
     const [isCreating, setCreating] = useState(false);
   
     const { data, refetch } = tClientNext.groups.list.useQuery({
-      userIdList: selected.map(option => option.value),
+      userIds: selected.map(option => option.value),
     });
   
     const createGroup = async () => {

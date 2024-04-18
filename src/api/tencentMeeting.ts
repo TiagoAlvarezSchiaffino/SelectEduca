@@ -73,7 +73,7 @@ const tmRequest = async (
 
   // authentication docs location
   // https://cloud.tencent.com/document/product/1095/42413
-  const url = "https://api.meeting.qq.com" + pathWithQuery;
+  const url = "" + pathWithQuery;
 
   const nonce = Math.floor(Math.random() * 100000);
 
@@ -127,6 +127,11 @@ const tmRequest = async (
   }));
 };
 
+/**
+ * Create a meeting.
+ * 
+ * https://cloud.tencent.com/document/product/1095/42417
+ */
 export async function createMeeting(
   subject: string,
   startTimeSecond: number,
@@ -193,7 +198,6 @@ export async function createMeeting(
     })),
   });
 
-  
   return zRes.parse(await tmRequest('POST', '/v1/meetings', {}, {
     userid: apiEnv.TM_ADMIN_USER_ID,
     instanceid: "1",
@@ -209,6 +213,11 @@ const paginationNotSupported = () => new TRPCError({
   message: "Pagination isn't supported",
 });
 
+/**
+ * List meetings of user apiEnv.TM_ADMIN_USER_ID.
+ * 
+ * https://cloud.tencent.com/document/product/1095/42421
+ */
 export async function listMeetings() {
   console.log(LOG_HEADER, 'listMeetings()');
   const zRes = z.intersection(z.object({
@@ -248,6 +257,8 @@ export async function listMeetings() {
 
 /**
  * List meeting recordings since 31 days ago (max allowed date range).
+ * 
+ * https://cloud.tencent.com/document/product/1095/51189
  */
 export async function listRecords() {
   console.log(LOG_HEADER, 'listRecords()');
@@ -271,32 +282,15 @@ export async function listRecords() {
         // password: z.string(),
         // sharing_expire: z.number(),
         // allow_download: z.boolean()
-      }),
+      })
+    ).optional()
+  });
   const zRes = z.object({
     total_count: z.number(),
     // current_size: z.number(),
     // current_page: z.number(),
     total_page: z.number(),
-    record_meetings: z.array(
-      z.object({
-        meeting_record_id: z.string(), // needed for script download
-        meeting_id: z.string(),
-        // meeting_code: z.string(),
-        // host_user_id: z.string(),
-        // media_start_time: z.number(),
-        subject: z.string(),
-        state: z.number(), // 3 - ready for download
-        record_files: z.array(
-          z.object({
-            record_file_id: z.string(), // needed for script download
-            // record_start_time: z.number(),
-            // record_end_time: z.number(),
-            // record_size: z.number(),
-            // sharing_state: z.number(),
-            // required_same_corp: z.boolean(),
-            // required_participant: z.boolean(),
-            // password: z.string(),
-            record_meetings: z.array(zRecordMeetings)
+    record_meetings: z.array(zRecordMeetings).optional()
   });
 
   var ret : TypeOf<typeof zRecordMeetings>[] = []
@@ -310,7 +304,7 @@ export async function listRecords() {
       page_size: 20,  // max page size
       page
     }));
-    ret = ret.concat(res.record_meetings)
+    ret = ret.concat(res.record_meetings || [])
     if (page >= res.total_page) break;
     page++;
   }
@@ -319,6 +313,8 @@ export async function listRecords() {
 
 /**
  * Get record file download URLs given a meeting record id retrieved from listRecords().
+ * 
+ * https://cloud.tencent.com/document/product/1095/51174
  */
 export async function getRecordURLs(meetingRecordId : string) {
   console.log(LOG_HEADER, `getRecordURLs("${meetingRecordId}")`);
@@ -341,8 +337,7 @@ export async function getRecordURLs(meetingRecordId : string) {
         meeting_summary: z.array(
           z.object({
             download_address: z.string().url(),
-            //file_type: z.literal('txt')
-            //file_type: z.literal('txt')
+            file_type: z.string(),
           })
         ).optional()
       })
@@ -353,7 +348,7 @@ export async function getRecordURLs(meetingRecordId : string) {
     meeting_record_id: meetingRecordId,
     userid: apiEnv.TM_ADMIN_USER_ID,
   }));
-  
+
   if (res.total_page != 1) throw paginationNotSupported();
   return res;
 }
