@@ -6,12 +6,12 @@ import Navbar from 'horizon-ui/components/navbar/NavbarAdmin'
 import Sidebar from 'horizon-ui/components/sidebar/Sidebar'
 import { SidebarContext } from 'horizon-ui/contexts/SidebarContext'
 import { FC, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
-import routes from 'routes'
 import {
   getActiveNavbar,
   getActiveNavbarText,
   getActiveRoute,
-} from 'navigation'
+  navbarItems,
+} from 'navbar'
 
 import { GuardProvider } from '@authing/guard-react18';
 import { UserContext } from "./useUserContext";
@@ -89,7 +89,7 @@ export default function AppLayout(props: DashboardLayoutProps) {
               setToggleSidebar
             }}
           >
-            <Sidebar routes={routes} display='none' {...rest} />
+            <Sidebar routes={navbarItems} display='none' {...rest} />
             <Box
               float='right'
               minHeight='100vh'
@@ -109,9 +109,9 @@ export default function AppLayout(props: DashboardLayoutProps) {
                   <Navbar
                     onOpen={onOpen}
                     logoText={'Horizon UI Dashboard PRO'}
-                    brandText={getActiveRoute(routes)}
-                    secondary={getActiveNavbar(routes)}
-                    message={getActiveNavbarText(routes)}
+                    brandText={getActiveRoute(navbarItems)}
+                    secondary={getActiveNavbar(navbarItems)}
+                    message={getActiveNavbarText(navbarItems)}
                     fixed={fixed}
                     {...rest}
                   />
