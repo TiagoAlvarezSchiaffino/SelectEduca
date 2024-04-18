@@ -13,14 +13,12 @@ const routes: IRoute[] = [
     layout: '/',
     path: '/',
     icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
-    resource: 'my-groups:read',
   },
   {
     name: '',
     layout: '/',
     path: '/profile',
     icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
-    resource: 'me:write',
     hiddenFromSidebar: true,
   },
   {
@@ -28,8 +26,6 @@ const routes: IRoute[] = [
     layout: '/',
     path: '/groups/[groupId]',
     icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
-    // Permission varies based on `id`.
-    resource: 'open-to-all',
     hiddenFromSidebar: true,
   },
   {
@@ -37,8 +33,6 @@ const routes: IRoute[] = [
     layout: '/',
     path: '/groups/[groupId]/transcripts/[transcriptId]',
     icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
-    // Permission varies based on `id`.
-    resource: 'open-to-all',
     hiddenFromSidebar: true,
   },
   {
@@ -46,14 +40,12 @@ const routes: IRoute[] = [
     layout: '/',
     path: '/users',
     icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
-    resource: 'users:write',
   },
   {
     name: '',
     layout: '/',
     path: '/groups',
     icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
-    resource: 'groups:write',
   },
 ]
 
