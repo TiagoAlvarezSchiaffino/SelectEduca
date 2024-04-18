@@ -3,8 +3,8 @@ import { Icon } from '@chakra-ui/react'
 import {
   MdPerson,
   MdHome,
-  MdAccountBox
 } from 'react-icons/md'
+import { Role } from "shared/RBAC";
 
 export interface Route {
   name: string;
@@ -12,7 +12,7 @@ export interface Route {
   icon: ReactComponentElement | string;
   secondary?: boolean;
   path: string;
-  hiddenFromSidebar?: boolean;
+  role: Role,
 }
 
 const routes: Route[] = [
@@ -20,34 +20,19 @@ const routes: Route[] = [
     name: '',
     path: '/',
     icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
-  },
-  {
-    name: '',
-    path: '/profile',
-    icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
-    hiddenFromSidebar: true,
-  },
-  {
-    name: '',
-    path: '/groups/[groupId]',
-    icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
-    hiddenFromSidebar: true,
-  },
-  {
-    name: '',
-    path: '/groups/[groupId]/transcripts/[transcriptId]',
-    icon: <Icon as={MdAccountBox} width='20px' height='20px' color='inherit' />,
-    hiddenFromSidebar: true,
+    role: 'ANYONE',
   },
   {
     name: '',
     path: '/users',
     icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
+    role: 'ADMIN',
   },
   {
     name: '',
     path: '/groups',
     icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
+    role: 'ADMIN',
   },
 ]
 

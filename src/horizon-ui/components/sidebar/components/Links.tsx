@@ -4,9 +4,10 @@
 import { Box, Flex, HStack, Text, useColorModeValue } from '@chakra-ui/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { NavbarItem } from 'navbar'
+import { Route } from 'routes'
 import useUserContext from 'useUserContext'
-import { isPermitted } from 'shared/roles'
+import { isPermitted } from 'shared/RBAC'
+import { NavbarItem } from 'navbar'
 
 interface SidebarLinksProps {
   routes: NavbarItem[]
@@ -14,8 +15,6 @@ interface SidebarLinksProps {
 
 export function SidebarLinks (props: SidebarLinksProps) {
   const { routes } = props
-
-  //   Chakra color mode
   const router = useRouter()
 
   let activeColor = useColorModeValue('gray.700', 'white')
@@ -32,9 +31,11 @@ export function SidebarLinks (props: SidebarLinksProps) {
     return router.pathname === routeName;
   }
 
+  const [user] = useUserContext();
+
   // this function creates the links from the secondary accordions (for example auth -> sign-in -> default)
-  const createLinks = (routes: IRoute[]) => {
-    return routes.filter(r => !r.hiddenFromSidebar).map((route, index: number) => {
+  const createLinks = (routes: Route[]) => {
+    return routes.filter(r => isPermitted(user.roles, r.role)).map((route, index: number) => {
       return (
         <Link key={index} href={route.path}>
             {route.icon ? (
