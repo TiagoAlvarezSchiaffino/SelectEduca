@@ -1,4 +1,4 @@
-import { Role } from "../RBAC";
+import { Role } from "./roles";
 
 interface PublicUser {
   id: string;
@@ -12,7 +12,7 @@ interface PublicUser {
 
 export default PublicUser;
 
-import type User from '../../api/database/models/User';
+import type User from '../api/database/models/User';
 export const presentPublicUser = (g: User) => {
   return {
     id: g.id,

@@ -6,7 +6,7 @@ interface PublicGroup {
   
   export default PublicGroup;
   
-  import type Group from '../../api/database/models/Group';
+  import type Group from '../api/database/models/Group';
   export const presentPublicGroup = (g: Group) => {
     return {
       id: g.id,
