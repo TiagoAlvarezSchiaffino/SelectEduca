@@ -14,7 +14,7 @@ export interface NavbarItem {
   icon: ReactComponentElement | string,
   secondary?: boolean,
   path: string,
-  role: Role,
+  role?: Role,
 }
 
 export const navbarItems: NavbarItem[] = [
@@ -22,7 +22,6 @@ export const navbarItems: NavbarItem[] = [
     name: '',
     path: '/',
     icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
-    role: 'Anyone',
   },
   {
     name: '',
