@@ -1,4 +1,4 @@
-import { Role } from "./roles";
+import Role from "./Role";
 
 interface PublicUser {
   id: string;

@@ -1,4 +1,4 @@
-import { Role } from "./RBAC";
+import Role from "./Role";
 
 export default interface IUser {
   id: string;

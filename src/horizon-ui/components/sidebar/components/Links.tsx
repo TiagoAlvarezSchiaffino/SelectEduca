@@ -5,7 +5,7 @@ import { Box, Flex, HStack, Text, useColorModeValue } from '@chakra-ui/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import useUserContext from 'useUserContext'
-import { isPermitted } from 'shared/RBAC'
+import { isPermitted } from 'shared/Role'
 import { NavbarItem } from 'navbar'
 
 interface SidebarLinksProps {

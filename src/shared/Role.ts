@@ -10,7 +10,9 @@ export const ALL_ROLES = [
   'VISITOR',
 ] as const;
 
-export type Role = ArrayElement<typeof ALL_ROLES>;
+type Role = ArrayElement<typeof ALL_ROLES>;
+
+export default Role;
 
 export const zRoles = z.array(z.enum(ALL_ROLES));
 
