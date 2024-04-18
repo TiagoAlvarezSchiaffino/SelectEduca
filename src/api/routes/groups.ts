@@ -3,13 +3,14 @@ import { z } from "zod";
 import { authUser } from "../auth";
 import Group from "../database/models/Group";
 import GroupUser from "../database/models/GroupUser";
-import { Op } from "sequelize";
+import { Includeable } from "sequelize";
 import User from "../database/models/User";
-import { presentPublicGroup } from "../../shared/PublicGroup";
-import PublicUser from "../../shared/PublicUser";
 import { TRPCError } from "@trpc/server";
 import Transcript from "../database/models/Transcript";
 import Summary from "../database/models/Summary";
+import invariant from "tiny-invariant";
+import _ from "lodash";
+import { isPermitted } from "../../shared/Role";
 
 function isSubset<T>(superset: Set<T>, subset: Set<T>): boolean {
   for (const item of subset) {

@@ -4,10 +4,12 @@
 import { Box, Flex, HStack, Text, useColorModeValue } from '@chakra-ui/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { IRoute } from 'horizon-ui/types/navigation'
+import { NavbarItem } from 'navbar'
+import useUserContext from 'useUserContext'
+import { isPermitted } from '../../../../shared/Role'
 
 interface SidebarLinksProps {
-  routes: IRoute[]
+  routes: NavbarItem[]
 }
 
 export function SidebarLinks (props: SidebarLinksProps) {
