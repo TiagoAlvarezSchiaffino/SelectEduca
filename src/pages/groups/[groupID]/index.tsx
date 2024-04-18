@@ -73,7 +73,6 @@ import {
               <Th></Th>
               <Th></Th>
               <Th></Th>
-              <Th></Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -82,8 +81,7 @@ import {
               return <Tr key={t.transcriptId}>
                 <Td><Link href={link}>{capitalizeFirstChar(moment(t.startedAt).fromNow())}</Link></Td>
                 <Td><Link href={link}>{capitalizeFirstChar(moment.duration(moment(t.endedAt).diff(t.startedAt)).humanize())}</Link></Td>
-                <Td><Link href={link}>{t.summaries.length} 个</Link></Td>
-                <Td><Link href={link}> <ArrowForwardIcon /></Link></Td>
+                <Td><Link href={link}>{t.summaries.length} 个 <ArrowForwardIcon /></Link></Td>
               </Tr>;
             })}
           </Tbody>

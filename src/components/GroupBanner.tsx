@@ -36,19 +36,18 @@ import {
     }
   
     return (
-      <SimpleGrid columns={3} templateColumns={'9em 2fr 1fr'} spacing={5}>
+      <SimpleGrid columns={3} templateColumns={'7em 2fr 1fr'} spacing={2}>
         <Center>
           <Button variant='outline' leftIcon={<MdVideocam />}
             isLoading={isJoiningMeeting} loadingText={'...'}
-            onClick={async () => launchMeeting(props.group.id)}>
-          </Button>
+            onClick={async () => launchMeeting(props.group.id)}></Button>
         </Center>
         <Wrap spacing='1.5em'>
         {
           props.group.users
           .filter((u: any) => user.id != u.id)
           .map((user: any) => 
-            <WrapItem key={user.name}>
+            <WrapItem key={user.id}>
               <HStack>
                 <Avatar name={user.name} />
                 <Text>{user.name}</Text>
