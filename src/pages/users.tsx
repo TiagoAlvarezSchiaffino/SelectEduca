@@ -30,7 +30,7 @@ import {
   import tClientBrowser from "../tClientBrowser";
   import { Role, ALL_ROLES } from "../shared/RBAC";
   import { HSeparator } from "../horizon-ui/components/separator/Separator";
-  import { IUser } from "../shared/user";
+  import IUser from "../shared/IUser";
   import { toast } from "react-toastify";
   import tClientNext from "../tClientNext";
   

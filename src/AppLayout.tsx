@@ -17,7 +17,7 @@ import { GuardProvider } from '@authing/guard-react18';
 import { UserContext } from "./useUserContext";
 import browserEnv from "./browserEnv";
 import tClientBrowser from "./tClientBrowser";
-import { IUser } from "./shared/user";
+import IUser from "./shared/IUser";
 import { useRouter } from "next/router";
 import { Resource, isPermitted } from "./shared/RBAC";
 import { BeatLoader } from 'react-spinners';
