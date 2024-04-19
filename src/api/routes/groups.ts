@@ -10,7 +10,7 @@ import Transcript from "../database/models/Transcript";
 import Summary from "../database/models/Summary";
 import invariant from "tiny-invariant";
 import _ from "lodash";
-import { isPermitted } from "../../shared/Role";
+import { isPermitted } from "shared/Role";
 
 function isSubset<T>(superset: Set<T>, subset: Set<T>): boolean {
   for (const item of subset) {
