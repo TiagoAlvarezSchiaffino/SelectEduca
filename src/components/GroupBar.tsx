@@ -16,7 +16,7 @@ import Link from 'next/link';
 import useUserContext from 'useUserContext';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 
-export default function GroupBanner(props: {
+export default function GroupBar(props: {
   group: any,
   showSelf?: boolean,
   showJoinButton?: boolean,
