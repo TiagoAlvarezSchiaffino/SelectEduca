@@ -5,8 +5,8 @@ import { zRoles } from "../../shared/Role";
 import User from "../database/models/User";
 import { TRPCError } from "@trpc/server";
 import { Op } from "sequelize";
-import IUser from "../../shared/IUser";
 import { presentPublicUser } from "../../shared/PublicUser";
+import UserProfile from "shared/UserProfile";
 
 const users = router({
   create: procedure
@@ -71,7 +71,7 @@ const users = router({
     .query(async () => {
 
     return {
-      users: await User.findAll({ order: [['pinyin', 'ASC']] }) as IUser[]
+      users: await User.findAll({ order: [['pinyin', 'ASC']] }) as UserProfile[]
     };
   })
 });
