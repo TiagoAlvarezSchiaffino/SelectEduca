@@ -1,20 +1,16 @@
 import { ArrayElement } from "./utils/ArrayElement";
 import z from "zod";
 
-export const ALL_ROLES = [
-  'ADMIN',
-
-  'AI Researcher',
-
-  // DEPRECATED. Do not use. TODO: remove it from all dbs (including all local dev dbs).
-  'VISITOR',
+export const AllRoles = [
+  'UserManager',
+  'SummaryEngineer',
 ] as const;
 
-type Role = ArrayElement<typeof ALL_ROLES>;
+type Role = ArrayElement<typeof AllRoles>;
 
 export default Role;
 
-export const zRoles = z.array(z.enum(ALL_ROLES));
+export const zRoles = z.array(z.enum(AllRoles));
 
 export function isPermitted(userRoles : Role[], permitted?: Role) {
   return permitted === undefined || userRoles.includes(permitted);
