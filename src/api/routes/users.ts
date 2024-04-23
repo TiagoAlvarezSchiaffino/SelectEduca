@@ -1,17 +1,21 @@
 import { procedure, router } from "../trpc";
 import { z } from "zod";
-import { authUser } from "../auth";
-import { zRoles } from "../../shared/Role";
+import Role, { isPermitted, zRoles } from "../../shared/Role";
 import User from "../database/models/User";
 import { TRPCError } from "@trpc/server";
 import { Op } from "sequelize";
 import { presentPublicUser } from "../../shared/PublicUser";
-import UserProfile from "shared/UserProfile";
+import { authUser, invalidateLocalUserCache } from "../auth";
+import pinyin from 'tiny-pinyin';
+import { zUserProfile } from "shared/UserProfile";
+import { isValidChineseName } from "../../shared/utils/string";
+import invariant from 'tiny-invariant';
+import { email, emailUserManagersIgnoreError } from "api/sendgrid";
 
 const users = router({
   create: procedure
-    .use(authUser('UserManager'))
-    .input(z.object({
+  .use(authUser('UserManager'))
+  .input(z.object({
     name: z.string().min(1, "required"),
     pinyin: z.string(),
     email: z.string().email(),
@@ -44,14 +48,10 @@ const users = router({
   }),
 
   search: procedure
-    .use(authUser('UserManager'))
-    .input(z.object({
-    offset: z.number(),
-    limit: z.number(),
-    query: z.string(),
-  }))
-  .query(async ({ input, ctx }) => {
-    const userList = await User.findAll({
+  .use(authUser('UserManager'))
+  .input(z.object({ query: z.string() }))
+  .query(async ({ input }) => {
+    const users = await User.findAll({
       where: {
         [Op.or]: [
           { pinyin: { [Op.iLike]: `%${input.query}%` } },
@@ -62,18 +62,77 @@ const users = router({
     });
 
     return {
-      userList: userList.map(presentPublicUser),
+      users: users.map(presentPublicUser),
     }
   }),
-  
-  listUsers: procedure
-    .use(authUser('UserManager'))
-    .query(async () => {
 
-    return {
-      users: await User.findAll({ order: [['pinyin', 'ASC']] }) as UserProfile[]
-    };
+  list: procedure
+  .use(authUser('UserManager'))
+  .output(z.array(zUserProfile))
+  .query(async () => await User.findAll({ order: [['pinyin', 'ASC']] })),
+
+  /**
+   * In Edge or Serverless environments, user profile updates may take up to auth.USER_CACHE_TTL_IN_MS to propagate.
+   * TODO: add a warning message in profile change UI.
+   */
+  update: procedure
+  .use(authUser())
+  .input(zUserProfile)
+  .mutation(async ({ input, ctx }) => {
+    const isUserManager = isPermitted(ctx.user.roles, 'UserManager');
+    const isSelf = ctx.user.id === input.id;
+    // Anyone can update user profiles, but non-UserManagers can only update their own.
+    if (!isUserManager && !isSelf) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: ''
+      })
+    }
+    if (!isValidChineseName(input.name)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: ''
+      })
+    }
+    invariant(input.name);
+
+    const user = await User.findByPk(input.id);
+    if (!user) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: `${input.id}`,
+      });
+    }
+
+    if (!isSelf) await emailUserAboutNewRoles(ctx.user.name, user, input.roles, ctx.baseUrl);
+
+    await user.update({
+      name: input.name,
+      pinyin: pinyin.convertToPinyin(input.name),
+      consentFormAcceptedAt: input.consentFormAcceptedAt,
+      ...isUserManager ? {
+        roles: input.roles,
+        email: input.email,
+      } : {},
+    });
+    invalidateLocalUserCache();
   })
 });
 
 export default users;
+
+async function emailUserAboutNewRoles(userManagerName: string, user: User, newRoles: Role[], baseUrl: string) {
+  const added = newRoles.filter(r => !user.roles.includes(r));
+  for (const r of added) {
+    await email('d-7b16e981f1df4e53802a88e59b4d8049', [{
+      to: [{ 
+        name: user.name, 
+        email: user.email 
+      }],
+      dynamicTemplateData: {
+        'role': r,
+        'manager': userManagerName,
+      }
+    }], baseUrl);
+  }
+}
