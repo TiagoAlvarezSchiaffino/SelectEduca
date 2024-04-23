@@ -34,7 +34,7 @@ export type GetGroupResponse = z.TypeOf<typeof zGetGroupResponse>;
 const groups = router({
 
   create: procedure
-  .use(authUser('UserManager'))
+  .use(authUser('GroupManager'))
   .input(z.object({
     userIds: z.array(z.string()).min(2),
   }))
@@ -46,7 +46,7 @@ const groups = router({
    * @returns All groups if `userIds` is empty, otherwise return the group that contains all the given users and no more.
    */
   list: procedure
-  .use(authUser(['UserManager', 'SummaryEngineer']))
+  .use(authUser(['GroupManager']))
   .input(
     z.object({
       userIds: z.string().array(),

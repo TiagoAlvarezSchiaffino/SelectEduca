@@ -33,7 +33,7 @@ export const navbarItems: NavbarItem[] = [
     name: '',
     path: '/groups',
     icon: <Icon as={MdGroups} width='20px' height='20px' color='inherit' />,
-    role: 'UserManager',
+    role: 'GroupManager',
   },
   {
     name: '',
