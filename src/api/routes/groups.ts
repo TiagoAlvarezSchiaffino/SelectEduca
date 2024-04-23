@@ -1,8 +1,7 @@
-
 import { procedure, router } from "../trpc";
 import { z } from "zod";
 import { authUser } from "../auth";
-import DBGroup from "../database/models/Group";
+import DbGroup from "../database/models/Group";
 import GroupUser from "../database/models/GroupUser";
 import { Includeable } from "sequelize";
 import User from "../database/models/User";
@@ -11,11 +10,12 @@ import Transcript from "../database/models/Transcript";
 import Summary from "../database/models/Summary";
 import invariant from "tiny-invariant";
 import _ from "lodash";
-import { useId } from "react";
-import sequelizeInstance from "api/database/sequelizeInstance";
+import { isPermitted } from "../../shared/Role";
+import sequelizeInstance from "../database/sequelizeInstance";
 
-const zGroup = z.object({
+export const zGroup = z.object({
   id: z.string(),
+  name: z.string().nullable(),
   users: z.array(z.object({
     id: z.string(),
     name: z.string().nullable(),
@@ -24,7 +24,11 @@ const zGroup = z.object({
 
 export type Group = z.TypeOf<typeof zGroup>;
 
-const zGetGroupResponse = zGroup.merge(z.object({
+const zGroupCountingTranscripts = zGroup.merge(z.object({
+  transcripts: z.array(z.object({})).optional()
+}));
+
+const zGroupWithTranscripts = zGroup.merge(z.object({
   transcripts: z.array(z.object({
     transcriptId: z.string(),
     startedAt: z.date(),
@@ -35,16 +39,7 @@ const zGetGroupResponse = zGroup.merge(z.object({
   })),
 }));
 
-export type GetGroupResponse = z.TypeOf<typeof zGetGroupResponse>;
-
-const zListGroupsResponse = z.array(zGroup);
-export type ListGroupsResponse = z.TypeOf<typeof zListGroupsResponse>;
-
-const zListGroupsAndCountTranscriptsResponse = z.array(
-  zGroup.merge(z.object({
-  transcripts: z.array(z.object({})).optional()
-})));
-export type ListGroupsAndCountTranscriptsResponse = z.TypeOf<typeof zListGroupsAndCountTranscriptsResponse>;
+export type GroupWithTranscripts = z.TypeOf<typeof zGroupWithTranscripts>;
 
 async function listGroups(userIds: string[]) {
   const includes: Includeable[] = [{
@@ -56,7 +51,7 @@ async function listGroups(userIds: string[]) {
   }];
 
   if (userIds.length === 0) {
-    return await DBGroup.findAll({ include: includes });
+    return await DbGroup.findAll({ include: includes });
   } else {
     return await findGroups(userIds, 'inclusive', includes);
   }
@@ -81,24 +76,27 @@ const groups = router({
     checkMinimalGroupSize(newUserIds);
 
     await sequelizeInstance.transaction(async (t) => {
-      const oldUserIds = (await GroupUser.findAll({
-        where: { groupId: input.id }
-      })).map(gu => gu.userId);
+      const group = await DbGroup.findByPk(input.id, {
+        include: GroupUser
+      });
+      if (!group) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: ` ${input.id} `,
+        })
+      }
+      group.update({
+        // Set to null if the input is an empty string.
+        name: input.name || null
+      });
 
-      for (const oldId of oldUserIds) {
-        if (!newUserIds.includes(oldId)) {
-          const oldGU = await GroupUser.findOne({ where: {
-            groupId: input.id,
-            userId: oldId,
-          } });
-          if (!oldGU) throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: ` <${input.id}, ${oldId}> `
-          });
+      for (const oldGU of group.groupUsers) {
+        if (!newUserIds.includes(oldGU.userId)) {
           await oldGU.destroy({ transaction: t });
         }
       }
 
+      const oldUserIds = group.groupUsers.map(gu => gu.userId);
       for (const newId of newUserIds) {
         if (!oldUserIds.includes(newId)) {
           await GroupUser.create({
@@ -114,9 +112,9 @@ const groups = router({
    * @returns All groups if `userIds` is empty, otherwise return groups that has all the given users.
    */
   list: procedure
-  .use(authUser(['UserManager']))
+  .use(authUser(['GroupManager']))
   .input(z.object({ userIds: z.string().array(), }))
-  .output(zListGroupsResponse)
+  .output(z.array(zGroup))
   .query(async ({ input }) => listGroups(input.userIds)),
 
   /**
@@ -125,16 +123,16 @@ const groups = router({
   listAndCountTranscripts: procedure
   .use(authUser(['SummaryEngineer']))
   .input(z.object({ userIds: z.string().array(), }))
-  .output(zListGroupsAndCountTranscriptsResponse)
+  .output(z.array(zGroupCountingTranscripts))
   .query(async ({ input }) => listGroups(input.userIds)),
 
   get: procedure
   // We will throw access denied later if the user isn't a privileged user and isn't in the group.
   .use(authUser())
   .input(z.object({ id: z.string().uuid() }))
-  .output(zGetGroupResponse)
+  .output(zGroupWithTranscripts)
   .query(async ({ input, ctx }) => {
-    const g = await DBGroup.findByPk(input.id, {
+    const g = await DbGroup.findByPk(input.id, {
       include: [{
         model: User,
         attributes: ['id', 'name'],
@@ -150,7 +148,7 @@ const groups = router({
       throw new TRPCError({ code: 'NOT_FOUND', message: ` ${input.id} ` });
     }
     if (!isPermitted(ctx.user.roles, 'SummaryEngineer') && !g.users.some(u => u.id === ctx.user.id)) {
-      throw new TRPCError({ code: 'FORBIDDEN', message: ` ${input.id}` });
+      throw new TRPCError({ code: 'FORBIDDEN', message: `${input.id}` });
     }
     return g;
   }),
@@ -165,21 +163,20 @@ export const GROUP_ALREADY_EXISTS_ERROR_MESSAGE = '';
  * @param mode if `exclusive`, return the singleton group that contains no more other users.
  * @param includes Optional `include`s in the returned group.
  */
-
 export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusive', includes?: Includeable[]):
-  Promise<DBGroup[]> 
-{ 
+  Promise<DbGroup[]> 
+{
   invariant(userIds.length > 0);
-  
+
   const gus = await GroupUser.findAll({
     where: {
       userId: userIds[0] as string,
     },
     include: [{
-      model: Group,
-      attributes: ['id'],
+      model: DbGroup,
+      attributes: ['id', 'name'],
       include: [{
-        model: DBGroup,
+        model: GroupUser,
         attributes: ['userId'],
       }, ...(includes || [])]
     }]
@@ -188,7 +185,7 @@ export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusi
   const res = gus.filter(gu => {
     const groupUserIds = gu.group.groupUsers.map(gu => gu.userId);
     const isSubset = userIds.every(uid => groupUserIds.includes(uid));
-    return isSubset && (mode === 'inclusive' || userIds.length === groupUserIds.length);;
+    return isSubset && (mode === 'inclusive' || userIds.length === groupUserIds.length);
   }).map(gu => gu.group);
 
   invariant(mode === 'inclusive' || res.length <= 1);
@@ -205,7 +202,7 @@ export async function createGroup(userIds: string[]) {
     });
   }
 
-  const group = await DBGroup.create({});
+  const group = await DbGroup.create({});
   const groupUsers = await GroupUser.bulkCreate(userIds.map(userId => ({
     userId: userId,
     groupId: group.id,
@@ -218,6 +215,7 @@ export async function createGroup(userIds: string[]) {
 }
 
 function checkMinimalGroupSize(userIds: string[]) {
+  // Some userIds may be duplicates
   if ((new Set(userIds)).size < 2) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
