@@ -34,8 +34,7 @@ import {
   
       // TODO: Handle error display globally. Redact server-side errors.
         try {
-          await trpc.users.update.mutate(updatedUser);
-          console.log("user name update succeeded");
+          await tClientBrowser.users.update.mutate(updatedUser);
           setUser(updatedUser);
           setShow(!show);
         } catch(e) {

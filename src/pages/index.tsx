@@ -4,8 +4,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  Modal,
-  ModalOverlay,
   ModalContent,
   ModalHeader,
   ModalBody,
@@ -23,10 +21,11 @@ import useUserContext from "../useUserContext";
 import trpc from "../trpc";
 import trpcNext from "../trpcNext";
 import { toast } from "react-toastify";
-import pinyin from 'tiny-pinyin';
 import GroupBar from 'components/GroupBar';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import ConsentModal, { consentFormAccepted } from '../components/ConsentModal';
+import ModalWithBackdrop from 'components/ModalWithBackdrop';
+import { isValidChineseName } from '../shared/utils/string';
 
 const Index: NextPageWithLayout = () => {
   const [user] = useUserContext();
@@ -55,8 +54,7 @@ function SetNameModal() {
     };
   };
   return (
-    <Modal isOpen onClose={() => undefined}>
-      <ModalOverlay backdropFilter='blur(8px)' />
+    <ModalWithBackdrop isOpen onClose={() => undefined}>
       <ModalContent>
         <ModalHeader> 👋</ModalHeader>
         <ModalBody>
@@ -80,12 +78,10 @@ function SetNameModal() {
           </Box>
         </ModalBody>
       </ModalContent>
-    </Modal>
+    </ModalWithBackdrop>
   );
 }
-function isValidChineseName(s: string) : boolean {
-  return s.length >= 2 && pinyin.parse(s).every(token => token.type === 2);
-}
+
 function Meetings() {
   const { data: groups, isLoading } = trpcNext.myGroups.list.useQuery();
   return (
