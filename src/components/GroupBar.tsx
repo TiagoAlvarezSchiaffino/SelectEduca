@@ -2,8 +2,10 @@ import {
   Avatar,
   Button,
   Center,
+  Flex,
   HStack,
   SimpleGrid,
+  Spacer,
   Text,
   Wrap,
   WrapItem,
@@ -16,12 +18,13 @@ import Link from 'next/link';
 import useUserContext from 'useUserContext';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 
+// @ts-ignore TODO: fix me.
 export default function GroupBar(props: {
   group: any,
   showSelf?: boolean,
   showJoinButton?: boolean,
-  countTranscripts?: boolean,
   showTranscriptCount?: boolean,
+  showTranscriptLink?: boolean,   // Effective ony if showTranscriptCount is true
 }) {
   const [user] = useUserContext();
   const transcriptCount = (props.group.transcripts || []).length;
@@ -39,41 +42,44 @@ export default function GroupBar(props: {
   }
 
   return (
-    <SimpleGrid 
-      columns={(props.showJoinButton ? 1 : 0) + 1 + (props.showTranscriptCount ? 1 : 0)} 
-      templateColumns={(props.showJoinButton ? '7em ' : '') + '2fr' + (props.showTranscriptCount ? ' 1fr' : '')} 
-      spacing={2}
-    >
+    <Flex>
       {props.showJoinButton &&
         <Center>
-          <Button variant='outline' leftIcon={<MdVideocam />}
-            isLoading={isJoiningMeeting} loadingText={'加入中...'}
-            onClick={async () => launchMeeting(props.group.id)}></Button>
+          <Button
+            boxShadow="md"
+            marginRight={6}
+            leftIcon={<MdVideocam />}
+            isLoading={isJoiningMeeting} loadingText={'...'}
+            onClick={async () => launchMeeting(props.group.id)}
+          ></Button>
         </Center>
       }
       <UserChips currentUserId={props.showSelf ? undefined : user.id} users={props.group.users} />
-      <Center>
-      {props.showTranscriptCount &&
-          (props.showTranscriptLink ? 
-            <Link href={`/groups/${props.group.id}`}>
-              {transcriptCount ?
-                <>{transcriptCount}<ArrowForwardIcon /></>
-                : 
-                <Text color='gray.400'><ArrowForwardIcon /></Text>
-              }
-            </Link>
-            :
-            <>
-              {transcriptCount ?
-                <>{transcriptCount}</>
-                : 
-                <Text color='gray.400'></Text>
-              }
-            </>
-          )
-        }
-      </Center>
-    </SimpleGrid>
+      {props.showTranscriptCount && (
+        <>
+          <Spacer marginLeft={6} />
+          <Center>
+            {props.showTranscriptLink ? 
+              <Link href={`/groups/${props.group.id}`}>
+                {transcriptCount ?
+                  <>{transcriptCount}  <ArrowForwardIcon /></>
+                  : 
+                  <Text color='gray.400'> <ArrowForwardIcon /></Text>
+                }
+              </Link>
+              :
+              <>
+                {transcriptCount ?
+                  <>{transcriptCount}</>
+                  : 
+                  <Text color='gray.400'></Text>
+                }
+              </>
+            }
+          </Center>
+        </>
+      )}
+    </Flex>
   );
 }
 

@@ -57,19 +57,19 @@ const Page: NextPageWithLayout = () => {
           <Table variant='striped'>
             <Thead>
               <Tr>
+                <Th></Th>
+                <Th></Th>
+                <Th></Th>
                 <Th />
-                <Th></Th>
-                <Th></Th>
-                <Th></Th>
               </Tr>
             </Thead>
             <Tbody>
               {data.map((u: any) => (
                 <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer'>
-                  <Td><Icon as={MdEditNote} /></Td>
                   <Td>{u.email}</Td>
                   <Td>{u.name} {user.id === u.id ? <Badge variant='brand'></Badge> : <></>}</Td>
                   <Td>{u.roles.map((r: Role) => RoleProfiles[r].displayName).join('、')}</Td>
+                  <Td><Icon as={MdEditNote} /></Td>
                 </Tr>
               ))}
             </Tbody>

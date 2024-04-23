@@ -1,8 +1,5 @@
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
   StackDivider,
   Text,
   Stack,
@@ -42,16 +39,10 @@ function GroupCard() {
   const id = typeof router.query.groupId === 'string' ? router.query.groupId : 'nonexistence';
   const { data: group } : { data: GetGroupResponse | undefined } = trpcNext.groups.get.useQuery({ id });
 
-  return (
-    <Card>
-      <CardHeader>
-        <PageBreadcrumb current='' parents={[{ name: '', link: '/' }]} />
-      </CardHeader>
-      <CardBody>
-        {group ? <GroupDetail group={group} /> : <Text align='center'>...</Text>}
-      </CardBody>
-    </Card>
-  );
+  return (<>
+    <PageBreadcrumb current='' parents={[{ name: '', link: '/' }]} />
+    {group ? <GroupDetail group={group} /> : <Text align='center'>...</Text>}
+  </>);
 }
 
 function GroupDetail(props: { group: GetGroupResponse }) {
