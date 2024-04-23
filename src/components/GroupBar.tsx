@@ -38,17 +38,20 @@ export default function GroupBar(props: {
     }
   }
 
-  const join = props.showJoinButton;
   return (
-    <SimpleGrid columns={join ? 3 : 2} templateColumns={(join ? '7em ' : '') + '2fr 1fr'} spacing={2}>
-      {join &&
+    <SimpleGrid 
+      columns={(props.showJoinButton ? 1 : 0) + 1 + (props.showTranscriptCount ? 1 : 0)} 
+      templateColumns={(props.showJoinButton ? '7em ' : '') + '2fr' + (props.showTranscriptCount ? ' 1fr' : '')} 
+      spacing={2}
+    >
+      {props.showJoinButton &&
         <Center>
           <Button variant='outline' leftIcon={<MdVideocam />}
             isLoading={isJoiningMeeting} loadingText={'加入中...'}
             onClick={async () => launchMeeting(props.group.id)}></Button>
         </Center>
       }
-      <UserList currentUserId={props.showSelf ? undefined : user.id} users={props.group.users} />
+      <UserChips currentUserId={props.showSelf ? undefined : user.id} users={props.group.users} />
       <Center>
       {props.showTranscriptCount &&
           (props.showTranscriptLink ? 
@@ -74,17 +77,23 @@ export default function GroupBar(props: {
   );
 }
 
-function UserList(props: { currentUserId?: string, users: { id: string, name: string | null }[]}) {
+function UserChips(props: { currentUserId?: string, users: { id: string, name: string | null }[]}) {
   return <Wrap spacing='1.5em'> {
     props.users
     .filter((u: any) => props.currentUserId != u.id)
     .map((user: any) =>
       <WrapItem key={user.id}>
-        <HStack>
-          <Avatar name={user.name} boxSize={10}/>
-          <Text>{user.name}</Text>
-        </HStack>
+        <UserChip user={user} />
       </WrapItem >
     )
   } </Wrap>
+}
+
+export function UserChip(props: {
+  user: { id: string, name: string | null }
+}) {
+  return <HStack>
+    <Avatar name={props.user.name || undefined} boxSize={10}/>
+    <Text>{props.user.name}</Text>
+  </HStack>;
 }

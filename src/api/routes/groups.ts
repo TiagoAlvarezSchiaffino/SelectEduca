@@ -2,7 +2,7 @@
 import { procedure, router } from "../trpc";
 import { z } from "zod";
 import { authUser } from "../auth";
-import Group from "../database/models/Group";
+import DBGroup from "../database/models/Group";
 import GroupUser from "../database/models/GroupUser";
 import { Includeable } from "sequelize";
 import User from "../database/models/User";
@@ -11,7 +11,8 @@ import Transcript from "../database/models/Transcript";
 import Summary from "../database/models/Summary";
 import invariant from "tiny-invariant";
 import _ from "lodash";
-import { isPermitted } from "../../shared/Role";
+import { useId } from "react";
+import sequelizeInstance from "api/database/sequelizeInstance";
 
 const zGroup = z.object({
   id: z.string(),
@@ -20,6 +21,8 @@ const zGroup = z.object({
     name: z.string().nullable(),
   }))
 });
+
+export type Group = z.TypeOf<typeof zGroup>;
 
 const zGetGroupResponse = zGroup.merge(z.object({
   transcripts: z.array(z.object({
@@ -53,7 +56,7 @@ async function listGroups(userIds: string[]) {
   }];
 
   if (userIds.length === 0) {
-    return await Group.findAll({ include: includes });
+    return await DBGroup.findAll({ include: includes });
   } else {
     return await findGroups(userIds, 'inclusive', includes);
   }
@@ -68,6 +71,43 @@ const groups = router({
   }))
   .mutation(async ({ input }) => {
     return await createGroup(input.userIds);
+  }),
+
+  update: procedure
+  .use(authUser('GroupManager'))
+  .input(zGroup)
+  .mutation(async ({ input }) => {
+    const newUserIds = input.users.map(u => u.id);
+    checkMinimalGroupSize(newUserIds);
+
+    await sequelizeInstance.transaction(async (t) => {
+      const oldUserIds = (await GroupUser.findAll({
+        where: { groupId: input.id }
+      })).map(gu => gu.userId);
+
+      for (const oldId of oldUserIds) {
+        if (!newUserIds.includes(oldId)) {
+          const oldGU = await GroupUser.findOne({ where: {
+            groupId: input.id,
+            userId: oldId,
+          } });
+          if (!oldGU) throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: ` <${input.id}, ${oldId}> `
+          });
+          await oldGU.destroy({ transaction: t });
+        }
+      }
+
+      for (const newId of newUserIds) {
+        if (!oldUserIds.includes(newId)) {
+          await GroupUser.create({
+            groupId: input.id,
+            userId: newId,
+          }, { transaction: t })
+        }
+      }
+    });
   }),
 
   /**
@@ -94,7 +134,7 @@ const groups = router({
   .input(z.object({ id: z.string().uuid() }))
   .output(zGetGroupResponse)
   .query(async ({ input, ctx }) => {
-    const g = await Group.findByPk(input.id, {
+    const g = await DBGroup.findByPk(input.id, {
       include: [{
         model: User,
         attributes: ['id', 'name'],
@@ -126,9 +166,11 @@ export const GROUP_ALREADY_EXISTS_ERROR_MESSAGE = '';
  * @param includes Optional `include`s in the returned group.
  */
 
-export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusive', includes?: Includeable[]): Promise<Group[]> {
+export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusive', includes?: Includeable[]):
+  Promise<DBGroup[]> 
+{ 
   invariant(userIds.length > 0);
-
+  
   const gus = await GroupUser.findAll({
     where: {
       userId: userIds[0] as string,
@@ -137,24 +179,24 @@ export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusi
       model: Group,
       attributes: ['id'],
       include: [{
-        model: GroupUser,
+        model: DBGroup,
         attributes: ['userId'],
       }, ...(includes || [])]
     }]
   })
 
   const res = gus.filter(gu => {
-    const set = new Set(gu.group.groupUsers.map(gu => gu.userId));
-    const isSubset = userIds.every(uid => set.has(uid));
-    return isSubset && (mode === 'inclusive' || userIds.length === set.size);
+    const groupUserIds = gu.group.groupUsers.map(gu => gu.userId);
+    const isSubset = userIds.every(uid => groupUserIds.includes(uid));
+    return isSubset && (mode === 'inclusive' || userIds.length === groupUserIds.length);;
   }).map(gu => gu.group);
 
   invariant(mode === 'inclusive' || res.length <= 1);
   return res;
 }
 
-
 export async function createGroup(userIds: string[]) {
+  checkMinimalGroupSize(userIds);
   const existing = await findGroups(userIds, 'exclusive');
   if (existing.length > 0) {
     throw new TRPCError({
@@ -163,7 +205,7 @@ export async function createGroup(userIds: string[]) {
     });
   }
 
-  const group = await Group.create({});
+  const group = await DBGroup.create({});
   const groupUsers = await GroupUser.bulkCreate(userIds.map(userId => ({
     userId: userId,
     groupId: group.id,
@@ -172,5 +214,14 @@ export async function createGroup(userIds: string[]) {
   return {
     group,
     groupUsers,
+  }
+}
+
+function checkMinimalGroupSize(userIds: string[]) {
+  if ((new Set(userIds)).size < 2) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: ''
+    })
   }
 }
