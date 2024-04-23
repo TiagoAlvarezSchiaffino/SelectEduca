@@ -12,7 +12,7 @@ import {
   } from '@chakra-ui/react';
   import React, { useState } from 'react';
   import useUserContext from "../useUserContext";
-  import tClientBrowser from "../tClientBrowser";
+  import trpc from "../trpc";
   import moment from 'moment';
   import UserProfile from '../shared/UserProfile';
   
@@ -29,7 +29,7 @@ import {
       updatedUser.consentFormAcceptedAt = new Date();
   
       try {
-        await tClientBrowser.me.updateProfile.mutate(updatedUser);
+        await trpc.users.update.mutate(updatedUser);
         setUser(updatedUser);
       } catch (e) {
         toast.error((e as Error).message);

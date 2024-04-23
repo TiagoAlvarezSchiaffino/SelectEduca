@@ -20,8 +20,8 @@ import React, { useState } from 'react';
 import { NextPageWithLayout } from "../NextPageWithLayout";
 import AppLayout from "../AppLayout";
 import useUserContext from "../useUserContext";
-import tClientBrowser from "../tClientBrowser";
-import tClientNext from "../tClientNext";
+import trpc from "../trpc";
+import trpcNext from "../trpcNext";
 import { toast } from "react-toastify";
 import pinyin from 'tiny-pinyin';
 import GroupBar from 'components/GroupBar';
@@ -47,7 +47,7 @@ function SetNameModal() {
       const updatedUser = structuredClone(user);
       updatedUser.name = name;
       try {
-        await tClientBrowser.me.updateProfile.mutate(updatedUser);
+        await trpc.users.update.mutate(updatedUser);
         setUser(updatedUser);
       } catch (e) {
         toast.error((e as Error).message);
@@ -87,7 +87,7 @@ function isValidChineseName(s: string) : boolean {
   return s.length >= 2 && pinyin.parse(s).every(token => token.type === 2);
 }
 function Meetings() {
-  const { data: groups, isLoading } = tClientNext.myGroups.list.useQuery();
+  const { data: groups, isLoading } = trpcNext.myGroups.list.useQuery();
   return (
     <Card>
       <CardHeader>

@@ -18,7 +18,7 @@ import {
   import { NextPageWithLayout } from "../../../../NextPageWithLayout";
   import AppLayout from "../../../../AppLayout";
   import useUserContext from "../../../../useUserContext";
-  import tClientNext from "../../../../tClientNext";
+  import trpcNext from "../../../../trpcNext";
   import moment from 'moment';
   import GroupBar from 'components/GroupBar';
   import { GetTranscriptResponse } from 'api/routes/transcripts';
@@ -39,7 +39,7 @@ import {
   function TranscriptCard() {
     const router = useRouter();
     const id = typeof router.query.transcriptId === 'string' ? router.query.transcriptId : 'nonexistence';
-    const { data: transcript } : { data: GetTranscriptResponse | undefined } = tClientNext.transcripts.get.useQuery({ id });
+    const { data: transcript } : { data: GetTranscriptResponse | undefined } = trpcNext.transcripts.get.useQuery({ id });
   
     return (
       <Card>

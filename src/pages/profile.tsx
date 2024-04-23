@@ -13,7 +13,7 @@ import {
   import { useEffect, useState } from 'react'
   import AppLayout from 'AppLayout'
   import { NextPageWithLayout } from '../NextPageWithLayout'
-  import tClientBrowser from "../tClientBrowser";
+  import trpc from "../trpc";
   import { EditIcon, EmailIcon } from '@chakra-ui/icons';
   import { toast } from "react-toastify";
   import useUserContext from 'useUserContext';
@@ -34,7 +34,7 @@ import {
   
       // TODO: Handle error display globally. Redact server-side errors.
         try {
-          await tClientBrowser.me.updateProfile.mutate(updatedUser);
+          await trpc.users.update.mutate(updatedUser);
           console.log("user name update succeeded");
           setUser(updatedUser);
           setShow(!show);
