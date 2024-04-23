@@ -8,7 +8,6 @@ import {
   Tr,
   Th,
   Td,
-  Heading,
   ModalHeader,
   ModalContent,
   ModalBody,
@@ -30,7 +29,7 @@ import { NextPageWithLayout } from '../NextPageWithLayout'
 import trpcNext from "../trpcNext";
 import UserProfile from 'shared/UserProfile';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
-import { AllRoles, isPermitted } from 'shared/Role';
+import Role, { Roles, RoleProfiles, isPermitted } from 'shared/Role';
 import trpc from 'trpc';
 import useUserContext from 'useUserContext';
 
@@ -68,7 +67,7 @@ const Page: NextPageWithLayout = () => {
                 <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer'>
                   <Td>{u.email}</Td>
                   <Td>{u.name} {user.id === u.id ? <Badge variant='brand'></Badge> : <></>}</Td>
-                  <Td>{u.roles.join(', ')}</Td>
+                  <Td>{u.roles.map((r: Role) => RoleProfiles[r].displayName).join('、')}</Td>
                 </Tr>
               ))}
             </Tbody>
@@ -129,8 +128,10 @@ function UserEditor(props: {
           <FormControl>
             <FormLabel></FormLabel>
             <Stack>
-              {AllRoles.map(role => (
-                <Checkbox key={role} value={role} isChecked={isPermitted(roles, role)} onChange={setRole}>{role}</Checkbox>  
+              {Roles.map(role => (
+                <Checkbox key={role} value={role} isChecked={isPermitted(roles, role)} onChange={setRole}>
+                  {RoleProfiles[role].displayName}（{role}）
+                </Checkbox>
               ))}
             </Stack>
           </FormControl>

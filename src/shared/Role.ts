@@ -1,16 +1,37 @@
 import { ArrayElement } from "./utils/ArrayElement";
 import z from "zod";
 
-export const AllRoles = [
+export const Roles = [
   'UserManager',
   'SummaryEngineer',
 ] as const;
 
-type Role = ArrayElement<typeof AllRoles>;
+export const RoleProfiles: { [key: string]: {
+  displayName: string,
+  actions: string,
+  dataAccess: string,
+}} = {
+  UserManager: {
+    displayName: '',
+    actions: '',
+    dataAccess: '',
+  },
+  GroupManager: {
+    displayName: '',
+    actions: '',
+    dataAccess: '',
+  },
+  SummaryEngineer: {
+    displayName: '',
+    actions: '',
+    dataAccess: '',
+  },
+}
 
+type Role = ArrayElement<typeof Roles>;
 export default Role;
 
-export const zRoles = z.array(z.enum(AllRoles));
+export const zRoles = z.array(z.enum(Roles));
 
 /**
  * @param permitted When absent, this function always returns true.
