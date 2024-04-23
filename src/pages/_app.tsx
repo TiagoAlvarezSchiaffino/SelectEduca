@@ -30,8 +30,18 @@ function MyApp ({ Component, pageProps }: AppPropsWithLayout) {
         <meta name='theme-color' content='#000000' />
       </Head>
       {getLayout(<Component {...pageProps}></Component>)}
-      <ToastContainer position={'bottom-right'} hideProgressBar />
-    </ChakraProvider>
+      <ToastContainer
+        position="bottom-center"
+        autoClose={5000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />    </ChakraProvider>
   )
 }
 
