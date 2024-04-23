@@ -75,7 +75,7 @@ const Page: NextPageWithLayout = () => {
         </Grid>
       </Box>
       <VStack divider={<StackDivider />} align='left' spacing='3'>
-        {data && data.map(group => <GroupBar key={group.id} group={group} countTranscripts showSelf />)}
+        {data && data.map(group => <GroupBar key={group.id} group={group} showSelf />)}
       </VStack>
       {!data && <Button isLoading={true} loadingText={'...'} disabled={true}/>}
     </Box>

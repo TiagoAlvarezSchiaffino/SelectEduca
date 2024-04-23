@@ -1,6 +1,6 @@
 /*eslint-disable*/
 
-import { Flex, Link, List, ListItem, Text, useColorModeValue } from '@chakra-ui/react';
+import { Center, Flex, Link, List, ListItem, Text, useColorModeValue } from '@chakra-ui/react';
 
 export default function Footer() {
 	const textColor = useColorModeValue('gray.400', 'white');
@@ -41,7 +41,7 @@ export default function Footer() {
 					</Link>
 				</ListItem>
 				<ListItem
-					me={{
+					marginEnd={{
 						base: '20px',
 						md: '44px'
 					}}>
@@ -49,11 +49,12 @@ export default function Footer() {
 						
 					</Link>
 				</ListItem>
-				<ListItem>
-				<Link fontWeight='500' color={textColor} target='_blank' href=''>
-						
-					</Link>
-				</ListItem>
+				<Center opacity='50%'>
+          			<ListItem>
+              			<a href="">
+              			</a>
+          			</ListItem>
+        		</Center>
 			</List>
 		</Flex>
 	);
