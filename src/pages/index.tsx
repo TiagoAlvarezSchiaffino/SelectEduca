@@ -45,12 +45,8 @@ function SetNameModal() {
     if (name) {
       const updatedUser = structuredClone(user);
       updatedUser.name = name;
-      try {
-        await trpc.users.update.mutate(updatedUser);
-        setUser(updatedUser);
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
+      await trpc.users.update.mutate(updatedUser);
+      setUser(updatedUser);
     };
   };
   return (

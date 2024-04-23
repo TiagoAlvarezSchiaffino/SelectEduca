@@ -28,12 +28,8 @@ import {
       const updatedUser = structuredClone(user);
       updatedUser.consentFormAcceptedAt = new Date();
   
-      try {
-        await trpc.users.update.mutate(updatedUser);
-        setUser(updatedUser);
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
+      await trpc.users.update.mutate(updatedUser);
+      setUser(updatedUser);
     };
   
     const MyLink = (props: any) => <Link isExternal color='teal.500' {...props} />;

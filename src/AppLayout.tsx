@@ -41,7 +41,7 @@ const Guarded: FC<{ children: (_: UserProfile) => ReactNode }> = (props) => {
 
     if (userFetchedRef.current) return;
     userFetchedRef.current = true;
-    fetchUser().catch(toast.error);
+    fetchUser();
   }, []);
 
   if (!user) {
