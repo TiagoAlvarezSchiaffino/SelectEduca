@@ -22,7 +22,7 @@ import {
   import PageBreadcrumb from 'components/PageBreadcrumb';
   import { useRouter } from 'next/router';
   import invariant from 'tiny-invariant';
-  import { capitalizeFirstChar } from 'shared/utils/string';
+  import { capitalizeFirstChar } from 'shared/string';
   
   const Page: NextPageWithLayout = () => {
     const [user] = useUserContext();

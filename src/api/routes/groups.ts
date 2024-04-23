@@ -12,7 +12,7 @@ import invariant from "tiny-invariant";
 import _ from "lodash";
 import { isPermitted } from "../../shared/Role";
 import sequelizeInstance from "../database/sequelizeInstance";
-import formatGroupName from "../../shared/formatGroupName";
+import { formatGroupName, formatUserName } from "../../shared/formatNames";
 import nzh from 'nzh';
 import { email } from "../sendgrid";
 
@@ -175,7 +175,7 @@ const groups = router({
     });
     if (!g) throw notFound(input.id);
     if (!isPermitted(ctx.user.roles, 'SummaryEngineer') && !g.users.some(u => u.id === ctx.user.id)) {
-      throw new TRPCError({ code: 'FORBIDDEN', message: `${input.id}` });
+      throw new TRPCError({ code: 'FORBIDDEN', message: ` ${input.id}` });
     }
     return g;
   }),
@@ -281,7 +281,7 @@ async function emailNewUsersOfGroup(ctx: any, groupId: string, newUserIds: strin
         name: thisUser.name 
       }],
       dynamicTemplateData: {
-        name: thisUser.name,
+        name: formatUserName(thisUser.name, 'friendly'),
         manager: ctx.user.name,
         groupName: formatGroupName(group.name, group.users.length),
         others: formatNames(group.users.filter(u => u.id !== uid).map(u => u.name)),
