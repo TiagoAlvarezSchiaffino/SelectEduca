@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
-import '@authing/guard-react18/dist/esm/guard.min.css'
-import browserEnv from "../browserEnv";
+import { Center, Container, Flex, Link } from '@chakra-ui/react'
+import Image from "next/image";
+import { useEffect } from 'react';
+import '@authing/guard-react18/dist/esm/guard.min.css';
 import guard from "../guard";
 
 export default function Login() {
@@ -23,8 +24,23 @@ export default function Login() {
   }, [])
 
   return (
-    <div>
+    <Flex
+      justifyContent="center"
+      alignItems="flex-end"
+      minHeight="99vh"
+    >
       <div id="authing-guard-container"></div>
-    </div>
+      <Center>
+        <Container as="footer">
+          <Link target='_blank' href="">
+            <Image 
+            src={vercelBanner} 
+            alt="Banner"  
+            height="30"
+            />
+          </Link>
+        </Container>
+      </Center>
+    </Flex>
   )
 }
