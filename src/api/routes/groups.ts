@@ -12,6 +12,9 @@ import invariant from "tiny-invariant";
 import _ from "lodash";
 import { isPermitted } from "../../shared/Role";
 import sequelizeInstance from "../database/sequelizeInstance";
+import formatGroupName from "../../shared/formatGroupName";
+import nzh from 'nzh';
+import { email } from "../sendgrid";
 
 const zGroup = z.object({
   id: z.string(),
@@ -64,17 +67,20 @@ const groups = router({
   .input(z.object({
     userIds: z.array(z.string()).min(2),
   }))
-  .mutation(async ({ input }) => {
-    return await createGroup(input.userIds);
+  .mutation(async ({ ctx, input }) => {
+    const res = await createGroup(input.userIds);
+    await emailNewUsersOfGroupIgnoreError(ctx, res.group.id, input.userIds);
+    return res;
   }),
 
   update: procedure
   .use(authUser('GroupManager'))
   .input(zGroup)
-  .mutation(async ({ input }) => {
+  .mutation(async ({ ctx, input }) => {
     const newUserIds = input.users.map(u => u.id);
     checkMinimalGroupSize(newUserIds);
 
+    const addUserIds: string[] = [];
     await sequelizeInstance.transaction(async (t) => {
       const group = await DbGroup.findByPk(input.id, {
         include: GroupUser
@@ -90,27 +96,32 @@ const groups = router({
         }
       }
 
-      group.update({
+      // Update group itself
+      await group.update({
         // Set to null if the input is an empty string.
         name: input.name || null,
         // Reset the meeting link to prevent deleted users from reusing it.
         ...deleted ? {
           meetingLink: null,
         } : {}
-      });
+      }, { transaction: t });
 
-      // Adding new users
-
+      // Add new users
       const oldUserIds = group.groupUsers.map(gu => gu.userId);
-      for (const newId of newUserIds) {
-        if (!oldUserIds.includes(newId)) {
-          await GroupUser.create({
-            groupId: input.id,
-            userId: newId,
-          }, { transaction: t })
-        }
-      }
+      addUserIds.push(...newUserIds.filter(uid => !oldUserIds.includes(uid)));
+      const promises = addUserIds.map(async uid => {
+        // upsert because the matching row may have been previously deleted.
+        await GroupUser.upsert({
+          groupId: input.id,
+          userId: uid,
+          deletedAt: null,
+        }, { transaction: t })
+      });
+      await Promise.all(promises);
     });
+
+    // new users are persisted only after the transaction is committed (not read-your-write yet).
+    await emailNewUsersOfGroupIgnoreError(ctx, input.id, addUserIds);
   }),
 
   destroy: procedure
@@ -232,6 +243,54 @@ export async function createGroup(userIds: string[]) {
     group,
     groupUsers,
   }
+}
+
+async function emailNewUsersOfGroupIgnoreError(ctx: any, groupId: string, userIds: string[]) {
+  try {
+    await emailNewUsersOfGroup(ctx, groupId, userIds);
+  } catch (e) {
+    console.log('Error ignored by emailNewUsersOfGroupIgnoreError()', e);
+  }
+}
+
+async function emailNewUsersOfGroup(ctx: any, groupId: string, newUserIds: string[]) {
+  if (newUserIds.length == 0) return;
+
+  const group = await DbGroup.findByPk(groupId, {
+    include: [{
+      model: User,
+      attributes: ['id', 'name', 'email'],
+    }]
+  });
+  if (!group) throw notFound(groupId);
+
+  const formatNames = (names: string[]) =>
+    names.slice(0, 3).join('、') + (names.length > 3 ? `${nzh.cn.encodeS(names.length)}` : '');
+
+  const personalizations = newUserIds
+  // Don't send emails to self.
+  .filter(uid => uid != ctx.user.id)
+  .map(uid => {
+    const theseUsers = group.users.filter(u => u.id === uid);
+    invariant(theseUsers.length === 1);
+    const thisUser = theseUsers[0];
+
+    return {
+      to: [{ 
+        email: thisUser.email, 
+        name: thisUser.name 
+      }],
+      dynamicTemplateData: {
+        name: thisUser.name,
+        manager: ctx.user.name,
+        groupName: formatGroupName(group.name, group.users.length),
+        others: formatNames(group.users.filter(u => u.id !== uid).map(u => u.name)),
+        groupUrl: `${ctx.baseUrl}/groups/${group.id}`
+      }
+    }
+  });
+
+  await email('d-839f4554487c4f3abeca937c80858b4e', personalizations, ctx.baseUrl);
 }
 
 function checkMinimalGroupSize(userIds: string[]) {
