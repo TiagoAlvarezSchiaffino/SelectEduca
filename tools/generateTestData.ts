@@ -41,6 +41,11 @@ async function main() {
   const _ = sequelizeInstance;
 
   await migrateRoles();
+  const mgrs = await getUserManagers();
+  if (mgrs.length == 0) {
+    console.error('ERROR: No uesr is found. Please follow README.md and log into your local server first.');
+    process.exit(1);
+  }
   await generateUsers();
   await generateGroupsAndSummaries();
 }
