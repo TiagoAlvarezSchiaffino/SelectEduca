@@ -13,7 +13,7 @@ import _ from "lodash";
 import { isPermitted } from "../../shared/Role";
 import sequelizeInstance from "../database/sequelizeInstance";
 
-export const zGroup = z.object({
+const zGroup = z.object({
   id: z.string(),
   name: z.string().nullable(),
   users: z.array(z.object({
@@ -24,7 +24,7 @@ export const zGroup = z.object({
 
 export type Group = z.TypeOf<typeof zGroup>;
 
-const zGroupCountingTranscripts = zGroup.merge(z.object({
+export const zGroupCountingTranscripts = zGroup.merge(z.object({
   transcripts: z.array(z.object({})).optional()
 }));
 
@@ -79,22 +79,27 @@ const groups = router({
       const group = await DbGroup.findByPk(input.id, {
         include: GroupUser
       });
-      if (!group) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: ` ${input.id} `,
-        })
-      }
-      group.update({
-        // Set to null if the input is an empty string.
-        name: input.name || null
-      });
+      if (!group) throw notFound(input.id);
 
+      // Delete old users
+      var deleted = false;
       for (const oldGU of group.groupUsers) {
         if (!newUserIds.includes(oldGU.userId)) {
           await oldGU.destroy({ transaction: t });
+          deleted = true;
         }
       }
+
+      group.update({
+        // Set to null if the input is an empty string.
+        name: input.name || null,
+        // Reset the meeting link to prevent deleted users from reusing it.
+        ...deleted ? {
+          meetingLink: null,
+        } : {}
+      });
+
+      // Adding new users
 
       const oldUserIds = group.groupUsers.map(gu => gu.userId);
       for (const newId of newUserIds) {
@@ -105,6 +110,19 @@ const groups = router({
           }, { transaction: t })
         }
       }
+    });
+  }),
+
+  destroy: procedure
+  .use(authUser('GroupManager'))
+  .input(z.object({ groupId: z.string().uuid() }))
+  .mutation(async ({ input }) => {
+    const group = await DbGroup.findByPk(input.groupId);
+    if (!group) throw notFound(input.groupId);
+
+    // Need a transaction for cascading destroys
+    await sequelizeInstance.transaction(async (t) => {
+      await group.destroy({ transaction: t });
     });
   }),
 
@@ -144,9 +162,7 @@ const groups = router({
         }]
       }]
     });
-    if (!g) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: ` ${input.id} ` });
-    }
+    if (!g) throw notFound(input.id);
     if (!isPermitted(ctx.user.roles, 'SummaryEngineer') && !g.users.some(u => u.id === ctx.user.id)) {
       throw new TRPCError({ code: 'FORBIDDEN', message: `${input.id}` });
     }
@@ -157,6 +173,10 @@ const groups = router({
 export default groups;
 
 export const GROUP_ALREADY_EXISTS_ERROR_MESSAGE = '';
+
+function notFound(groupId: string) {
+  return new TRPCError({ code: 'NOT_FOUND', message: ` ${groupId} ` });
+}
 
 /**
  * @returns groups that contain all the given users.
