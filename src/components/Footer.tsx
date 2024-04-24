@@ -60,7 +60,7 @@ export default function Footer() {
         </FooterItem>
         <Center opacity='50%'>
           <ListItem>
-              <Link isExternal href="">
+            <Link isExternal href="">
                 <Image src={vercelBanner} alt="Vercel Banner" height="22" />
               </Link>
           </ListItem>

@@ -32,7 +32,7 @@ export default function Login() {
       <div id="authing-guard-container"></div>
       <Center>
         <Container as="footer">
-          <Link target='_blank' href="">
+          <Link isExternal href="">
             <Image 
             src={Banner} 
             alt="Banner"  

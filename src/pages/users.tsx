@@ -30,6 +30,7 @@ import { NextPageWithLayout } from '../NextPageWithLayout'
 import trpcNext from "../trpcNext";
 import UserProfile from 'shared/UserProfile';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
+import { toPinyin } from 'shared/string';
 import Role, { AllRoles, RoleProfiles, isPermitted } from 'shared/Role';
 import trpc from 'trpc';
 import useUserContext from 'useUserContext';
@@ -69,6 +70,7 @@ const Page: NextPageWithLayout = () => {
                 <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer'>
                   <Td>{u.email}</Td>
                   <Td>{u.name} {user.id === u.id ? <Badge variant='brand' marginLeft={2}></Badge> : <></>}</Td>
+                  <Td>{toPinyin(u.name)}</Td>
                   <Td>{u.roles.map((r: Role) => RoleProfiles[r].displayName).join('、')}</Td>
                   <Td><Icon as={MdEditNote} /></Td>
                 </Tr>
