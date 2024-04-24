@@ -1,7 +1,6 @@
 /*eslint-disable*/
 
 import { Center, Flex, Link, List, ListItem, Text, useColorModeValue } from '@chakra-ui/react';
-import vercelBanner from '../../public/img/vercel-banner.svg';
 import Image from "next/image";
 
 // The minimal height of the blank space between body and footer.
@@ -9,6 +8,12 @@ export const bodyFooterSpacing = 80;
 
 export default function Footer() {
   const textColor = useColorModeValue('gray.400', 'white');
+  const FooterItem = (props: any) =>
+    <ListItem marginEnd={{
+      base: '20px',
+      md: '44px'
+    }}>{props.children}</ListItem>;
+
   return (
     <Flex
       zIndex='3'
@@ -38,35 +43,25 @@ export default function Footer() {
         </Text>
       </Text>
       <List display='flex'>
-        <ListItem
-          marginEnd={{
-            base: '20px',
-            md: '44px'
-          }}>
-          <Link fontWeight='500' color={textColor} target='_blank' href=''>
+        <FooterItem>
+          <Link fontWeight='500' color={textColor} isExternal href='mailto:a@b.org'>
             
           </Link>
-        </ListItem>
-        <ListItem
-          marginEnd={{
-            base: '20px',
-            md: '44px'
-          }}>
-          <Link fontWeight='500' color={textColor} target='_blank' href=''>
+        </FooterItem>
+        <FooterItem>
+          <Link fontWeight='500' color={textColor} isExternal href=''>
             
           </Link>
-        </ListItem>
-        <ListItem
-          marginEnd={{
-            base: '20px',
-            md: '44px'
-          }}>
-          <Link fontWeight='500' color={textColor} target='_blank' href=''>
+        </FooterItem>
+        <FooterItem>
+          <Link fontWeight='500' color={textColor} isExternal href=''>
+            
           </Link>
-        </ListItem>
+        </FooterItem>
         <Center opacity='50%'>
           <ListItem>
-              <Link target='_blank' href="">
+              <Link isExternal href="">
+                <Image src={vercelBanner} alt="Vercel Banner" height="22" />
               </Link>
           </ListItem>
         </Center>
