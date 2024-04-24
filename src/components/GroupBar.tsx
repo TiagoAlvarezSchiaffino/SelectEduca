@@ -54,7 +54,7 @@ export default function GroupBar(props: {
 
       {/* row 1 col 2 */}
       <Text color='grey' fontSize='sm'>{formatGroupName(props.group.name, props.group.users.length)}</Text>
-
+      
       {/* row 2 col 1 */}
       {props.showJoinButton &&
         <Center>
@@ -67,6 +67,7 @@ export default function GroupBar(props: {
           <Spacer />
         </Center>
       }
+
       {/* row 2 col 2 */}
       <Flex>
         <UserChips currentUserId={props.showSelf ? undefined : user.id} users={props.group.users} />
@@ -77,9 +78,9 @@ export default function GroupBar(props: {
             {props.showTranscriptLink ? 
               <Link href={`/groups/${props.group.id}`}>
                 {transcriptCount ?
-                  <>{transcriptCount}  <ArrowForwardIcon /></>
+                  <>{transcriptCount}<ArrowForwardIcon /></>
                   : 
-                  <Text color='grey'> <ArrowForwardIcon /></Text>
+                  <Text color='grey'><ArrowForwardIcon /></Text>
                 }
               </Link>
               :

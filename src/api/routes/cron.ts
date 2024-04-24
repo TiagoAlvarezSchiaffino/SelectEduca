@@ -12,6 +12,8 @@ const cron = router({
 
   /**
    * Download transcripts and then upload them as summaries as is.
+   * 
+   * @returns An Id array of uploaded transcripts.
    */
   uploadRawTranscripts: procedure
   .output(z.array(z.string()))
@@ -28,9 +30,9 @@ const cron = router({
         const res = await axios.get(transcript.url);
         console.log(`Uploading ${id}...`);
         try {
-          await axios.post(`${baseUrl}summaries.write`, {
+          await axios.post(`${baseUrl}/summaries.write`, {
             transcriptId: id,
-            summaryKey: '（）',
+            summaryKey: '',
             summary: res.data,
           }, { headers });
         } catch (e) {
@@ -41,10 +43,10 @@ const cron = router({
       }
     });
     await Promise.all(promises);
-    
+
     return res.data.result.data.map((t: any) => t.transcriptId);
   }),
-  
+
   /**
    * Check the ongoing meetings and update the OngoingMeetingCount table
    */
@@ -57,6 +59,6 @@ const cron = router({
     })
   })
 
-})
+});
 
-export default cron
+export default cron;

@@ -34,7 +34,7 @@ export default function Login() {
         <Container as="footer">
           <Link target='_blank' href="">
             <Image 
-            src={vercelBanner} 
+            src={Banner} 
             alt="Banner"  
             height="30"
             />

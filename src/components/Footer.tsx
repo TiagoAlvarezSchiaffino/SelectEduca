@@ -1,30 +1,31 @@
 /*eslint-disable*/
 
 import { Center, Flex, Link, List, ListItem, Text, useColorModeValue } from '@chakra-ui/react';
+import vercelBanner from '../../public/img/vercel-banner.svg';
 import Image from "next/image";
 
 // The minimal height of the blank space between body and footer.
 export const bodyFooterSpacing = 80;
 
 export default function Footer() {
-    const textColor = useColorModeValue('gray.400', 'white');
-    return (
-      <Flex
-        zIndex='3'
-        flexDirection={{
-          base: 'column',
-          xl: 'row'
-        }}
-        alignItems={{
-          base: 'center',
-          xl: 'start'
-        }}
-        justifyContent='space-between'
-        paddingX={{ base: '30px', md: '50px' }}
-        paddingBottom='30px'
-        paddingTop={`${bodyFooterSpacing}px`}
+  const textColor = useColorModeValue('gray.400', 'white');
+  return (
+    <Flex
+      zIndex='3'
+      flexDirection={{
+        base: 'column',
+        xl: 'row'
+      }}
+      alignItems={{
+        base: 'center',
+        xl: 'start'
+      }}
+      justifyContent='space-between'
+      paddingX={{ base: '30px', md: '50px' }}
+      paddingBottom='30px'
+      paddingTop={`${bodyFooterSpacing}px`}
     >
-			      <Text
+      <Text
         color={textColor}
         textAlign={{
           base: 'center',
@@ -61,17 +62,15 @@ export default function Footer() {
             md: '44px'
           }}>
           <Link fontWeight='500' color={textColor} target='_blank' href=''>
-            
           </Link>
         </ListItem>
         <Center opacity='50%'>
           <ListItem>
               <Link target='_blank' href="">
-                <Image src={} alt="Banner" height="22" />
               </Link>
           </ListItem>
         </Center>
-        </List>
+      </List>
     </Flex>
   );
 }

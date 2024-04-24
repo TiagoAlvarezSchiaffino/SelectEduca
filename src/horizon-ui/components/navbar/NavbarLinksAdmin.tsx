@@ -48,7 +48,7 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 			p='10px'
 			borderRadius='30px'
 			boxShadow={shadow}
-			>
+    >
 			<SidebarResponsive routes={navbarItems} />
 			<Menu>
 				<MenuButton p='0px'>
@@ -62,8 +62,8 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 						h='40px'
 					/>
 				</MenuButton>
-				<MenuList boxShadow={shadow} p='0px' mt='10px' borderRadius='20px' bg={menuBg} border='none'>
-				<MenuItem as={Link} href='/profile'>
+				<MenuList>
+          <MenuItem as={Link} href='/profile'>
             <Text fontSize='sm'></Text>
           </MenuItem>
           <MenuDivider />

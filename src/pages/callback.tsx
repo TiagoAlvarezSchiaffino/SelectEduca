@@ -1,5 +1,3 @@
-// callback.tsx
-
 import { Guard, GuardProvider, JwtTokenStatus, useGuard, User } from '@authing/guard-react18';
 
 import React, { useEffect } from 'react';
@@ -22,10 +20,11 @@ const handleCallback = async (guard: Guard) => {
 
     const userInfo: User | null = await guard.trackSession()
 
+
+    // 示例一：跳转到固定页面
     location.href = '/';
     // navigate('/app')
 
-    // const search = window.location.search
   } catch (e) {
     toast.error((e as any as Error).message);
 

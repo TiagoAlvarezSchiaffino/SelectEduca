@@ -117,7 +117,6 @@ export default function AppLayout(props: DashboardLayoutProps) {
                   />
                 </Box>
               </Portal>
-
               <Box
                 marginX='auto'
                 padding={{ base: '20px', md: '30px' }}

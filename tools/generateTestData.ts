@@ -8,7 +8,7 @@ import invariant from "tiny-invariant";
 import _ from "lodash";
 import { upsertSummary } from "../src/api/routes/summaries";
 import moment from "moment";
-import Role from "../src/shared/Role";
+import Role, { AllRoles } from "../src/shared/Role";
 
 type TestUser = {
   name: string,
@@ -39,25 +39,34 @@ main().then();
 async function main() {
   // Force sequelize initialization
   const _ = sequelizeInstance;
-
+  
   await migrateRoles();
   const mgrs = await getUserManagers();
   if (mgrs.length == 0) {
     console.error('ERROR: No uesr is found. Please follow README.md and log into your local server first.');
     process.exit(1);
   }
+  await upgradeUsers(mgrs);
   await generateUsers();
-  await generateGroupsAndSummaries();
+  await generateGroupsAndSummaries(mgrs);
 }
 
 async function migrateRoles()
 {
-  console.log('Migration roles column');
+  console.log('Migrating roles column');
   await sequelizeInstance.query(`update users set roles = '[]' where roles = '["VISITOR"]'`);
   await sequelizeInstance.query(`update users set roles = '["UserManager"]' where roles = '["ADMIN"]'`);
   await sequelizeInstance.query(`update users set roles = '["SummaryEngineer"]' where roles = '["AIResearcher"]'`);
 }
 
+async function upgradeUsers(users: User[]) {
+  console.log('Upgrading user roles for', users.map(u => u.email));
+  for (const user of users) {
+    await user.update({
+      roles: [...AllRoles],
+    });
+  }
+}
 
 async function generateUsers() {
   for (const u of allUsers) {
@@ -72,18 +81,18 @@ async function generateUsers() {
   }
 }
 
-async function generateGroupsAndSummaries() {
-  const admins = await getAdmins();
-  await generateGroup([...admins, mentees[0]]);
-  await generateGroup([...admins, mentees[1]]);
-  await generateGroup([...admins, mentees[0], mentees[1]]);
-  await generateGroup([...admins, mentors[0]]);
+async function generateGroupsAndSummaries(include: User[]) {
+  await generateGroup([...include, mentees[0]]);
+  await generateGroup([...include, mentees[1]]);
+  await generateGroup([...include, mentees[0], mentees[1]]);
+  await generateGroup([...include, mentors[0]]);
 
-  await generateSummaries([...admins, mentees[1]]);
-  await generateSummaries([...admins, mentors[0]]);
+  await generateSummaries([...include, mentees[1]]);
+  await generateSummaries([...include, mentors[0]]);
 }
 
-async function getAdmins() {
+async function getUserManagers() {
+  // Use type system to capture typos.
   const role : Role = "UserManager";
   return await User.findAll({ where: {
     roles: { [Op.contains]: [role] },
@@ -106,10 +115,10 @@ async function generateSummaries(users: TestUser[]) {
   invariant(groups.length == 1);
   const gid = groups[0].id;
 
-  const start = moment('', 'YYYY-MM-DD');
+  const start = moment('2024-4-24', 'YYYY-MM-DD');
   const end = start.clone().add(33, 'minute');
 
-  const md = '';
+  const md = '\n\n### \n****.\n\n1. **\n2. ';
   await upsertSummary(gid, `transcript-1-${gid}`, start.valueOf(), end.valueOf(), 'summary-A',
     '> transcript-1, summary-A' + md);
   await upsertSummary(gid, `transcript-1-${gid}`, start.valueOf(), end.valueOf(), 'summary-B',

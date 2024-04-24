@@ -30,15 +30,16 @@ import { NextPageWithLayout } from '../NextPageWithLayout'
 import trpcNext from "../trpcNext";
 import UserProfile from 'shared/UserProfile';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
-import Role, { Roles, RoleProfiles, isPermitted } from 'shared/Role';
+import Role, { AllRoles, RoleProfiles, isPermitted } from 'shared/Role';
 import trpc from 'trpc';
+import useUserContext from 'useUserContext';
 import { MdEditNote } from 'react-icons/md';
 
 const Page: NextPageWithLayout = () => {
   const { data, refetch } : { data: UserProfile[] | undefined, refetch: () => void } = trpcNext.users.list.useQuery();
   const [userBeingEdited, setUserBeingEdited] = useState<UserProfile | null>(null);
   const [user] = useUserContext();
-
+  
   const closeUserEditor = () => {
     setUserBeingEdited(null);
     refetch();
@@ -93,7 +94,7 @@ function UserEditor(props: {
   const [name, setName] = useState(u.name || '');
   const [roles, setRoles] = useState(u.roles);
   const [saving, setSaving] = useState(false);
-  const validName = isValidChineseName(name);
+  const validName = (name);
 
   const setRole = (e: any) => {
     if (e.target.checked) setRoles([...roles, e.target.value]);
@@ -136,7 +137,7 @@ function UserEditor(props: {
           <FormControl>
             <FormLabel></FormLabel>
             <Stack>
-              {Roles.map(role => (
+              {AllRoles.map(role => (
                 <Checkbox key={role} value={role} isChecked={isPermitted(roles, role)} onChange={setRole}>
                   {RoleProfiles[role].displayName}（{role}）
                 </Checkbox>

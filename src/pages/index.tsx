@@ -21,7 +21,6 @@ import GroupBar from 'components/GroupBar';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import ConsentModal, { consentFormAccepted } from '../components/ConsentModal';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
-import { isValidChineseName } from '../shared/utils/string';
 
 const Index: NextPageWithLayout = () => {
   const [user] = useUserContext();
@@ -32,8 +31,11 @@ const Index: NextPageWithLayout = () => {
     <Box paddingTop={'80px'}><Meetings /></Box>
   </>;
 }
+
 Index.getLayout = (page) => <AppLayout>{page}</AppLayout>;
+
 export default Index;
+
 function SetNameModal() {
   const [user, setUser] = useUserContext();
   const [name, setName] = useState(user.name || '');
@@ -45,10 +47,11 @@ function SetNameModal() {
       setUser(updatedUser);
     };
   };
+
   return (
     <ModalWithBackdrop isOpen onClose={() => undefined}>
       <ModalContent>
-        <ModalHeader> 👋</ModalHeader>
+        <ModalHeader>👋</ModalHeader>
         <ModalBody>
           <Box mt={4}>
             <FormControl>
@@ -62,7 +65,7 @@ function SetNameModal() {
               />
               <Button
                 onClick={handleSubmit}
-                isDisabled={!isValidChineseName(name)}
+                isDisabled={(name)}
                 variant='brand' w='100%' mb='24px'>
                 
               </Button>
@@ -76,6 +79,7 @@ function SetNameModal() {
 
 function Meetings() {
   const { data: groups, isLoading } = trpcNext.myGroups.list.useQuery();
+
   return (<>
     <PageBreadcrumb current='' parents={[]} />
     {!groups
@@ -83,15 +87,13 @@ function Meetings() {
     && <Text align='center'>
         ...
     </Text>}
-
+    
     {groups
     && groups.length == 0
     && !isLoading
     && <Text align='center'>
-        
         </Text>}
-        
-        
+    
     <VStack divider={<StackDivider />} align='left' spacing='6'>
       {groups &&
         groups.map(group => 

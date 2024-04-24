@@ -13,20 +13,10 @@ const summaries = router({
    * 
    * @param transcriptId Returned from /api/v1/transcripts.list
    * @param summaryKey An arbitrary string determined by the caller
-   * 
-   * Example:
-   * 
-   * $ curl -X POST https://${HOST}/api/v1/summaries.write \
-   *    -H "Content-Type: application/json" \
-   *    -H "Authorization: Bearer ${INTEGRATION_AUTH_TOKEN}" \
-   *    -d '{ \
-   *      "transcriptId": "4e446385-4cf8-4230-a662-39e82cac6855.1671726726708793345.1687405685480.1687405712444", \
-   *      "summaryKey": "llm_v1", \
-   *      "summary": "..." }'
    */
   write: procedure
-    .use(authIntegration())
-    .input(
+  .use(authIntegration())
+  .input(
     z.object({ 
       transcriptId: z.string(),
       summaryKey: z.string(),

@@ -16,29 +16,28 @@ function getBaseUrl() {
 }
 
 const errorToastLink: TRPCLink<ApiRouter> = () => {
-    return ({ next, op }) => {
-      return observable((observer) => {
-        const unsubscribe = next(op).subscribe({
-          next(value) {
-            observer.next(value);
-          },
-          error(err: TRPCClientError<ApiRouter>) {
-            console.log('TRPC got an error:', err);
-            toast.error(`${err.message}`);
-            observer.error(err);
-          },
-          complete() {
-            observer.complete();
-          },
-        });
-        return unsubscribe;
+  return ({ next, op }) => {
+    return observable((observer) => {
+      const unsubscribe = next(op).subscribe({
+        next(value) {
+          observer.next(value);
+        },
+        error(err: TRPCClientError<ApiRouter>) {
+          console.log('TRPC got an error:', err);
+          toast.error(`！${err.message}`);
+          observer.error(err);
+        },
+        complete() {
+          observer.complete();
+        },
       });
-    };
+      return unsubscribe;
+    });
   };
-  
+};
 
 export const links = [
-    errorToastLink,
+  errorToastLink,
   ...(process.env.NODE_ENV === "production" ? [] : [loggerLink()]),
   requestFinishLink(),
   httpBatchLink({

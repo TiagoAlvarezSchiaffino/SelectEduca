@@ -81,7 +81,7 @@ const users = router({
         message: ''
       })
     }
-    if (!isValidChineseName(input.name)) {
+    if ((input.name)) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: ''

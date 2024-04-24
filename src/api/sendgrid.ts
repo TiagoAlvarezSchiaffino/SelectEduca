@@ -7,6 +7,26 @@ import Role from '../shared/Role';
 
 mail.setApiKey(apiEnv.SENDGRID_API_KEY);
 
+/**
+ * Example personalizations:
+ * 
+    [{
+      to: [
+        {
+          name: 'foo',
+          email: 'bar',
+        },
+        {
+          name: 'foo2',
+          email: 'bar2',
+        },
+      ],
+      dynamicTemplateData: { 
+        key: value, 
+        key2: value2,
+      }
+    }, ...]
+ */
 export async function email(templateId: string, personalization: PersonalizationData[], baseUrl: string) {
   // Always attach `base_url` as dynamic template data
   const ps: any[] = structuredClone(personalization);

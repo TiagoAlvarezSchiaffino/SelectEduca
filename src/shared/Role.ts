@@ -1,8 +1,9 @@
 import { ArrayElement } from "./ArrayElement";
 import z from "zod";
 
-export const Roles = [
+export const AllRoles = [
   'UserManager',
+  'GroupManager',
   'SummaryEngineer',
 ] as const;
 
@@ -28,10 +29,11 @@ export const RoleProfiles: { [key: string]: {
   },
 }
 
-type Role = ArrayElement<typeof Roles>;
+type Role = ArrayElement<typeof AllRoles>;
+
 export default Role;
 
-export const zRoles = z.array(z.enum(Roles));
+export const zRoles = z.array(z.enum(AllRoles));
 
 /**
  * @param permitted When absent, this function always returns true.

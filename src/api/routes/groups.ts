@@ -50,6 +50,8 @@ async function listGroups(userIds: string[]) {
     attributes: ['id', 'name']
   }, {
     model: Transcript,
+    // We don't need to return any attributes, but sequelize seems to require at least one attribute.
+    // TODO: Any way to return transcript count?
     attributes: ['transcriptId']
   }];
 
