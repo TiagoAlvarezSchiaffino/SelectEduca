@@ -22,6 +22,7 @@ import GroupBar from 'components/GroupBar';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import ConsentModal, { consentFormAccepted } from '../components/ConsentModal';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
+import Loader from 'components/Loader'
 
 const Index: NextPageWithLayout = () => {
   const [user] = useUserContext();
@@ -83,11 +84,7 @@ function Meetings() {
 
   return (<>
     <PageBreadcrumb current='' parents={[]} />
-    {!groups
-    && isLoading
-    && <Text align='center'>
-        ...
-    </Text>}
+    {isLoading && <Loader />}
     
     {groups
     && groups.length == 0

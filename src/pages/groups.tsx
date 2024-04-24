@@ -32,6 +32,7 @@ import {
   import ModalWithBackdrop from 'components/ModalWithBackdrop';
   import { MdEditNote, MdPersonRemove } from 'react-icons/md';
   import { formatGroupName } from 'shared/formatNames';
+  import Loader from 'components/Loader'
   
   function UserSelector(props: {
     value: any,
@@ -128,7 +129,7 @@ import {
             </Flex>
           )}
         </VStack>
-        {!data && <Button isLoading={true} loadingText={'...'} disabled={true}/>}
+        {!data && <Loader />}
       </Box>
     )
   }

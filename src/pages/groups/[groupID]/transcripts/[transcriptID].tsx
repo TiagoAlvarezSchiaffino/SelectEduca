@@ -43,7 +43,7 @@ function TranscriptCard() {
       { name: '', link: '/' },
       { name: '', link: `/groups/${router.query.groupId}` },
     ]} />
-    {transcript ? <TranscriptDetail transcript={transcript} /> : <Text align='center'>...</Text>}
+    {transcript ? <TranscriptDetail transcript={transcript} /> : <Loader />}
   </>);
 }
 
@@ -93,6 +93,7 @@ function Summaries(props: { transcript: GetTranscriptResponse }) {
 
 import "easymde/dist/easymde.min.css";
 import dynamic from "next/dynamic";
+import Loader from 'components/Loader'
 const SimpleMdeEditor = dynamic(
 	() => import("react-simplemde-editor"),
 	{ ssr: false }
