@@ -8,16 +8,8 @@ import invariant from "tiny-invariant";
 import { createMeeting } from "../TencentMeeting";
 import Transcript from "../database/models/Transcript";
 import moment from 'moment';
-import { zGroupCountingTranscripts } from "./groups";
+import { noPermissionError, notFoundError, zGroupCountingTranscripts } from "./groups";
 
-function isSubset<T>(superset: Set<T>, subset: Set<T>): boolean {
-  for (const item of subset) {
-    if (!superset.has(item)) {
-      return false;
-    }
-  }
-  return true;
-}
 
 export function meetingLinkIsExpired(meetingLinkCreatedAt : Date) {
   // meeting is valid for 31 days after start time
@@ -33,9 +25,13 @@ const myGroups = router({
   generateMeetingLink: procedure
   .use(authUser())
   .input(z.object({ groupId: z.string() }))
-  .mutation(async ({ input }) => {
-    const group = await Group.findByPk(input.groupId);
-    invariant(group);
+  .mutation(async ({ ctx, input }) => {
+    const group = await Group.findByPk(input.groupId, {
+      include: [GroupUser]
+    });
+    if (!group) throw notFoundError(input.groupId);
+    // Only meeting members have access to this method.
+    if (!group.groupUsers.some(gu => gu.userId === ctx.user.id)) throw noPermissionError(input.groupId);
 
     if (group.meetingLink && !meetingLinkIsExpired(group.updatedAt)) {
       return group.meetingLink;
