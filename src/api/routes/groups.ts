@@ -12,7 +12,7 @@ import invariant from "tiny-invariant";
 import _ from "lodash";
 import { isPermitted } from "../../shared/Role";
 import sequelizeInstance from "../database/sequelizeInstance";
-import { formatGroupName, formatUserName } from "../../shared/formatNames";
+import { formatUserName, formatGroupName } from "../../shared/strings";
 import nzh from 'nzh';
 import { email } from "../sendgrid";
 
