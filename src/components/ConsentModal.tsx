@@ -7,6 +7,7 @@ import {
   VStack,
   ModalFooter,
   Link,
+  Spacer,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import useUserContext from "../useUserContext";
@@ -30,8 +31,6 @@ export default function ConsentModal() {
     setUser(updatedUser);
   };
 
-  const MyLink = (props: any) => <Link isExternal color='teal.500' {...props} />;
-
   return <>
     {/* onClose returns undefined to prevent user from closing the modal without entering name. */}
     <ModalWithBackdrop isOpen={!declined} onClose={() => undefined}>
@@ -47,7 +46,8 @@ export default function ConsentModal() {
           </VStack>
         </ModalBody>
         <ModalFooter>
-          <Button variant='ghost' onClick={() => setDeclined(true)}></Button>
+          <Button onClick={() => setDeclined(true)}></Button>
+          <Spacer />
           <Button variant='brand' onClick={handleSubmit}></Button>
         </ModalFooter>
       </ModalContent>

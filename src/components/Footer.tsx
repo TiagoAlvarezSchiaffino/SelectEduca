@@ -7,7 +7,7 @@ import Image from "next/image";
 export const bodyFooterSpacing = 80;
 
 export default function Footer() {
-  const textColor = useColorModeValue('gray.400', 'white');
+  const color = 'gray.400';
   const FooterItem = (props: any) =>
     <ListItem marginEnd={{
       base: '20px',
@@ -31,7 +31,7 @@ export default function Footer() {
       paddingTop={`${bodyFooterSpacing}px`}
     >
       <Text
-        color={textColor}
+        color={color}
         textAlign={{
           base: 'center',
           xl: 'start'
@@ -44,17 +44,17 @@ export default function Footer() {
       </Text>
       <List display='flex'>
         <FooterItem>
-          <Link fontWeight='500' color={textColor} isExternal href='mailto:a@b.org'>
+          <Link fontWeight='500' color={color} isExternal href='mailto:a@b.org'>
             
           </Link>
         </FooterItem>
         <FooterItem>
-          <Link fontWeight='500' color={textColor} isExternal href=''>
+          <Link fontWeight='500' color={color} isExternal href='mailto:a@b.org'>
             
           </Link>
         </FooterItem>
         <FooterItem>
-          <Link fontWeight='500' color={textColor} isExternal href=''>
+          <Link fontWeight='500' color={color} isExternal href='mailto:a@b.org'>
             
           </Link>
         </FooterItem>
