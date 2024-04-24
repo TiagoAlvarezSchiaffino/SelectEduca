@@ -45,7 +45,7 @@ const transcripts = router({
     .map(async meeting => {
       const groupId = meeting.subject;
       if (!await groupExists(groupId)) {
-        console.log(`Group doesn't exist. Igore: ${groupId}`)
+        console.log(`Group doesn't exist. Igore: "${groupId}"`)
         return;
       }
 
