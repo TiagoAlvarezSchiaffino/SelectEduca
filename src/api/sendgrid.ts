@@ -1,9 +1,10 @@
+
 import { PersonalizationData } from '@sendgrid/helpers/classes/personalization';
 import mail from '@sendgrid/mail';
 import apiEnv from './apiEnv';
 import User from './database/models/User';
 import { Op } from 'sequelize';
-import Role from '../shared/Role';
+import Role, { RoleProfiles } from '../shared/Role';
 
 mail.setApiKey(apiEnv.SENDGRID_API_KEY);
 
@@ -41,8 +42,20 @@ export async function email(templateId: string, personalization: Personalization
   console.log(`Sending mail via SendGrid, template id: ${templateId}, personalizations: ${JSON.stringify(ps, null, 2)}`);
   await mail.send({
     personalizations: ps,
-    from: apiEnv.SENDGRID_FROM_EMAIL,
     templateId,
+    from: {
+      email: '',
+      name: '',
+    },
+    replyTo: {
+      email: '',
+      name: '',
+    },
+    trackingSettings: {
+      openTracking: {
+        enable: true,
+      },
+    }
   });
 }
 
@@ -64,6 +77,10 @@ export async function emailUserManagersIgnoreError(subject: string, content: str
   });
   await emailIgnoreError('d-99d2ae84fe654400b448f8028238d461', [{
     to: admins.map(({ name, email }) => ({ name, email })),
-    dynamicTemplateData: { subject, content },
+    dynamicTemplateData: { 
+      subject, 
+      content,
+      roleDisplayName: RoleProfiles[role].displayName,
+    },
   }], baseUrl);
 }
