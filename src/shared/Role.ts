@@ -10,22 +10,18 @@ export const AllRoles = [
 export const RoleProfiles: { [key: string]: {
   displayName: string,
   actions: string,
-  dataAccess: string,
 }} = {
   UserManager: {
     displayName: '',
     actions: '',
-    dataAccess: '',
   },
   GroupManager: {
     displayName: '',
     actions: '',
-    dataAccess: '',
   },
   SummaryEngineer: {
     displayName: '',
     actions: '',
-    dataAccess: '',
   },
 }
 

@@ -2,6 +2,7 @@
 import {
 	Avatar,
 	Flex,
+	Icon,
 	Menu,
 	MenuButton,
 	MenuDivider,
@@ -19,6 +20,7 @@ import { sidebarItems } from 'sidebar';
 import { Guard, useGuard } from "@authing/guard-react18";
 import useUserContext from '../../../useUserContext';
 import Link from 'next/link';
+import { LockIcon } from '@chakra-ui/icons';
 
 const logout = async function (this: Guard) {
 	const authClient = await this.getAuthClient();
@@ -64,7 +66,11 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 				</MenuButton>
 				<MenuList>
           <MenuItem as={Link} href='/profile'>
-            <Text fontSize='sm'></Text>
+		  	<Text></Text>
+          </MenuItem>
+          <MenuDivider />
+          <MenuItem as={Link} href='/whocanseemydata'>
+            <LockIcon marginRight={1} /><Text></Text>
           </MenuItem>
           <MenuDivider />
           <MenuItem
@@ -78,7 +84,7 @@ export default function HeaderLinks(props: { secondary: boolean }) {
               location.href = '/';
             }}
           >
-            <Text fontSize='sm'></Text>
+            <Text></Text>
           </MenuItem>
 				</MenuList>
 			</Menu>
