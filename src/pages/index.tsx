@@ -93,7 +93,7 @@ function Meetings() {
     && groups.length == 0
     && !isLoading
     && <Text align='center'>
-        <Link color='teal' isExternal href=''></Link>。
+        <Link isExternal href=''></Link>
         </Text>}
     
     <VStack divider={<StackDivider />} align='left' spacing='6'>
