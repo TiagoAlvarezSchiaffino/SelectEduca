@@ -1,5 +1,4 @@
 import {
-    Box,
     Button,
     StackDivider,
     WrapItem,
@@ -25,7 +24,6 @@ import {
   import AppLayout from 'AppLayout'
   import { NextPageWithLayout } from '../NextPageWithLayout'
   import { trpcNext } from "../trpc";
-  import AsyncSelect from "react-select/async";
   import trpcNext from "../trpcNext";
   import GroupBar, { UserChip } from 'components/GroupBar';
   import { Group } from 'api/routes/groups';
@@ -33,66 +31,23 @@ import {
   import { MdEditNote, MdPersonRemove } from 'react-icons/md';
   import { formatGroupName } from 'shared/formatNames';
   import Loader from 'components/Loader'
-  
-  function UserSelector(props: {
-    value: any,
-    onChange: any,
-    placeholder?: string,
-  }) {
-    type Option = {
-      label: string,
-      value: string,
-    };
-  
-    const LoadOptions = (
-      inputValue: string,
-      callback: (options: Option[]) => void
-    ) => {
-      trpc.users.list.query({
-        searchTerm: inputValue,
-      }).then(users => {
-        callback(users.map(u => {
-          return {
-            label: `${u.name} (${u.email})`,
-            value: u.id,
-          };
-        }));
-      })
-    }
-  
-    // https://react-select.com/props
-    return <AsyncSelect
-      cacheOptions
-      // @ts-ignore
-      loadOptions={LoadOptions}
-      isMulti
-      value={props.value}
-      noOptionsMessage={() => ""}
-      loadingMessage={() => "..."}
-      placeholder={props.placeholder ?? ''}
-      // @ts-ignore
-      onChange={props.onChange}
-    />
-  }
-  
+  import UserSelector from '../components/UserSelector';
+
   const Page: NextPageWithLayout = () => {
-    const [selected, setSelected] = useState<{ value: string, label: string }[]>([]);
-    const [isCreating, setIsCreating] = useState(false);
+    const [userIds, setUserIds] = useState<string[]>([]);
+    const [creating, setCreating] = useState(false);
     const [groupBeingEdited, setGroupBeingEdited] = useState<Group | null>(null);
   
-    const { data, refetch } = trpcNext.groups.list.useQuery({
-      userIds: selected.map(option => option.value),
-    });
+    const { data, refetch } = trpcNext.groups.list.useQuery({ userIds });
   
     const createGroup = async () => {
-      setIsCreating(true);
+      setCreating(true);
       try {
-        await trpc.groups.create.mutate({
-          userIds: selected.map(option => option.value),
-        });
+        await trpc.groups.create.mutate({ userIds });
+
         refetch();
       } finally {
-        setIsCreating(false);
+        setCreating(false);
       }
     };
   
@@ -106,12 +61,12 @@ import {
         {groupBeingEdited && <GroupEditor group={groupBeingEdited} onClose={closeGroupEditor}/>}
         <Wrap spacing={6}>
           <WrapItem minWidth={100}>
-            <UserSelector value={selected} onChange={setSelected} />
+            <UserSelector isMulti placeholder="" onSelect={setUserIds} />
           </WrapItem>
           <WrapItem>
             <Button
-              isLoading={isCreating}
-              isDisabled={selected.length < 2}
+              isLoading={creating}
+              isDisabled={userIds.length < 2}
               loadingText='...'
               variant='brand' onClick={createGroup}>
               
@@ -144,12 +99,12 @@ import {
     onClose: () => void,
   }) {
     const [name, setName] = useState<string>(props.group.name || '');
-    const [selected, setSelected] = useState<{ value: string, label: string }[]>([]);
+    const [newUserIds, setNewUserIds] = useState<string[]>([]);
     const [users, setUsers] = useState(props.group.users);
     const [working, setWorking] = useState(false);
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
   
-    const isValid = users.length + selected.length > 1;
+    const isValid = users.length + newUserIds.length > 1;
   
     const save = async () => {
       setWorking(true);
@@ -157,7 +112,7 @@ import {
         const group = structuredClone(props.group);
         group.name = name
         group.users = [
-          ...selected.map(s => ({ id: s.value, name: null })),
+          ...newUserIds.map(n => ({ id: n, name: null })),
           ...users,
         ];
         await trpc.groups.update.mutate(group);
@@ -190,7 +145,7 @@ import {
               </FormControl>
               <FormControl>
                 <FormLabel></FormLabel>
-                <UserSelector value={selected} placeholder='...' onChange={setSelected} />
+                <UserSelector isMulti onSelect={setNewUserIds} />
               </FormControl>
               <FormControl>
                 <FormLabel></FormLabel>
