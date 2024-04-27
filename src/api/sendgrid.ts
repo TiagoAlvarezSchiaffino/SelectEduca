@@ -7,7 +7,7 @@ import { Op } from 'sequelize';
 import Role, { RoleProfiles } from '../shared/Role';
 import z from 'zod';
 
-mail.setApiKey(apiEnv.SENDGRID_API_KEY);
+if (apiEnv.hasSendGrid()) mail.setApiKey(apiEnv.SENDGRID_API_KEY);
 
 /**
  * Example personalizations:
@@ -41,6 +41,11 @@ export async function email(templateId: string, personalization: Personalization
   }
 
   console.log(`Sending mail via SendGrid, template id: ${templateId}, personalizations: ${JSON.stringify(ps, null, 2)}`);
+  if (!apiEnv.hasSendGrid()) {
+    console.log('SendGrid not configured. Skip calling actual API.');
+    return;
+  }
+
   await mail.send({
     personalizations: ps,
     templateId,
