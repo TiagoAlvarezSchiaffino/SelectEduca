@@ -26,9 +26,7 @@ const zSummariesListInput = z.object({
 
 type SummariesListInput = z.TypeOf<typeof zSummariesListInput>;
 
-const summaries = router({
-
-  list: procedure
+const list = procedure
   .use(authIntegration())
   .input(zSummariesListInput)
   .output(
@@ -36,32 +34,24 @@ const summaries = router({
       transcriptId: z.string(),
       summary: z.string(),
     }))
-  ).query(async ({ input }: { input: SummariesListInput }) => {
-    const summaries = await Summary.findAll({ 
-      where: { summaryKey: input.key },
-      attributes: ['transcriptId', 'summary'],
-    });
+  ).query(async ({ input }: { input: SummariesListInput }) => 
+{
+  // TODO: Optimize and use a single query to return final results.
+  const summaries = await Summary.findAll({ 
+    where: { summaryKey: input.key },
+    attributes: ['transcriptId', 'summary'],
+  });
 
-    const skippedTranscriptIds = input.excludeTranscriptsWithKey ? (await Summary.findAll({
-      where: { summaryKey: input.excludeTranscriptsWithKey },
-      attributes: ['transcriptId'],
-    })).map(s => s.transcriptId) : [];
+  const skippedTranscriptIds = input.excludeTranscriptsWithKey ? (await Summary.findAll({
+    where: { summaryKey: input.excludeTranscriptsWithKey },
+    attributes: ['transcriptId'],
+  })).map(s => s.transcriptId) : [];
 
-    return summaries
-      .filter(s => !skippedTranscriptIds.includes(s.transcriptId));
-  }),
+  return summaries
+    .filter(s => !skippedTranscriptIds.includes(s.transcriptId));
+});
 
-  /**
-   * Upload a summary for a transcript. Each summary is identified by `transcriptId` and `summaryKey`.
-   * Uploading a summary that already exists overwrites it.
-   * 
-   * See docs/summarization.md for usage.
-   * 
-   * @param transcriptId Returned from /api/v1/summaries.list
-   * @param summaryKey An arbitrary string determined by the caller
-
-   */
-  write: procedure
+const write = procedure
   .use(authIntegration())
   .input(
     z.object({ 
@@ -69,22 +59,26 @@ const summaries = router({
       summaryKey: z.string(),
       summary: z.string(),
     })
-  ).mutation(async ({ input }) => {
-    if (input.summaryKey === crudeSummaryKey) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: `Summaries with key "${crudeSummaryKey}" are read-only`,
-      })
-    }
-    // By design, this statement fails if the transcript doesn't exist.
-    await Summary.upsert({
-      transcriptId: input.transcriptId,
-      summaryKey: input.summaryKey,
-      summary: input.summary,
-    });
-  }),
+  ).mutation(async ({ input }) => 
+{
+  if (input.summaryKey === crudeSummaryKey) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `Summaries with key "${crudeSummaryKey}" are read-only`,
+    })
+  }
+  // By design, this statement fails if the transcript doesn't exist.
+  await Summary.upsert({
+    transcriptId: input.transcriptId,
+    summaryKey: input.summaryKey,
+    summary: input.summary,
+  });
 });
 
+const summaries = router({
+  list,
+  write,
+});
 export default summaries;
 
 export async function saveCrudeSummary(meta: CrudeSummaryDescriptor, summary: string) {
@@ -103,12 +97,6 @@ export async function saveCrudeSummary(meta: CrudeSummaryDescriptor, summary: st
   });
 }
 
-/**
- * Returns crude summaries that 1) were created in the last 31 days, and 2) only exist in Tencent Meeting but not 
- * locally. 31 days are the max query range allowed by Tencent. 
- * 
- * Note that the returned URLs are valid only for a short period of time.
- */
 export async function findMissingCrudeSummaries(): Promise<CrudeSummaryDescriptor[]> {
   const ret: CrudeSummaryDescriptor[] = [];
 
