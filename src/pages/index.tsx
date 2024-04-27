@@ -11,6 +11,8 @@ import {
   Input,
   FormControl,
   Link,
+  UnorderedList,
+  ListItem,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import { NextPageWithLayout } from "../NextPageWithLayout";
@@ -86,12 +88,18 @@ function Meetings() {
     <PageBreadcrumb current='' parents={[]} />
     {isLoading && <Loader />}
     
-    {groups
-    && groups.length == 0
-    && !isLoading
-    && <Text align='center'>
-        <Link isExternal href=''></Link>
-        </Text>}
+    {groups && groups.length == 0 && !isLoading && <>
+      <Text></Text>
+      <br />
+      <UnorderedList>
+        <ListItem>
+          （<Link isExternal href="https://meeting.tencent.com/download/"></Link>）
+        </ListItem>
+        <ListItem>
+          （<Link isExternal href="https://voovmeeting.com/download-center.html"></Link>）
+        </ListItem>
+      </UnorderedList>
+    </>}
     
     <VStack divider={<StackDivider />} align='left' spacing='6'>
       {groups &&
