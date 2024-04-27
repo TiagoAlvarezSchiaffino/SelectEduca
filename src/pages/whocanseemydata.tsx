@@ -79,7 +79,7 @@ import {
           <Tr><Th></Th><Th></Th><Th></Th></Tr>
         </Thead>
         <Tbody>{
-          AllRoles.map(r => <Tr key={r}>
+          AllRoles.filter(r => RoleProfiles[r].privileged).map(r => <Tr key={r}>
             <Td>{dp(r)}</Td>
             <Td>{RoleProfiles[r].actions}</Td>
             <Td>{props.privileged

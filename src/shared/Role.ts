@@ -7,32 +7,52 @@ export const AllRoles = [
   'SummaryEngineer',
   'PartnershipManager',
   'PartnershipAssessor',
+  'Mentor',
+  'Mentee',
 ] as const;
 
 export const RoleProfiles: { [key: string]: {
+  // You may ask, why not simply use displayName as the role key?
+  // Well, we're just too lazy to type Chinese characters everywhere.
   displayName: string,
   actions: string,
+  privileged: boolean,
 }} = {
   UserManager: {
     displayName: '',
     actions: '',
+    privileged: true,
   },
   GroupManager: {
     displayName: '',
     actions: '',
+    privileged: true,
   },
   SummaryEngineer: {
     displayName: '',
     actions: '',
+    privileged: true,
   },
   PartnershipManager: {
     displayName: '',
     actions: '',
+    privileged: true,
   },
   PartnershipAssessor: {
     displayName: '',
     actions: '',
-  }
+    privileged: true,
+  },
+  Mentor: {
+    displayName: '',
+    actions: '',
+    privileged: false,
+  },
+  Mentee: {
+    displayName: '',
+    actions: '',
+    privileged: false,
+  },
 }
 
 type Role = ArrayElement<typeof AllRoles>;
