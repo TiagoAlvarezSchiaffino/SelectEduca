@@ -26,10 +26,10 @@ import {
   import NextLink from "next/link";
   import Assessment from 'shared/Assessment';
   
-  const Page: NextPageWithLayout = () => {;
+  const Page: NextPageWithLayout = () => {
     const partnershipId = parseQueryParameter(useRouter(), "partnershipId");
-    const { data: partnership } = trpcNext.partnerships.getWithAssessments.useQuery
-      <PartnershipWithAssessments | undefined>({ id: partnershipId });
+    const { data: partnership } = trpcNext.partnerships.getWithAssessments
+      .useQuery<PartnershipWithAssessments | undefined>({ id: partnershipId });
   
     return <>
       <PageBreadcrumb current="" parents={[
@@ -46,24 +46,29 @@ import {
                 key={a.id} 
                 partnershipId={partnershipId} 
                 assessmentId={a.id}
-                // @ts-ignore
-                year={new Date(a.createdAt).getFullYear()}
+                date={a.createdAt}
                 summary={a.summary}
               />
             )) : <AssessmentRow
               partnershipId={partnershipId}  
-              year={new Date().getFullYear()}
-            />}
+              date={new Date()}
+              />}
           </Tbody>
         </Table>
       </Flex>}
     </>;
   }
   
-  function AssessmentRow({ partnershipId, assessmentId, year, summary } : {
+// Date is optional merely to suppress typescript warning
+export function getYearText(date?: Date | string): string {
+    // @ts-ignore
+    return new Date(date).getFullYear() + "";
+  }
+  
+  function AssessmentRow({ partnershipId, assessmentId, date, summary } : {
     partnershipId: string,
     assessmentId?: string,  // When undefined, create a new assessment and enter the new assessment page.
-    year: number,
+    date?: Date | string,   // Optional merely to suppress typescript warning
     summary?: string | null,
   }) {
     const router = useRouter();
@@ -75,11 +80,12 @@ import {
   
     return <LinkBox as={Tr}>
       <Td>
-        {year} 
+      {getYearText(date)}
       </Td>
-      <Td>
-        {summary || ""}
-      </Td>
+      {summary ? 
+        <Td>{summary}</Td> : 
+        <Td color="disabled"></Td>
+        }
       <Td>
         <LinkOverlay as={NextLink}
           href={assessmentId ? `/partnerships/${partnershipId}/assessments/${assessmentId}` : "#"}

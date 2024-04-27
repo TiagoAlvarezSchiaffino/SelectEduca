@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import sleep from 'shared/sleep';
 
 const autosaveDelayMs = 800;
-const retryIntervalMs = 5000;
+const retryIntervalSec = 8;
 
 export default function Autosaver(props: {
   data: any,
@@ -60,10 +60,10 @@ async function saveWithRetry(
         setError();
         break;
       } catch (e) {
-        console.error("Autosaver: error during saving. Will retry:", e);
+        console.error(`Autosaver: error during saving. retry in ${retryIntervalSec} secs:`, e);
         setError(`${e}`);
-        await sleep(retryIntervalMs);
-      }
+        await sleep(retryIntervalSec * 1000);
+    }
     }
   }
   

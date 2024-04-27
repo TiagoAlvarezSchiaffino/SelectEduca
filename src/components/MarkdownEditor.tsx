@@ -10,12 +10,14 @@ const SimpleMDE = dynamic(
 const options = {
   spellChecker: false,
   autofocus: true,
-};
+  // This has no effect. Need more research.
+  // readOnly: true,
+} /* as SimpleMDE.Options -- ts warns on this due to the above hack */;
 
-export default function MarkdownEditor(props : {
+export default function MarkdownEditor({ value, onChange, ...rest }: {
   value: string,
   onChange?: (value: string) => void,
-  options?: any,
+  [key: string]: any,  /* SimpleMDE.Options -- ts warns on this due to the above hack */
 }) {
-  return <SimpleMDE value={props.value} options={{ ...options, ...props.options }} onChange={props.onChange} />;
+  return <SimpleMDE value={value} options={{ ...options, ...rest }} onChange={onChange} />;
 }

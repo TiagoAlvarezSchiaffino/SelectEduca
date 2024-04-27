@@ -15,6 +15,8 @@ import sequelizeInstance from "../database/sequelizeInstance";
 import { formatUserName, formatGroupName } from "../../shared/strings";
 import nzh from 'nzh';
 import { email } from "../sendgrid";
+import { minUserProfileAttributes, zMinUserProfile } from "../../shared/UserProfile";
+import { alreadyExistsError, noPermissionError, notFoundError } from "../errors";
 
 const zGroup = z.object({
   id: z.string(),
@@ -191,14 +193,6 @@ const groups = router({
 
 export default groups;
 
-export const GROUP_ALREADY_EXISTS_ERROR_MESSAGE = '';
-
-export const notFoundError = (groupId: string) =>
-  new TRPCError({ code: 'NOT_FOUND', message: ` ${groupId} ` });
-
-export const noPermissionError = (groupId: string) =>
-new TRPCError({ code: 'FORBIDDEN', message: ` ${groupId}。` });
-
 /**
  * @returns groups that contain all the given users.
  * @param mode if `exclusive`, return the singleton group that contains no more other users.
@@ -237,10 +231,7 @@ export async function createGroup(userIds: string[]) {
   checkMinimalGroupSize(userIds);
   const existing = await findGroups(userIds, 'exclusive');
   if (existing.length > 0) {
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: GROUP_ALREADY_EXISTS_ERROR_MESSAGE,
-    });
+    throw alreadyExistsError("");
   }
 
   const group = await DbGroup.create({});
