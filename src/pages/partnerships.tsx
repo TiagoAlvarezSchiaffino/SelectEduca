@@ -38,8 +38,8 @@ import {
   
   const Page: NextPageWithLayout = () => {
     const [user] = useUserContext();
-    const { data: partnerships, refetch } = trpcNext.partnerships.list.useQuery
-      <PartnershipCountingAssessments[] | undefined>();
+    const { data: partnerships, refetch } = trpcNext.partnerships.listAll.useQuery
+    <PartnershipCountingAssessments[] | undefined>();
     const [ modalIsOpen, setModalIsOpen ] = useState(false);
   
     const showAddButton = isPermitted(user.roles, 'PartnershipManager');

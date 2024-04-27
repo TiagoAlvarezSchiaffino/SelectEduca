@@ -20,6 +20,7 @@ import {
   MenuDivider,
   MenuItem,
   MenuList,
+  Divider,
 } from '@chakra-ui/react';
 import {
   FiMenu,
@@ -34,7 +35,7 @@ import { isPermitted } from 'shared/Role';
 
 import Image from "next/image";
 import { useRouter } from 'next/router';
-import { MdChevronRight } from 'react-icons/md';
+import { MdChevronRight, MdFace } from 'react-icons/md';
 import colors from 'theme/colors';
 import AutosaveIndicator, { 
     AutosaveState,
@@ -44,11 +45,13 @@ import AutosaveIndicator, {
     setPendingSaverError
   } from './AutosaveIndicator';
 import AutosaveContext from 'AutosaveContext';
+import { trpcNext } from 'trpc';
+import { Partnership } from 'shared/Partnership';
 
 const sidebarWidth = 60;
 export const topbarHeight = "60px";
 export const sidebarBreakpoint = "lg";
-export const sidebarContentMarginTop = "40px";
+export const sidebarContentMarginTop = 10;
 
 export default function Navbars({
   children,
@@ -108,11 +111,27 @@ export default function Navbars({
   );
 }
 
+/**
+ * TODO: Extract Sidebar functions to a separate file
+ */
+const sidebarItemPaddingY = 4;
+
+function partnerships2sidebarItems(partnerships: Partnership[] | undefined): SidebarItem[] {
+  if (!partnerships) return [];
+  return partnerships.map(p => ({
+    name: p.mentee.name ?? '',
+    icon: MdFace,
+    path: `/partnership/${p.id}`,
+  }));
+}
+
 interface SidebarProps extends BoxProps {
   onClose: () => void;
 }
 const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
-  const [user] = useUserContext();
+    const [me] = useUserContext();
+    const { data: partnerships } = trpcNext.partnerships.listMineAsMentor.useQuery();
+    const partnershipItems = partnerships2sidebarItems(partnerships);
   // Save an API call if the user is not a mentor.
   const { data: partnerships } = isPermitted(me.roles, "Mentor") ? 
     trpcNext.partnerships.listMineAsMentor.useQuery() : { data: undefined };
@@ -143,14 +162,17 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }} onClick={onClose} />
       </Flex>
       <Box height={{
-        base: 4,
-        [sidebarBreakpoint]: sidebarContentMarginTop,
-        }}/>
+        base: 0,
+        [sidebarBreakpoint]: sidebarContentMarginTop - sidebarItemPaddingY,
+      }}/>
+
       {sidebarItems
-        .filter(item => isPermitted(user.roles, item.role))
-        .map(item => (
-        <SidebarRow key={item.path} item={item} onClose={onClose} />
-      ))}
+        .filter(item => isPermitted(me.roles, item.role))
+        .map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
+
+      {partnershipItems?.length > 0 && <Divider marginY={2} />}
+
+      {partnershipItems.map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
     </Box>
   );
 };
@@ -173,7 +195,7 @@ const SidebarRow = ({ item, onClose, ...rest }: SidebarRowProps) => {
         align="center"
         marginX={4}
         paddingLeft={4}
-        paddingBottom={8}
+        paddingY={sidebarItemPaddingY}
         role="group"
         cursor={active ? "default" : "pointer"}
         {...rest}

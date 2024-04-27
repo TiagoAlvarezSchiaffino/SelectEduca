@@ -11,7 +11,7 @@ import GroupBar from 'components/GroupBar';
 import Loader from 'components/Loader';
 
 const Page: NextPageWithLayout = () => {
-  const { data } = trpcNext.groups.listAndCountTranscripts.useQuery({ userIds: [] });
+  const { data } = trpcNext.groups.listAllCountingTranscripts.useQuery({ userIds: [] });
 
   return (
     <Box paddingTop={'80px'}>
