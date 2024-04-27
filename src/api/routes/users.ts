@@ -15,12 +15,13 @@ const users = router({
   create: procedure
   .use(authUser('UserManager'))
   .input(z.object({
-    name: z.string().min(1, "required"),
-    email: z.string().email(),
-    roles: zRoles.min(1, "required"),
+    name: z.string(),
+    email: z.string(),
+    roles: zRoles,
   }))
-  .mutation(async ({ input }) => {
-    validateUserFields(input.name, input.email);
+  .mutation(async ({ ctx, input }) => {
+    checkUserFields(input.name, input.email);
+    checkPermissionForManagingPrivilegedRoles(ctx.user.roles, input.roles);
     await User.create({
       name: input.name,
       pinyin: toPinyin(input.name),
@@ -55,12 +56,12 @@ const users = router({
   .use(authUser())
   .input(zUserProfile)
   .mutation(async ({ input, ctx }) => {
-    validateUserFields(input.name, input.email);
+    checkUserFields(input.name, input.email);
 
-    const isUserManager = isPermitted(ctx.user.roles, 'UserManager');
+    const isUserOrPRManager = isPermitted(ctx.user.roles, ['UserManager', 'PrivilegedRoleManager']);
     const isSelf = ctx.user.id === input.id;
-    // Anyone can update user profiles, but non-UserManagers can only update their own.
-    if (!isUserManager && !isSelf) {
+    // Anyone can update user profiles, but non-user- and non-privileged-role-managers can only update their own.
+    if (!isUserOrPRManager && !isSelf) {
       throw noPermissionError("", input.id);
     }
     if ((input.name)) {
@@ -76,6 +77,10 @@ const users = router({
       throw notFoundError("", input.id);
     }
 
+    const rolesToAdd = input.roles.filter(r => !user.roles.includes(r));
+    const rolesToRemove = user.roles.filter(r => !input.roles.includes(r));
+    checkPermissionForManagingPrivilegedRoles(ctx.user.roles, [...rolesToAdd, ...rolesToRemove]);
+
     if (!isSelf) {
       await emailUserAboutNewPrivilegedRoles(ctx.user.name, user, input.roles, ctx.baseUrl);
     }
@@ -85,7 +90,7 @@ const users = router({
       name: input.name,
       pinyin: toPinyin(input.name),
       consentFormAcceptedAt: input.consentFormAcceptedAt,
-      ...isUserManager ? {
+      ...isUserOrPRManager ? {
         roles: input.roles,
         email: input.email,
       } : {},
@@ -116,6 +121,12 @@ const users = router({
 });
 
 export default users;
+
+function checkPermissionForManagingPrivilegedRoles(userRoles: Role[], subjectRoles: Role[]) {
+  if (subjectRoles.some(r => RoleProfiles[r].privileged) && !isPermitted(userRoles, "PrivilegedRoleManager")) {
+    throw noPermissionError("");
+  }
+}
 
 async function emailUserAboutNewPrivilegedRoles(userManagerName: string, user: User, roles: Role[], baseUrl: string) {
   const added = roles.filter(r => !user.roles.includes(r)).filter(r => RoleProfiles[r].privileged);

@@ -2,6 +2,7 @@ import { ArrayElement } from "./ArrayElement";
 import z from "zod";
 
 export const AllRoles = [
+  'PrivilegedRoleManager',
   'UserManager',
   'GroupManager',
   'SummaryEngineer',
@@ -18,6 +19,11 @@ export const RoleProfiles: { [key: string]: {
   actions: string,
   privileged: boolean,
 }} = {
+  PrivilegedRoleManager: {
+    displayName: '',
+    actions: '',
+    privileged: true,
+  },
   UserManager: {
     displayName: '',
     actions: '',

@@ -5,8 +5,8 @@ type Kind = "" | "" | "";
 export const notFoundError = (kind: Kind, id: string) =>
   new TRPCError({ code: 'NOT_FOUND', message: `${kind} ${id} ` });
 
-export const noPermissionError = (kind: Kind, id: string) =>
-  new TRPCError({ code: 'FORBIDDEN', message: `${kind} ${id}。` });
+export const noPermissionError = (kind: Kind, id?: string) =>
+  new TRPCError({ code: 'FORBIDDEN', message: `${kind}${id ? ` ${id}` : ""}。` });
 
 export const alreadyExistsErrorMessage = (kind: Kind) => `${kind}`;
 
