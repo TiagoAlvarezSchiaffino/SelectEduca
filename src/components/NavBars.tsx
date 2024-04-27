@@ -36,7 +36,13 @@ import Image from "next/image";
 import { useRouter } from 'next/router';
 import { MdChevronRight } from 'react-icons/md';
 import colors from 'theme/colors';
-import AutosaveIndicator, { AutosaveState, addPendingSaver, initialState, removePendingSaver } from './AutosaveIndicator';
+import AutosaveIndicator, { 
+    AutosaveState,
+    addPendingSaver,
+    initialState,
+    removePendingSaver,
+    setPendingSaverError
+  } from './AutosaveIndicator';
 import AutosaveContext from 'AutosaveContext';
 
 const sidebarWidth = 60;
@@ -65,6 +71,10 @@ export default function Navbars({
     ref.state = removePendingSaver(ref.state, id);
     setAutosateState(ref.state);
   }, [ref]);
+  const setPSError = useCallback((id: string, e?: any) => {
+    ref.state = setPendingSaverError(ref.state, id, e);
+    setAutosateState(ref.state);
+  }, [ref]);
 
   return (
     <Box minHeight="100vh" bg={useColorModeValue(colors.backgroundLight, colors.backgroundDark)}>
@@ -89,6 +99,7 @@ export default function Navbars({
         <AutosaveContext.Provider value={{
           addPendingSaver: addPS,
           removePendingSaver: removePS,
+          setPendingSaverError: setPSError,
         }}>
           {children}
         </AutosaveContext.Provider>
@@ -102,7 +113,9 @@ interface SidebarProps extends BoxProps {
 }
 const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
   const [user] = useUserContext();
-
+  // Save an API call if the user is not a mentor.
+  const { data: partnerships } = isPermitted(me.roles, "Mentor") ? 
+    trpcNext.partnerships.listMineAsMentor.useQuery() : { data: undefined };
   return (
     <Box
       transition="3s ease"
