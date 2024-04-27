@@ -19,7 +19,7 @@ const cron = router({
   .output(z.object({
     uploadedTranscripts: z.array(z.string()),
   }))
-  .query(async ({ ctx }) => {
+  .mutation(async () => {
     console.log('Retriving transcript URLs...');
     const headers = { 'Authorization': `Bearer ${apiEnv.INTEGRATION_AUTH_TOKEN}` };
     const baseUrl = `${ctx.baseUrl}/api/v1`;
