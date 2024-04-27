@@ -34,10 +34,6 @@ class User extends ParanoidModel<
   @Column(STRING)
   email: string;
 
-  @Unique
-  @Column(STRING)
-  clientId: string;
-
   @ZodColumn(JSONB, zRoles)
   roles: Role[];
 
