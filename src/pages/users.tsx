@@ -33,7 +33,7 @@ import ModalWithBackdrop from 'components/ModalWithBackdrop';
 import { toPinyin } from 'shared/string';
 import Role, { AllRoles, RoleProfiles, isPermitted } from 'shared/Role';
 import trpc from 'trpc';
-import useUserContext from 'useUserContext';
+import { useUserContext } from 'UserContext';
 import { MdEditNote } from 'react-icons/md';
 import Loader from 'components/Loader';
 

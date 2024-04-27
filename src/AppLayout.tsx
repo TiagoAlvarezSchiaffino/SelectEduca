@@ -3,7 +3,7 @@ import Footer, { footerBreakpoint, footerMarginTop } from 'components/Footer'
 import { FC, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
 
 import { GuardProvider } from '@authing/guard-react18';
-import { UserContext } from "./useUserContext";
+import UserContext from "./UserContext";
 import browserEnv from "./browserEnv";
 import trpc from "./trpc";
 import { BeatLoader } from 'react-spinners';
