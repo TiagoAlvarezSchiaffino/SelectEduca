@@ -7,6 +7,7 @@ import Group from "../database/models/Group";
 import User from "../database/models/User";
 import { TRPCError } from "@trpc/server";
 import { isPermitted } from "../../shared/Role";
+import { zMinUserProfile } from "shared/UserProfile";
 
 const zGetTranscriptResponse = z.object({
   transcriptId: z.string(),
@@ -14,10 +15,7 @@ const zGetTranscriptResponse = z.object({
   endedAt: z.date(),
   group: z.object({
     id: z.string(),
-    users: z.array(z.object({
-      id: z.string(),
-      name: z.string().nullable(),
-    }))      
+    users: z.array(zMinUserProfile)  
   }),
   summaries: z.array(z.object({
       summaryKey: z.string(),
