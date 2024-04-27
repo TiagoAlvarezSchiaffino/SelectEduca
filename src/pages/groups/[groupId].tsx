@@ -21,7 +21,7 @@ import Link from 'next/link';
 import { GroupWithTranscripts } from 'api/routes/groups';
 import moment from 'moment';
 import GroupBar from 'components/GroupBar';
-import trpcNext from 'trpcNext';
+import { trpcNext } from "../../trpc";
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import { capitalizeFirstChar } from 'shared/string';
 import Loader from 'components/Loader'

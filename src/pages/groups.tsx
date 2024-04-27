@@ -24,7 +24,7 @@ import {
   import React, { useState } from 'react'
   import AppLayout from 'AppLayout'
   import { NextPageWithLayout } from '../NextPageWithLayout'
-  import trpc from "../trpc";
+  import { trpcNext } from "../trpc";
   import AsyncSelect from "react-select/async";
   import trpcNext from "../trpcNext";
   import GroupBar, { UserChip } from 'components/GroupBar';

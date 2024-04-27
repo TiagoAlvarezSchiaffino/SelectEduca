@@ -27,7 +27,7 @@ import {
 import React, { useState } from 'react'
 import AppLayout from 'AppLayout'
 import { NextPageWithLayout } from '../NextPageWithLayout'
-import trpcNext from "../trpcNext";
+import { trpcNext } from "../trpc";
 import UserProfile from 'shared/UserProfile';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
 import { toPinyin } from 'shared/string';

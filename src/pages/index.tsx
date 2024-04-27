@@ -18,7 +18,7 @@ import React, { useState } from 'react';
 import { NextPageWithLayout } from "../NextPageWithLayout";
 import AppLayout from "../AppLayout";
 import useUserContext from "../useUserContext";
-import trpc from "../trpc";
+import { trpcNext } from "../trpc";
 import trpcNext from "../trpcNext";
 import GroupBar from 'components/GroupBar';
 import PageBreadcrumb from 'components/PageBreadcrumb';

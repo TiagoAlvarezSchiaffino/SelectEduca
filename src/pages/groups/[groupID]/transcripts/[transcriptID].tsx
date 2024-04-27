@@ -15,7 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { NextPageWithLayout } from "../../../../NextPageWithLayout";
 import AppLayout from "../../../../AppLayout";
 import useUserContext from "../../../../useUserContext";
-import trpcNext from "../../../../trpcNext";
+import { trpcNext } from "../../../../trpc";
 import moment from 'moment';
 import GroupBar from 'components/GroupBar';
 import { GetTranscriptResponse } from 'api/routes/transcripts';

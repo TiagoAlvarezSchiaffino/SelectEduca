@@ -13,7 +13,7 @@ import {
   } from '@chakra-ui/react';
   import AppLayout from 'AppLayout';
   import { NextPageWithLayout } from '../NextPageWithLayout';
-  import trpcNext from 'trpcNext';
+  import { trpcNext } from "../trpc";
   import Loader from 'components/Loader';
   import PageBreadcrumb from 'components/PageBreadcrumb';
   import Role, { AllRoles, RoleProfiles } from '../shared/Role';
