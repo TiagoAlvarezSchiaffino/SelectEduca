@@ -114,6 +114,28 @@ const destroy = procedure
 });
 
 /**
+ * Unowned groups are the ones not assoicated with a partnership.
+ */
+const listMyUnowned = procedure
+  .use(authUser())
+  .output(z.array(zGroupCountingTranscripts))
+  .query(async ({ ctx }) => 
+{
+  return (await db.GroupUser.findAll({
+    where: { 
+      userId: ctx.user.id,
+    },
+    include: [{
+      model: db.Group,
+      include: [User, Transcript],
+      where: {
+        partnershipId: null,
+      }
+    }]
+  })).map(groupUser => groupUser.group);
+});
+
+/**
  * @returns All groups if `userIds` is empty, otherwise return groups that has all the given users.
  */
 const list = procedure
@@ -168,6 +190,7 @@ const groups = router({
   update,
   destroy,
   list,
+  listMyUnowned,
   listCountingTranscripts,
   get,
 });
