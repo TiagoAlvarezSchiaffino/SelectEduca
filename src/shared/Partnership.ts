@@ -13,9 +13,13 @@ export const zPartnership = z.object({
   id: z.string().uuid(),
   mentor: zMinUserProfile,
   mentee: zMinUserProfile,
-  privateMentorNotes: zPrivateMentorNotes.nullable(),
 });
 export type Partnership = z.TypeOf<typeof zPartnership>;
+
+export const zPartnershipWithPrivateMentorNotes = zPartnership.merge(z.object({
+  privateMentorNotes: zPrivateMentorNotes.nullable(),
+}));
+export type PartnershipWithPrivateMentorNotes = z.TypeOf<typeof zPartnershipWithPrivateMentorNotes>;
 
 export const zPartnershipCountingAssessments = zPartnership.merge(z.object({
   assessments: z.array(z.object({})),
@@ -32,6 +36,8 @@ export function isValidPartnershipIds(menteeId: string | null, mentorId: string 
     && z.string().uuid().safeParse(mentorId).success
     && menteeId !== mentorId;
 }
+
+export const minAttributes = ['id', 'menteeId', 'mentorId'];
 
 export const includePartnershipUsers = [{
     association: 'mentor',
