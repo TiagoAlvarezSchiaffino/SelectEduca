@@ -7,7 +7,7 @@ import apiEnv from "./apiEnv";
 import { UniqueConstraintError } from "sequelize";
 import { AuthenticationClient } from 'authing-js-sdk';
 import { LRUCache } from 'lru-cache';
-import { emailUserManagersIgnoreError } from './sendgrid';
+import { emailRoleIgnoreError } from './sendgrid';
 
 const USER_CACHE_TTL_IN_MS = 60 * 60 * 1000
 
@@ -106,7 +106,7 @@ async function findOrCreateUser(email: string, baseUrl: string): Promise<User> {
     // Set the first user as an admin
     const roles: Role[] = (await User.count()) == 0 ? ['UserManager'] : [];
     console.log(`Creating user ${email} roles ${roles}`);
-    await emailUserManagersIgnoreError("", ` ${email} `, baseUrl);
+    await emailRoleIgnoreError("UserManager", "", `${email} `, baseUrl);
     try {
       return await User.create({
         name: "",

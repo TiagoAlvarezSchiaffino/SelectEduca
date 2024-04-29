@@ -18,7 +18,7 @@ import {
   import PageBreadcrumb from 'components/PageBreadcrumb';
   import Role, { AllRoles, RoleProfiles } from '../shared/Role';
   
-  const Page: NextPageWithLayout = () => {
+  const { data: privileged } = trpcNext.users.listPriviledgedUserDataAccess.useQuery();
     const { data: privileged } = trpcNext.users.listPriviledged.useQuery();
   
     return (
@@ -79,7 +79,8 @@ import {
           <Tr><Th></Th><Th></Th><Th></Th></Tr>
         </Thead>
         <Tbody>{
-          AllRoles.filter(r => RoleProfiles[r].privileged).map(r => <Tr key={r}>
+        AllRoles.filter(r => RoleProfiles[r].privilegedUserDataAccess).map(r => <Tr key={r}>
+
             <Td>{dp(r)}</Td>
             <Td>{RoleProfiles[r].actions}</Td>
             <Td>{props.privileged
