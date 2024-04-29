@@ -6,6 +6,7 @@ import {
   AllowNull,
   BelongsToMany,
   Column,
+  Index,
   Table,
   Unique,
 } from "sequelize-typescript";
@@ -39,6 +40,10 @@ class User extends ParanoidModel<
 
   @BelongsToMany(() => Group, { through: () => GroupUser })
   groups: NonAttribute<Group[]>;
+
+  @Index({
+    using: 'gin'
+  })
 
   @AllowNull(true)
   @Column(DATE)
