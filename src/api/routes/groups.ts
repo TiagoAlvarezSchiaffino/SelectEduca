@@ -2,8 +2,7 @@ import { procedure, router } from "../trpc";
 import { z } from "zod";
 import { authUser } from "../auth";
 import db from "../database/db";
-import GroupUser from "../database/models/GroupUser";
-import { Includeable } from "sequelize";
+import { Includeable, Transaction } from "sequelize";
 import User from "../database/models/User";
 import { TRPCError } from "@trpc/server";
 import Transcript from "../database/models/Transcript";
@@ -15,15 +14,13 @@ import sequelizeInstance from "../database/sequelizeInstance";
 import { formatUserName, formatGroupName } from "../../shared/strings";
 import nzh from 'nzh';
 import { email } from "../sendgrid";
-import { minUserProfileAttributes } from "../../shared/UserProfile";
 import { alreadyExistsError, noPermissionError, notFoundError } from "../errors";
-import { Group, GroupCountingTranscripts, zGroup, zGroupCountingTranscripts, zGroupWithTranscripts } from "../../shared/Group";
+import { Group, GroupCountingTranscripts, zGroup, zGroupCountingTranscripts, 
+  zGroupWithTranscripts } from "../../shared/Group";
+import { includeForGroup } from "../database/models/attributesAndIncludes";
 
 async function listGroups(userIds: string[]): Promise<GroupCountingTranscripts[]> {
-  const includes: Includeable[] = [{
-    model: User,
-    attributes: ['id', 'name']
-  }, {
+  const includes: Includeable[] = [...includeForGroup, {
     model: Transcript,
     // We don't need to return any attributes, but sequelize seems to require at least one attribute.
     // TODO: Any way to return transcript count?
@@ -43,35 +40,36 @@ const create = procedure
     userIds: z.array(z.string()).min(2),
   }))
   .mutation(async ({ ctx, input }) =>
-    {
-      const res = await createGroup(input.userIds);
-      await emailNewUsersOfGroupIgnoreError(ctx, res.group.id, input.userIds);
-      return res;
-    });
+{
+  const res = await createGroupDeprecated(input.userIds);
+  await emailNewUsersOfGroupIgnoreError(ctx, res.group.id, input.userIds);
+  return res;
+});
 
 const update = procedure
   .use(authUser('GroupManager'))
   .input(zGroup)
   .mutation(async ({ ctx, input }) =>
-    {
-      const newUserIds = input.users.map(u => u.id);
-      checkMinimalGroupSize(newUserIds);
-    
-      const addUserIds: string[] = [];
-      await sequelizeInstance.transaction(async (t) => {
-        const group = await db.Group.findByPk(input.id, {
-          include: GroupUser
-        });
-        if (!group) throw notFoundError("", input.id);
-    
-        // Delete old users
-        var deleted = false;
-        for (const oldGU of group.groupUsers) {
-          if (!newUserIds.includes(oldGU.userId)) {
-            await oldGU.destroy({ transaction: t });
-            deleted = true;
+{
+  const newUserIds = input.users.map(u => u.id);
+  checkMinimalGroupSize(newUserIds);
+
+  const addUserIds: string[] = [];
+  await sequelizeInstance.transaction(async (t) => {
+    const group = await db.Group.findByPk(input.id, {
+      include: db.GroupUser
+    });
+    if (!group) throw notFoundError("", input.id);
+
+    // Delete old users
+    var deleted = false;
+    for (const oldGU of group.groupUsers) {
+      if (!newUserIds.includes(oldGU.userId)) {
+        await oldGU.destroy({ transaction: t });
+        deleted = true;
       }
     }
+
     // Update group itself
     await group.update({
       // Set to null if the input is an empty string.
@@ -87,7 +85,7 @@ const update = procedure
     addUserIds.push(...newUserIds.filter(uid => !oldUserIds.includes(uid)));
     const promises = addUserIds.map(async uid => {
       // upsert because the matching row may have been previously deleted.
-      await GroupUser.upsert({
+      await db.GroupUser.upsert({
         groupId: input.id,
         userId: uid,
         deletedAt: null,
@@ -104,16 +102,15 @@ const destroy = procedure
   .use(authUser('GroupManager'))
   .input(z.object({ groupId: z.string().uuid() }))
   .mutation(async ({ input }) => 
-    {
-      const group = await db.Group.findByPk(input.groupId);
-      if (!group) throw notFoundError("", input.groupId);
+{
+  const group = await db.Group.findByPk(input.groupId);
+  if (!group) throw notFoundError("", input.groupId);
 
   // Need a transaction for cascading destroys
   await sequelizeInstance.transaction(async (t) => {
     await group.destroy({ transaction: t });
   });
 });
-  }),
 
 /**
  * @returns All groups if `userIds` is empty, otherwise return groups that has all the given users.
@@ -142,17 +139,13 @@ const get = procedure
   .input(z.object({ id: z.string().uuid() }))
   .output(zGroupWithTranscripts)
   .query(async ({ input, ctx }) => 
-    {
-      const g = await db.Group.findByPk(input.id, {
-        include: [{
-          model: User,
-          attributes: minUserProfileAttributes,
-        }, {
-          model: Transcript,
+{
+  const g = await db.Group.findByPk(input.id, {
+    include: [...includeForGroup, {
+      model: Transcript,
       include: [{
         model: Summary,
         attributes: [ 'summaryKey' ]  // Caller should only need to get the summary count.
-        }],
       }],
     }],
     order: [
@@ -178,7 +171,8 @@ export default groups;
 
 /**
  * @returns groups that contain all the given users.
- * @param mode if `exclusive`, return the singleton group that contains no more other users.
+ * @param mode if `exclusive`, return the singleton group that contains no more other users, or an empty array if no
+ * such group exists.
  * @param includes Optional `include`s in the returned group.
  */
 export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusive', includes?: Includeable[]):
@@ -186,17 +180,13 @@ export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusi
 {
   invariant(userIds.length > 0);
 
-  const gus = await GroupUser.findAll({
+  const gus = await db.GroupUser.findAll({
     where: {
       userId: userIds[0] as string,
     },
     include: [{
       model: db.Group,
-      attributes: ['id', 'name'],
-      include: [{
-        model: GroupUser,
-        attributes: ['userId'],
-      }, ...(includes || [])]
+      include: [db.GroupUser, ...(includes || [])]
     }]
   })
 
@@ -210,7 +200,20 @@ export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusi
   return res;
 }
 
-export async function createGroup(userIds: string[]) {
+export async function createGroup(userIds: string[], partnershipId: string | null, t: Transaction): Promise<Group>
+{
+  const g = await db.Group.create({ partnershipId }, { transaction: t });
+  await db.GroupUser.bulkCreate(userIds.map(userId => ({
+    userId,
+    groupId: g.id,
+  })), { transaction: t });
+  return g;
+}
+
+/**
+ * Use createGroup instead
+ */
+export async function createGroupDeprecated(userIds: string[]) {
   checkMinimalGroupSize(userIds);
   const existing = await findGroups(userIds, 'exclusive');
   if (existing.length > 0) {
@@ -218,7 +221,7 @@ export async function createGroup(userIds: string[]) {
   }
 
   const group = await db.Group.create({});
-  const groupUsers = await GroupUser.bulkCreate(userIds.map(userId => ({
+  const groupUsers = await db.GroupUser.bulkCreate(userIds.map(userId => ({
     userId: userId,
     groupId: group.id,
   })));
@@ -246,10 +249,10 @@ async function emailNewUsersOfGroup(ctx: any, groupId: string, newUserIds: strin
       attributes: ['id', 'name', 'email'],
     }]
   });
-  if (!group) throw notFoundError(groupId);
+  if (!group) throw notFoundError('', groupId);
 
   const formatNames = (names: string[]) =>
-    names.slice(0, 3).join('、') + (names.length > 3 ? `${nzh.cn.encodeS(names.length)}` : '');
+    names.slice(0, 3).join('') + (names.length > 3 ? `${nzh.cn.encodeS(names.length)}` : '');
 
   const personalizations = newUserIds
   // Don't send emails to self.

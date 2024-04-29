@@ -11,8 +11,6 @@ import {
   Input,
   FormControl,
   Link,
-  UnorderedList,
-  ListItem,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import { NextPageWithLayout } from "../NextPageWithLayout";
@@ -82,7 +80,7 @@ function SetNameModal() {
 }
 
 function Meetings() {
-  const { data: groups, isLoading } = trpcNext.myGroups.list.useQuery();
+  const { data: groups, isLoading } = trpcNext.myGroups.listUnowned.useQuery();
 
   return (<>
     <PageBreadcrumb current='' parents={[]} />

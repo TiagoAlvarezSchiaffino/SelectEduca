@@ -3,15 +3,14 @@ import { NextPageWithLayout } from '../../NextPageWithLayout';
 import { useRouter } from 'next/router';
 import { parseQueryParameter } from 'parseQueryParamter';
 import trpc, { trpcNext } from 'trpc';
-import PageBreadcrumb, { pageBreadcrumbMarginBottom } from 'components/PageBreadcrumb';
 import Loader from 'components/Loader';
-import { Flex, Grid, GridItem, HStack, Text, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
-import { JoinButton } from 'components/GroupBar';
+import { Flex, Grid, GridItem, Text, Tabs, TabList, TabPanels, Tab, TabPanel, Heading, Tooltip, Box, Center } from '@chakra-ui/react';
+import GroupBar from 'components/GroupBar';
 import { sidebarBreakpoint } from 'components/Navbars';
 import { AutosavingMarkdownEditor } from 'components/MarkdownEditor';
 import AssessmentsPanel from 'components/AssessmentsPanel';
 import { PrivateMentorNotes } from 'shared/Partnership';
-import { formatUserName } from 'shared/strings';
+import { QuestionIcon } from '@chakra-ui/icons';
 
 const Page: NextPageWithLayout = () => {
   const partnershipId = parseQueryParameter(useRouter(), 'partnershipId');
@@ -19,10 +18,7 @@ const Page: NextPageWithLayout = () => {
   if (!partnership) return <Loader />
 
   return <>
-    <HStack spacing={10} marginBottom={pageBreadcrumbMarginBottom}>
-        <PageBreadcrumb current={`${formatUserName(partnership.mentee.name, "friendly")}`} marginBottom={0} />
-      <JoinButton isDisabled></JoinButton>
-    </HStack>
+    <GroupBar group={partnership.group} showJoinButton showGroupName={false} marginBottom={8} />
     <Grid templateColumns={{ base: "1fr", [sidebarBreakpoint]: "0.382fr 0.618fr" }} gap={10}>
       <GridItem>
         <PrivateNotes 
@@ -41,8 +37,6 @@ Page.getLayout = (page) => <AppLayout unlimitedPageWidth>{page}</AppLayout>;
 
 export default Page;
 
-const Head = ({ children }: any) => <Text>{children}</Text>;
-
 function PrivateNotes({ partnershipId, notes, loading }: { 
   partnershipId: string,
   notes: PrivateMentorNotes | null,
@@ -57,7 +51,12 @@ function PrivateNotes({ partnershipId, notes, loading }: {
   };
 
   return <Flex direction="column" gap={6}>
-    <Head></Head>
+    <Flex alignItems="center">
+      <b></b>
+      <Tooltip label="">
+        <QuestionIcon color="gray" marginStart={2} />
+      </Tooltip>
+    </Flex>
     {loading ? <Loader /> : 
       <AutosavingMarkdownEditor key={partnershipId} initialValue={notes?.memo || ''} onSave={save} />}
   </Flex>;
@@ -68,12 +67,15 @@ type PartnershipProps = {
 };
 
 function MenteeTabs({ partnershipId } : PartnershipProps) {
+
+  const TabHead = ({ children }: any) => <Text>{children}</Text>;
+
   return <Tabs isFitted isLazy index={3}>
     <TabList>
-      <Tab isDisabled><Head></Head></Tab>
-      <Tab isDisabled><Head></Head></Tab>
-      <Tab isDisabled><Head></Head></Tab>
-      <Tab><Head></Head></Tab>
+      <Tab isDisabled><TabHead></TabHead></Tab>
+      <Tab isDisabled><TabHead></TabHead></Tab>
+      <Tab isDisabled><TabHead></TabHead></Tab>
+      <Tab><TabHead></TabHead></Tab>
     </TabList>
 
     <TabPanels>

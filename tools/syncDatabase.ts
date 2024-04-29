@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import sequelizeInstance from "../src/api/database/sequelizeInstance";
+import migrateData from "./migrateData";
 
 inquirer
   .prompt([
@@ -27,3 +28,5 @@ inquirer
   .catch((error) => {
     console.log(`Error: ${error}`);
   });
+
+  migrateData().then();

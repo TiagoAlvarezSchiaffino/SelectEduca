@@ -1,7 +1,7 @@
 import { Op } from "sequelize";
 import User from "../src/api/database/models/User";
 import sequelizeInstance from "../src/api/database/sequelizeInstance";
-import { createGroup, findGroups } from "../src/api/routes/groups";
+import { createGroupDeprecated, findGroups } from "../src/api/routes/groups";
 import { TRPCError } from "@trpc/server";
 import invariant from "tiny-invariant";
 import _ from "lodash";
@@ -41,7 +41,6 @@ async function main() {
   // Force sequelize initialization
   const _ = sequelizeInstance;
   
-  await migrateRoles();
   const mgrs = await getUserManagers();
   if (mgrs.length == 0) {
     console.error('ERROR: No uesr is found. Please follow README.md and log into your local server first.');
@@ -50,14 +49,6 @@ async function main() {
   await upgradeUsers(mgrs);
   await generateUsers();
   await generateGroupsAndSummaries(mgrs);
-}
-
-async function migrateRoles()
-{
-  console.log('Migrating roles column');
-  await sequelizeInstance.query(`update users set roles = '[]' where roles = '["VISITOR"]'`);
-  await sequelizeInstance.query(`update users set roles = '["UserManager"]' where roles = '["ADMIN"]'`);
-  await sequelizeInstance.query(`update users set roles = '["SummaryEngineer"]' where roles = '["AIResearcher"]'`);
 }
 
 async function upgradeUsers(users: User[]) {
@@ -103,7 +94,7 @@ async function generateGroup(users: TestUser[]) {
   invariant(users.length > 1);
   console.log('Creating group', users.map(u => u.name));
   try {
-    await createGroup(users.map(u => u.id as string));
+    await createGroupDeprecated(users.map(u => u.id as string));
   } catch (e) {
     if (!(e instanceof TRPCError && e.message === alreadyExistsErrorMessage(""))) throw e;
   }

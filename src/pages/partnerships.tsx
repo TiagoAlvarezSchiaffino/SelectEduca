@@ -60,7 +60,7 @@ import {
         <Thead>
           <Tr>
             <Th></Th><Th></Th>
-            {showAssessment && <Th></Th>}
+            {showAssessment && <Th></Th>} <Th>ID</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -75,6 +75,7 @@ import {
                 {p.assessments.length}）
               </Link>
             </Td>}
+            <Td>{p.id}</Td>
           </Tr>
         ))}
         </Tbody>

@@ -18,7 +18,7 @@ import AppLayout from "../../AppLayout";
 import useUserContext from "../../useUserContext";
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { GroupWithTranscripts } from 'api/routes/groups';
+import { GroupWithTranscripts } from '../../shared/Group';
 import moment from 'moment';
 import GroupBar from 'components/GroupBar';
 import { trpcNext } from "../../trpc";
