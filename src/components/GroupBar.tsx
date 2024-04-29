@@ -4,9 +4,16 @@ import {
   Button,
   Center,
   Flex,
+  HStack,
+  Modal,
+  ModalHeader,
+  ModalContent,
+  ModalCloseButton,
+  ModalOverlay,
+  ModalBody,
+  ModalFooter,
   SimpleGridProps,
   Tag,
-  HStack,
   Tooltip,
   Spacer,
   Text,
@@ -24,11 +31,13 @@ import { MdVideocam } from 'react-icons/md';
 import Link from 'next/link';
 import { useUserContext } from 'UserContext';
 import { formatGroupName } from 'shared/strings';
+import ModalWithBackdrop from './ModalWithBackdrop';
 import { sidebarBreakpoint } from './Navbars';
 import UserChip from './UserChip';
 import { MinUserProfile } from 'shared/UserProfile';
 import { Group, GroupCountingTranscripts } from 'shared/Group';
 import QuestionIconTooltip from './QuestionIconTooltip';
+const [showMeetingQuotaWarning, setShowMeetingQuotaWarning] = useState(false);
 
 export default function GroupBar({
   group, showSelf, showJoinButton, showTranscriptCount, showTranscriptLink, abbreviateOnMobile, showGroupName, ...rest
@@ -47,8 +56,13 @@ export default function GroupBar({
   const launchMeeting = async (groupId: string) => {
     setJoining(true);
     try {
-      const link = await trpc.myGroups.generateMeetingLink.mutate({ groupId: groupId });
-      window.location.href = link;
+      const link = await trpc.myGroups.joinMeeting.mutate({ groupId: groupId });
+      if (!link) {
+        setShowMeetingQuotaWarning(true);
+        setJoining(false);
+      } else {
+        window.location.href = link;
+      }
     } catch (e) {
       // See comments in the `finally` block below.
       setJoining(false);
@@ -70,6 +84,7 @@ export default function GroupBar({
       spacing={4}
       {...rest}
     >
+      {showMeetingQuotaWarning && <OngoingMeetingWarning onClose={() => setShowMeetingQuotaWarning(false)}/>}
       {/* row 1 col 1 */}
       {props.showJoinButton && <Box />}
 
@@ -136,6 +151,28 @@ export function JoinButton(props: ButtonProps) {
     {...props}
   >{props.children ? props.children : ""}</Button>;
 }
+
+export function OngoingMeetingWarning(props: {
+  onClose: () => void,
+}) {
+  return (<ModalWithBackdrop isOpen onClose={props.onClose}>
+    <ModalOverlay />
+    <ModalContent>
+      <ModalHeader></ModalHeader>
+      <ModalCloseButton />
+      <ModalBody>
+        <p></p>
+      </ModalBody>
+      <ModalFooter>
+        <Button onClick={props.onClose}>
+          
+        </Button>
+      </ModalFooter>
+    </ModalContent>
+  </ModalWithBackdrop>
+  );
+}
+
 
 export function UserChips(props: { 
   currentUserId?: string, 
