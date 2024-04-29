@@ -10,7 +10,6 @@ import apiEnv from "api/apiEnv";
 import sleep from "../../shared/sleep";
 import { noPermissionError, notFoundError } from "api/errors";
 import { emailRoleIgnoreError } from 'api/sendgrid';
-import moment from 'moment';
 import sequelizeInstance from 'api/database/sequelizeInstance';
 
 /**
@@ -39,11 +38,15 @@ const join = procedure
   }
 
   updateOngoingMeetings();
-    // lock option is applied to transactions in order to prevent conflicts 
-    // when multiple transactions are trying to access or modify the same data simultaneously
-    // if the user's group is present in OngoingMeetings Model, return the meeting link 
-    await sequelizeInstance.transaction(async (t) => {
-      const ongoingMeeting = await db.OngoingMeetings.findOne({ where: { groupId: group.id }, lock: true, transaction: t });
+
+  // lock option is applied to transactions in order to prevent conflicts 
+  // when multiple transactions are trying to access or modify the same data simultaneously
+  // if the user's group is present in OngoingMeetings Model, return the meeting link 
+  return await sequelizeInstance.transaction(async (t) => {
+    const ongoingMeeting = await db.OngoingMeetings.findOne({ 
+      where: { groupId: group.id },
+      lock: true, transaction: t,
+    });
       if (ongoingMeeting) {
         return ongoingMeeting.meetingLink;
       }
@@ -102,18 +105,18 @@ async function create(group: DbGroup, availableTmUserId: string) {
   invariant(res.meeting_info_list.length === 1);
   return {
     meetingId: res.meeting_info_list[0].meeting_id,
-    meetingLink: res.meeting_info_list[0].join_url
+    meetingLink: res.meeting_info_list[0].join_url,
   };
 }
 
 export async function updateOngoingMeetings() {
   await sequelizeInstance.transaction(async (t) => {
     const ongoingMeetings = await db.OngoingMeetings.findAll({
-      attributes: ["tmUserId", "meetingId"], lock: true, transaction: t
-    });  for (const meeting of ongoingMeetings) {
+      attributes: ["tmUserId", "meetingId"], lock: true, transaction: t,
+    });
+    for (const meeting of ongoingMeetings) {
       const meetingInfo = await getMeeting(meeting.meetingId, meeting.tmUserId);
-      if (meetingInfo.status !== 'MEETING_STATE_STARTED' &&
-        (moment() > moment.unix(parseInt(meetingInfo.start_time)).add(10, "minutes"))) {
+      if (meetingInfo.status !== 'MEETING_STATE_STARTED') {
         await db.OngoingMeetings.destroy({ where: { tmUserId: meeting.tmUserId }, transaction: t });
         }
     }
