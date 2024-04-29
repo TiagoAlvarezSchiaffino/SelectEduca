@@ -4,7 +4,10 @@ import {
   Button,
   Center,
   Flex,
-  SimpleGrid,
+  SimpleGridProps,
+  Tag,
+  HStack,
+  Tooltip,
   Spacer,
   Text,
   Wrap,
@@ -25,6 +28,7 @@ import { sidebarBreakpoint } from './Navbars';
 import UserChip from './UserChip';
 import { MinUserProfile } from 'shared/UserProfile';
 import { Group, GroupCountingTranscripts } from 'shared/Group';
+import QuestionIconTooltip from './QuestionIconTooltip';
 
 export default function GroupBar({
   group, showSelf, showJoinButton, showTranscriptCount, showTranscriptLink, abbreviateOnMobile, showGroupName, ...rest
@@ -71,7 +75,10 @@ export default function GroupBar({
 
       {/* row 1 col 2 */}
       {showGroupName ?
-        <Text color='grey' fontSize='sm'>{formatGroupName(group.name, group.users.length)}</Text>
+        <HStack spacing={4}>
+          {ownerTag(group)}
+          <Text color='grey' fontSize='sm'>{formatGroupName(group.name, group.users.length)}</Text>
+        </HStack>
         :
         null
       }
@@ -114,6 +121,10 @@ export default function GroupBar({
       </LinkBox>
     </SimpleGrid>
   );
+}
+
+function ownerTag(group: Group) {
+  return group.partnershipId ? <Tag color="white" bgColor="gray"></Tag> : null;
 }
 
 export function JoinButton(props: ButtonProps) {

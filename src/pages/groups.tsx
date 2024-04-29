@@ -19,6 +19,7 @@ import {
     FormErrorMessage,
     Flex,
     Spacer,
+    Checkbox
   } from '@chakra-ui/react'
   import React, { useState } from 'react'
   import AppLayout from 'AppLayout'
@@ -32,13 +33,14 @@ import {
   import { formatGroupName } from 'shared/formatNames';
   import Loader from 'components/Loader'
   import UserSelector from '../components/UserSelector';
+  import QuestionIconTooltip from "../components/QuestionIconTooltip"
 
   const Page: NextPageWithLayout = () => {
     const [userIds, setUserIds] = useState<string[]>([]);
     const [creating, setCreating] = useState(false);
     const [groupBeingEdited, setGroupBeingEdited] = useState<Group | null>(null);
-  
-    const { data, refetch } = trpcNext.groups.list.useQuery({ userIds });
+    const [includeOwned, setIncludOwned] = useState(false);
+    const { data, refetch } = trpcNext.groups.list.useQuery({ userIds, includeOwned });
   
     const createGroup = async () => {
       setCreating(true);
@@ -60,10 +62,10 @@ import {
       <Box paddingTop={'80px'}>
         {groupBeingEdited && <GroupEditor group={groupBeingEdited} onClose={closeGroupEditor}/>}
         <Wrap spacing={6}>
-          <WrapItem minWidth={100}>
+          <WrapItem minWidth={100} alignItems="center">
             <UserSelector isMulti placeholder="" onSelect={setUserIds} />
           </WrapItem>
-          <WrapItem>
+          <WrapItem alignItems="center">
             <Button
               isLoading={creating}
               isDisabled={userIds.length < 2}
@@ -71,6 +73,10 @@ import {
               variant='brand' onClick={createGroup}>
               
             </Button>
+          </WrapItem>
+          <WrapItem alignItems="center">
+            <Checkbox isChecked={includeOwned} onChange={e => setIncludOwned(e.target.checked)}></Checkbox>
+            <QuestionIconTooltip label="" />
           </WrapItem>
         </Wrap>
         <VStack divider={<StackDivider />} align='left' marginTop={8} spacing='3'>

@@ -19,8 +19,9 @@ import { Group, GroupCountingTranscripts, zGroup, zGroupCountingTranscripts,
   zGroupWithTranscripts } from "../../shared/Group";
 import { includeForGroup } from "../database/models/attributesAndIncludes";
 
-async function listGroups(userIds: string[]): Promise<GroupCountingTranscripts[]> {
-  const includes: Includeable[] = [...includeForGroup, {
+async function listGroups(userIds: string[], additionalWhere?: { [k: string]: any }):
+  Promise<GroupCountingTranscripts[]> 
+{  const includes: Includeable[] = [...includeForGroup, {
     model: Transcript,
     // We don't need to return any attributes, but sequelize seems to require at least one attribute.
     // TODO: Any way to return transcript count?
@@ -28,9 +29,9 @@ async function listGroups(userIds: string[]): Promise<GroupCountingTranscripts[]
   }];
 
   if (userIds.length === 0) {
-    return await db.Group.findAll({ include: includes });
+    return await db.Group.findAll({ where: additionalWhere, include: includes });
   } else {
-    return (await findGroups(userIds, 'inclusive', includes)) as GroupCountingTranscripts[];
+    return (await findGroups(userIds, 'inclusive', includes, additionalWhere)) as GroupCountingTranscripts[];
   }
 }
 
@@ -117,9 +118,12 @@ const destroy = procedure
  */
 const list = procedure
   .use(authUser(['GroupManager']))
-  .input(z.object({ userIds: z.string().array(), }))
+  .input(z.object({ 
+    userIds: z.string().array(),
+    includeOwned: z.boolean(),
+  }))
   .output(z.array(zGroup))
-  .query(async ({ input }) => listGroups(input.userIds));
+  .query(async ({ input }) => listGroups(input.userIds, input.includeOwned ? {} : { partnershipId: null }));
 
 /**
  * Identical to `list`, but additionally returns empty transcripts
@@ -175,8 +179,8 @@ export default groups;
  * such group exists.
  * @param includes Optional `include`s in the returned group.
  */
-export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusive', includes?: Includeable[]):
-  Promise<Group[] | GroupCountingTranscripts[]> 
+export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusive', includes?: Includeable[], 
+  additionalWhere?: { [k: string]: any }): Promise<Group[] | GroupCountingTranscripts[]> 
 {
   invariant(userIds.length > 0);
 
@@ -186,7 +190,8 @@ export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusi
     },
     include: [{
       model: db.Group,
-      include: [db.GroupUser, ...(includes || [])]
+      include: [db.GroupUser, ...(includes || [])],
+      where: additionalWhere,
     }]
   })
 
