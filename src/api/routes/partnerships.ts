@@ -10,8 +10,9 @@ import {
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import Assessment from "../database/models/Assessment";
-import { alreadyExistsError, generalBadRequestError } from "api/errors";
+import { alreadyExistsError, generalBadRequestError, noPermissionError, notFoundError } from "api/errors";
 import sequelizeInstance from "api/database/sequelizeInstance";
+import { isPermitted } from "shared/Role";
 
 const create = procedure
   .use(authUser('PartnershipManager'))
@@ -76,21 +77,24 @@ const listMineAsMentor = procedure
 });
 
 const getWithAssessments = procedure
-  .use(authUser('PartnershipAssessor'))
-  .input(z.object({ id: z.string().uuid() }))
+  .use(authUser())
+  .input(z.string())
   .output(zPartnershipWithAssessments)
-  .query(async ({ input }) => 
+  .query(async ({ ctx, input: id }) =>  
 {
-  const res = await db.Partnership.findByPk(input.id, {
+  const res = await db.Partnership.findByPk(id, {
     include: [
       ...includePartnershipUsers,
       Assessment,
     ]
   });
-  if (!res) throw new TRPCError({
-    code: "NOT_FOUND",
-    message: `${input.id}`,
-  })
+  if (!res) throw notFoundError("", id);
+
+  // Only assessors and mentors can access the partnership.
+  if (!isPermitted(ctx.user.roles, 'PartnershipAssessor') && res.mentorId !== ctx.user.id) {
+    throw noPermissionError("", id);
+  }
+
   return res;
 });
 
