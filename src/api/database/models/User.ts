@@ -32,9 +32,11 @@ class User extends ParanoidModel<
   pinyin: string;
 
   @Unique
+  @AllowNull(false)
   @Column(STRING)
   email: string;
 
+  @AllowNull(false)
   @ZodColumn(JSONB, zRoles)
   roles: Role[];
 
@@ -45,7 +47,6 @@ class User extends ParanoidModel<
     using: 'gin'
   })
 
-  @AllowNull(true)
   @Column(DATE)
   consentFormAcceptedAt: Date | null;
 }
