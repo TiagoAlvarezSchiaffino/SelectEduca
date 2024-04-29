@@ -26,7 +26,7 @@ import {
   import { trpcNext } from "../trpc";
   import trpcNext from "../trpcNext";
   import GroupBar, { UserChip } from 'components/GroupBar';
-  import { Group } from 'api/routes/groups';
+  import { Group } from '../shared/Group';
   import ModalWithBackdrop from 'components/ModalWithBackdrop';
   import { MdEditNote, MdPersonRemove } from 'react-icons/md';
   import { formatGroupName } from 'shared/formatNames';
@@ -38,7 +38,7 @@ import {
     const [creating, setCreating] = useState(false);
     const [groupBeingEdited, setGroupBeingEdited] = useState<Group | null>(null);
   
-    const { data, refetch } = trpcNext.groups.listAll.useQuery({ userIds });
+    const { data, refetch } = trpcNext.groups.list.useQuery({ userIds });
   
     const createGroup = async () => {
       setCreating(true);

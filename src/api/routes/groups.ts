@@ -1,7 +1,7 @@
 import { procedure, router } from "../trpc";
 import { z } from "zod";
 import { authUser } from "../auth";
-import DbGroup from "../database/models/Group";
+import db from "../database/db";
 import GroupUser from "../database/models/GroupUser";
 import { Includeable } from "sequelize";
 import User from "../database/models/User";
@@ -15,38 +15,11 @@ import sequelizeInstance from "../database/sequelizeInstance";
 import { formatUserName, formatGroupName } from "../../shared/strings";
 import nzh from 'nzh';
 import { email } from "../sendgrid";
-import { minUserProfileAttributes, zMinUserProfile } from "../../shared/UserProfile";
+import { minUserProfileAttributes } from "../../shared/UserProfile";
 import { alreadyExistsError, noPermissionError, notFoundError } from "../errors";
+import { Group, GroupCountingTranscripts, zGroup, zGroupCountingTranscripts, zGroupWithTranscripts } from "../../shared/Group";
 
-const zGroup = z.object({
-  id: z.string(),
-  name: z.string().nullable(),
-  users: z.array(z.object({
-    id: z.string(),
-    name: z.string().nullable(),
-  }))
-});
-
-export type Group = z.TypeOf<typeof zGroup>;
-
-export const zGroupCountingTranscripts = zGroup.merge(z.object({
-  transcripts: z.array(z.object({})).optional()
-}));
-
-const zGroupWithTranscripts = zGroup.merge(z.object({
-  transcripts: z.array(z.object({
-    transcriptId: z.string(),
-    startedAt: z.date(),
-    endedAt: z.date(),
-    summaries: z.array(z.object({
-        summaryKey: z.string(),
-    }))
-  })),
-}));
-
-export type GroupWithTranscripts = z.TypeOf<typeof zGroupWithTranscripts>;
-
-async function listGroups(userIds: string[]) {
+async function listGroups(userIds: string[]): Promise<GroupCountingTranscripts[]> {
   const includes: Includeable[] = [{
     model: User,
     attributes: ['id', 'name']
@@ -58,9 +31,9 @@ async function listGroups(userIds: string[]) {
   }];
 
   if (userIds.length === 0) {
-    return await DbGroup.findAll({ include: includes });
+    return await db.Group.findAll({ include: includes });
   } else {
-    return await findGroups(userIds, 'inclusive', includes);
+    return (await findGroups(userIds, 'inclusive', includes)) as GroupCountingTranscripts[];
   }
 }
 
@@ -86,7 +59,7 @@ const update = procedure
     
       const addUserIds: string[] = [];
       await sequelizeInstance.transaction(async (t) => {
-        const group = await DbGroup.findByPk(input.id, {
+        const group = await db.Group.findByPk(input.id, {
           include: GroupUser
         });
         if (!group) throw notFoundError("", input.id);
@@ -132,7 +105,7 @@ const destroy = procedure
   .input(z.object({ groupId: z.string().uuid() }))
   .mutation(async ({ input }) => 
     {
-      const group = await DbGroup.findByPk(input.groupId);
+      const group = await db.Group.findByPk(input.groupId);
       if (!group) throw notFoundError("", input.groupId);
 
   // Need a transaction for cascading destroys
@@ -145,7 +118,7 @@ const destroy = procedure
 /**
  * @returns All groups if `userIds` is empty, otherwise return groups that has all the given users.
  */
-const listAll = procedure
+const list = procedure
   .use(authUser(['GroupManager']))
   .input(z.object({ userIds: z.string().array(), }))
   .output(z.array(zGroup))
@@ -154,7 +127,7 @@ const listAll = procedure
 /**
  * Identical to `list`, but additionally returns empty transcripts
  */
-const listAllCountingTranscripts = procedure
+const listCountingTranscripts = procedure
   .use(authUser(['SummaryEngineer']))
   .input(z.object({ userIds: z.string().array(), }))
   .output(z.array(zGroupCountingTranscripts))
@@ -170,7 +143,7 @@ const get = procedure
   .output(zGroupWithTranscripts)
   .query(async ({ input, ctx }) => 
     {
-      const g = await DbGroup.findByPk(input.id, {
+      const g = await db.Group.findByPk(input.id, {
         include: [{
           model: User,
           attributes: minUserProfileAttributes,
@@ -197,8 +170,8 @@ const groups = router({
   create,
   update,
   destroy,
-  listAll,
-  listAllCountingTranscripts,
+  list,
+  listCountingTranscripts,
   get,
 });
 export default groups;
@@ -209,7 +182,7 @@ export default groups;
  * @param includes Optional `include`s in the returned group.
  */
 export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusive', includes?: Includeable[]):
-  Promise<DbGroup[]> 
+  Promise<Group[] | GroupCountingTranscripts[]> 
 {
   invariant(userIds.length > 0);
 
@@ -218,7 +191,7 @@ export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusi
       userId: userIds[0] as string,
     },
     include: [{
-      model: DbGroup,
+      model: db.Group,
       attributes: ['id', 'name'],
       include: [{
         model: GroupUser,
@@ -244,7 +217,7 @@ export async function createGroup(userIds: string[]) {
     throw alreadyExistsError("");
   }
 
-  const group = await DbGroup.create({});
+  const group = await db.Group.create({});
   const groupUsers = await GroupUser.bulkCreate(userIds.map(userId => ({
     userId: userId,
     groupId: group.id,
@@ -267,7 +240,7 @@ async function emailNewUsersOfGroupIgnoreError(ctx: any, groupId: string, userId
 async function emailNewUsersOfGroup(ctx: any, groupId: string, newUserIds: string[]) {
   if (newUserIds.length == 0) return;
 
-  const group = await DbGroup.findByPk(groupId, {
+  const group = await db.Group.findByPk(groupId, {
     include: [{
       model: User,
       attributes: ['id', 'name', 'email'],
