@@ -35,7 +35,8 @@ import {
   import { useUserContext } from 'UserContext';
   import { isPermitted } from 'shared/Role';
   import NextLink from 'next/link';
-  
+  import { formatUserName } from 'shared/strings';
+
   const Page: NextPageWithLayout = () => {
     const [user] = useUserContext();
     const { data: partnerships, refetch } = trpcNext.partnerships.listAll.useQuery
@@ -65,8 +66,10 @@ import {
         <Tbody>
         {partnerships.map(p => (
           <Tr key={p.id}>
-            <Td width={{ [sidebarBreakpoint]: '12em' }}><UserChip user={p.mentee} /></Td>
-            <Td><UserChip user={p.mentor} /></Td>
+            <Td>{formatUserName(p.mentee.name, "formal")}</Td>
+            <Td>(p.mentee.name ?? "")</Td>
+            <Td>{formatUserName(p.mentor.name, "formal")}</Td>
+            <Td>(p.mentor.name ?? "")</Td>
             {showAssessment && <Td>
               <Link as={NextLink} href={`/partnerships/${p.id}/assessments`}>
                 {p.assessments.length}）
