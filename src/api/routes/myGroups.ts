@@ -5,9 +5,8 @@ import GroupUser from "../database/models/GroupUser";
 import Group from "../database/models/Group";
 import User from "../database/models/User";
 import invariant from "tiny-invariant";
-import { createMeeting } from "../TencentMeeting";
+import { createMeeting, getMeeting } from "../TencentMeeting";
 import Transcript from "../database/models/Transcript";
-import moment from 'moment';
 import { zGroupCountingTranscripts } from "../../shared/Group";
 import { encodeMeetingSubject } from "./meetings";
 import { formatGroupName } from "shared/strings";
@@ -54,6 +53,8 @@ const myGroups = router({
         await sleep(2000);
         return "/fakeMeeting";
       }
+
+      updateOngoingMeetings();
 
       // if the user's group is present in OngoingMeetings Model, return the meeting link 
       const ongoingMeeting = await OngoingMeetings.findOne({ where: { groupId: group.id } });
@@ -103,3 +104,12 @@ const myGroups = router({
 });
 
 export default myGroups;
+
+export async function updateOngoingMeetings() {
+  const ongoingMeetings = await OngoingMeetings.findAll({ attributes: ["tmUserId", "meetingId"] });
+  for (const meeting of ongoingMeetings) {
+    if ((await getMeeting(meeting.meetingId, meeting.tmUserId)).status !== 'MEETING_STATE_STARTED') {
+      await OngoingMeetings.destroy({ where: { tmUserId: meeting.tmUserId } });
+    }
+  }
+}
