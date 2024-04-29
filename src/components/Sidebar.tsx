@@ -29,12 +29,16 @@ import {
 import Role from "../shared/Role";
 import { IconType } from "react-icons";
 import { sidebarBreakpoint, sidebarContentMarginTop, sidebarWidth, topbarHeight } from './Navbars';
+import { parseQueryParameter } from 'parseQueryParamter';
 
 export interface SidebarItem {
   name: string,
   icon: IconType,
   path: string,
   role?: Role,
+  
+  basePath?: string,
+  queryParam?: string,
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -75,6 +79,8 @@ function partnerships2Items(partnerships: Partnership[] | undefined): SidebarIte
     name: p.mentee.name ?? '',
     icon: MdFace,
     path: `/partnerships/${p.id}`,
+    basePath: "/partnerships/",
+    queryParam: "partnershipId",
   }));
 }
 
@@ -138,8 +144,9 @@ export default Sidebar;
 const SidebarRow = ({ item, onClose, ...rest }: {
   item: SidebarItem,
 } & SidebarProps) => {
-  const { pathname } = useRouter();
-  const active = pathname === item.path;
+  const router = useRouter();
+  const active = item.path === router.pathname || 
+    item.path === item.basePath + parseQueryParameter(router, item.queryParam || "");
   return (
     <Link 
       as={NextLink} 
