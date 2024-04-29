@@ -11,6 +11,7 @@ import { sidebarBreakpoint } from 'components/Navbars';
 import MarkdownEditor from 'components/MarkdownEditor';
 import AssessmentsPanel from 'components/AssessmentsPanel';
 import { Partnership } from 'shared/Partnership';
+import { formatUserName } from 'shared/strings';
 
 const Page: NextPageWithLayout = () => {
   const { data: partnership } = trpcNext.partnerships.getWithAssessments.useQuery(
@@ -20,7 +21,7 @@ const Page: NextPageWithLayout = () => {
 
   return <>
     <HStack spacing={10} marginBottom={pageBreadcrumbMarginBottom}>
-      <PageBreadcrumb current={`${partnership.mentee.name}`} marginBottom={0} />
+        <PageBreadcrumb current={`${formatUserName(partnership.mentee.name, "friendly")}`} marginBottom={0} />
       <JoinButton isDisabled></JoinButton>
     </HStack>
     <Grid templateColumns={{ base: "1fr", [sidebarBreakpoint]: "0.382fr 0.618fr" }} gap={10}>
