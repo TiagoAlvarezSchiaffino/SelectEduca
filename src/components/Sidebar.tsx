@@ -68,6 +68,12 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     name: '',
+    path: '/interviews',
+    icon: MdGroup,
+    role: 'InterviewManager',
+  },
+  {
+    name: '',
     path: '/partnerships',
     icon: MdGroup,
     role: 'PartnershipManager',

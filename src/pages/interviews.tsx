@@ -16,8 +16,10 @@ import {
     Th,
     Td,
     Flex,
-    Box,
     Link,
+    TableContainer,
+    HStack,
+    Icon,
   } from '@chakra-ui/react'
   import React, { useState } from 'react'
   import AppLayout from 'AppLayout'
@@ -25,7 +27,6 @@ import {
   import { trpcNext } from "../trpc";
   import ModalWithBackdrop from 'components/ModalWithBackdrop';
   import trpc from 'trpc';
-  import { AddIcon } from '@chakra-ui/icons';
   import Loader from 'components/Loader';
   import { PartnershipCountingAssessments, isValidPartnershipIds } from 'shared/Partnership';
   import UserSelector from 'components/UserSelector';
@@ -33,51 +34,52 @@ import {
   import { useUserContext } from 'UserContext';
   import { isPermitted } from 'shared/Role';
   import NextLink from 'next/link';
-  import { formatUserName } from 'shared/strings';
-
+  import { formatUserName, toPinyin } from 'shared/strings';
+  import { MdFace, MdPerson3 } from 'react-icons/md';
+  
   const Page: NextPageWithLayout = () => {
     const [user] = useUserContext();
     const { data: partnerships, refetch } = trpcNext.partnerships.list.useQuery
-    <PartnershipCountingAssessments[] | undefined>();
+      <PartnershipCountingAssessments[] | undefined>();
     const [ modalIsOpen, setModalIsOpen ] = useState(false);
   
-    const showAddButton = isPermitted(user.roles, 'PartnershipManager');
-    const showAssessment = isPermitted(user.roles, 'PartnershipAssessor');
+    const showAddButton = isPermitted(user.roles, 'InterviewManager');
+    const showFeedback = isPermitted(user.roles, 'PartnershipAssessor');
   
     return <Flex direction='column' gap={6}>
-      {showAddButton && <Box>
-        <Button variant='brand' leftIcon={<AddIcon />} onClick={() => setModalIsOpen(true)}></Button>
-      </Box>}
+      {showAddButton && <HStack spacing={6}>
+        <Button variant='brand' leftIcon={<Icon as={MdFace} />} onClick={() => setModalIsOpen(true)}></Button>
+        <Button variant='brand' leftIcon={<Icon as={MdPerson3} />} onClick={() => setModalIsOpen(true)}></Button>
+      </HStack>}
   
       {modalIsOpen && <AddModel onClose={() => {
         setModalIsOpen(false);
         refetch();
       }} />}
   
-      {!partnerships ? <Loader /> : <Table>
+      {!partnerships ? <Loader /> : <TableContainer><Table>
         <Thead>
           <Tr>
-            <Th></Th><Th></Th>
-            {showAssessment && <Th></Th>} <Th>ID</Th>
+            <Th></Th><Th></Th><Th></Th><Th></Th>
+            {showFeedback && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
         {partnerships.map(p => (
           <Tr key={p.id}>
             <Td>{formatUserName(p.mentee.name, "formal")}</Td>
-            <Td>(p.mentee.name ?? "")</Td>
+            <Td>{toPinyin(p.mentee.name ?? "")}</Td>
             <Td>{formatUserName(p.mentor.name, "formal")}</Td>
-            <Td>(p.mentor.name ?? "")</Td>
-            {showAssessment && <Td>
+            <Td>{toPinyin(p.mentor.name ?? "")}</Td>
+            {showFeedback && <Td>
               <Link as={NextLink} href={`/partnerships/${p.id}/assessments`}>
                 {p.assessments.length}）
               </Link>
             </Td>}
-            <Td>{p.id}</Td>
           </Tr>
         ))}
         </Tbody>
-      </Table>}
+      </Table></TableContainer>}
   
     </Flex>
   }

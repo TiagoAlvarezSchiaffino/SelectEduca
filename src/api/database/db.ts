@@ -6,6 +6,8 @@ import Summary from "./models/Summary";
 import OngoingMeetings from "./models/OngoingMeetings";
 import Partnership from './models/Partnership';
 import Assessment from "./models/Assessment";
+import Interview from "./models/Interview";
+import InterviewFeedback from "./models/InterviewFeedback";
 
 const db = {
   Partnership,
@@ -16,6 +18,8 @@ const db = {
   Summary, 
   OngoingMeetings,
   Assessment,
+  Interview,
+  InterviewFeedback,
 };
 
 export default db;

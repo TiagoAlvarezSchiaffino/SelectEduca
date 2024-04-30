@@ -17,6 +17,7 @@ import GroupUser from "./GroupUser";
 import User from "./User";
 import Transcript from "./Transcript";
 import Partnership from "./Partnership";
+import Interview from "./Interview";
 
 @Table({ tableName: "groups", modelName: "group" })
 @Fix
@@ -42,8 +43,10 @@ class Group extends ParanoidModel<
   @Column(UUID)
   partnershipId: string | null;
 
-  @BelongsTo(() => Partnership)
-  partnership: NonAttribute<Partnership>;
+  // A group is said to be "owned" by an interview if this field is non-null.
+  @ForeignKey(() => Interview)
+  @Column(UUID)
+  interviewId: string | null;
 
   @BeforeDestroy
   static async cascadeDestroy(group: Group, options: any) {

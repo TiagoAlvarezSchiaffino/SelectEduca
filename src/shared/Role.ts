@@ -9,6 +9,7 @@ export const AllRoles = [
   'SummaryEngineer',
   'PartnershipManager',
   'PartnershipAssessor',
+  'InterviewManager',
   'Mentor',
   'Mentee',
 ] as const;
@@ -65,6 +66,12 @@ export const RoleProfiles: { [key: string]: {
     actions: '',
     privileged: true,
     privilegedUserDataAccess: true,
+  },
+  InterviewManager: {
+    displayName: '',
+    actions: '',
+    privileged: true,
+    privilegedUserDataAccess: false,
   },
   Mentor: {
     displayName: '',
