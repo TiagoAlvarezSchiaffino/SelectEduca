@@ -77,11 +77,11 @@ const UserProfile: NextPageWithLayout = () => {
   const EmailField = () => {
     return (
       <FormControl>
-        <SimpleGrid columns={8}>
+        <SimpleGrid columns={6}>
           <Box>
             <FormLabel></FormLabel>
           </Box>
-          <Box width="200%">
+          <Box>
             {user.email}
           </Box>
         </SimpleGrid>
@@ -92,11 +92,11 @@ const UserProfile: NextPageWithLayout = () => {
   const NameField = () => {
     return (
       <FormControl isInvalid={!name}>
-        <SimpleGrid columns={8}>
+        <SimpleGrid columns={6}>
           <Box>
             <FormLabel marginTop='5px'></FormLabel>
           </Box>
-          <Box width="200%">
+          <Box>
             <Editable 
               defaultValue={user.name ? user.name : undefined}
               onSubmit={(newName) => handleSubmit(newName)}
