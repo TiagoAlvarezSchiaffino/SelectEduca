@@ -2,12 +2,13 @@ import { procedure } from "../trpc";
 import z from "zod";
 import { generalBadRequestError } from "../errors";
 import { createUser } from "../database/models/User";
+import { emailRoleIgnoreError } from "../sendgrid";
 
 export default procedure
-  .input(z.record(z.string()))
-  .mutation(async ({ input }) => submit(input));
+    .input(z.record(z.string(), z.any()))
+    .mutation(async ({ ctx, input }) => submit(input, ctx.baseUrl));
 
-export async function submit({ form, entry }: Record<string, any>) {
+export async function submit({ form, entry }: Record<string, any>, baseUrl: string) {
   if (form !== "FBTWTe") {
     throw generalBadRequestError();
   }
@@ -56,12 +57,15 @@ export async function submit({ form, entry }: Record<string, any>) {
     }
   }
 
+  const name = entry.field_104;
   await createUser({
-    name: entry.field_104,
+    name,
     sex: entry.field_57,
     email: entry.field_113,
     wechat: entry.field_106,
     menteeApplication: application,
     roles: ["Mentee"]
   });
+
+  emailRoleIgnoreError("UserManager", "", `${name}`, baseUrl);
 }
