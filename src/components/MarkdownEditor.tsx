@@ -31,16 +31,25 @@ export default function MarkdownEditor({ initialValue, onChange, ...rest }: {
  * It's highly recommended (and sometimes necessary) to use `key` to uniquely identify the editor,
  * to prevent the system from confusing the persistent states maintained in multiple instances of this component.
  */
-export function AutosavingMarkdownEditor({ initialValue, onSave }: {
+export function AutosavingMarkdownEditor({ initialValue, onSave, maxHeight, toolbar, status, placeholder }: {
   initialValue?: string | null,
   onSave: (edited: string) => Promise<void>,
+  placeholder?: string,
+  maxHeight?: string,
+  toolbar?: boolean,
+  status?: boolean,
 }) {
   const [edited, setEdited] = useState<string | undefined>();
 
   // Receating the editor on each change on `edited` will reset its focus (and possibly other states). So don't do it.
-  const editor = useMemo(() => <>
-    <MarkdownEditor initialValue={initialValue || ''} onChange={v => setEdited(v)} />
-  </>, [initialValue, setEdited]);
+  const editor = useMemo(() => <MarkdownEditor 
+      initialValue={initialValue || ''} 
+      onChange={v => setEdited(v)} 
+      placeholder={placeholder ? placeholder : ""}
+      {...maxHeight == undefined ? {} : { maxHeight }} 
+      {...toolbar == undefined ? {} : { toolbar }}
+      {...status == undefined ? {} : { status }}
+    />, [initialValue, setEdited, maxHeight, toolbar, status, placeholder]);
   return <>
     {editor}
     <Autosaver data={edited} onSave={onSave} />

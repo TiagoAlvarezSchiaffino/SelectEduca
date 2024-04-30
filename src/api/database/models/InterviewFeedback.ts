@@ -38,7 +38,7 @@ import {
     interviewerId: string;
   
     @ZodColumn(JSONB, z.record(z.string(), z.any()).nullable())
-    feedback: object | null;
+    feedback: Record<string, any> | null;
 
     @Column(DATE)
     feedbackCreatedAt: string | null;
@@ -49,6 +49,9 @@ import {
 
     @BelongsTo(() => User)
     interviewer: User;
+
+    @BelongsTo(() => Interview)
+    interview: Interview;
   }
   
   export default InterviewFeedback;

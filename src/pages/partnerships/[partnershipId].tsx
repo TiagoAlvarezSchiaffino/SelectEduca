@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { parseQueryParameter } from 'parseQueryParamter';
 import trpc, { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
-import { Flex, Grid, GridItem, Text, Tabs, TabList, TabPanels, Tab, TabPanel, Heading, Tooltip, Box, Center } from '@chakra-ui/react';
+import { Flex, Grid, GridItem, Text, Tabs, TabList, TabPanels, Tab, TabPanel, Tooltip } from '@chakra-ui/react';
 import GroupBar from 'components/GroupBar';
 import { sidebarBreakpoint } from 'components/Navbars';
 import { AutosavingMarkdownEditor } from 'components/MarkdownEditor';
