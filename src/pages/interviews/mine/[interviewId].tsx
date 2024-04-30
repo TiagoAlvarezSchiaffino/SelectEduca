@@ -12,13 +12,8 @@ import { Flex, Grid, GridItem,
   SliderThumb,
   SliderMark,
   Tooltip,
-  Icon,
-  Link,
-  UnorderedList,
-  ListItem,
-  Text,
-  Center,
 } from '@chakra-ui/react';
+import GroupBar from 'components/GroupBar';
 import { sidebarBreakpoint } from 'components/Navbars';
 import { useUserContext } from 'UserContext';
 import invariant from "tiny-invariant";
@@ -31,9 +26,6 @@ import Autosaver from 'components/Autosaver';
 import { InterviewFeedback } from 'shared/InterviewFeedback';
 import _ from "lodash";
 import MenteeApplication from 'components/MenteeApplication';
-import { BsWechat } from "react-icons/bs";
-import { MinUser } from 'shared/User';
-import { ExternalLinkIcon } from '@chakra-ui/icons';
 
 const Page: NextPageWithLayout = () => {
   const interviewId = parseQueryParameter(useRouter(), 'interviewId');
@@ -45,14 +37,11 @@ const Page: NextPageWithLayout = () => {
     <PageBreadcrumb current={formatUserName(interview.interviewee.name, "formal")} parents={[{
       name: "", link: "/interviews/mine",
     }]}/>
-    {/* <GroupBar group={interview.group} showGroupName={false} showJoinButton marginBottom={8} /> */}
+    <GroupBar group={interview.group} showJoinButton showGroupName={false} marginBottom={8} />
     {/* TODO: For some reason "1fr 1fr" doens't work */}
     <Grid templateColumns={{ base: "100%", [sidebarBreakpoint]: "40% 50%" }} gap={10}>
       <GridItem>
-        <Flex direction="column" gap={10}>
-          <Instructions interviewers={interview.feedbacks.map(f => f.interviewer)} />
-          <FeedbackEditor interview={interview} />
-        </Flex>
+        <FeedbackEditor interview={interview} />
       </GridItem>
       <GridItem>
         {interview.type == "MenteeInterview" ? <MenteeApplication menteeUserId={interview.interviewee.id} /> : <Box />}
@@ -65,48 +54,8 @@ Page.getLayout = (page) => <AppLayout unlimitedPageWidth>{page}</AppLayout>;
 
 export default Page;
 
-function Instructions({ interviewers }: {
-  interviewers: MinUser[],
-}) {
-  const [me] = useUserContext();
-
-  let first: boolean | null = null;
-  let other: MinUser | null = null;
-  invariant(interviewers.filter(i => i.id === me.id).length == 1);
-  if (interviewers.length == 2) {
-    other = interviewers[0].id === me.id ? interviewers[1] : interviewers[0];
-    first = other.id > me.id;
-  }
-
-  const marginEnd = 1.5;
-  return <Flex direction="column" gap={6}>
-    <UnorderedList>
-      <ListItem><Icon as={BsWechat} marginX={1.5} /></ListItem>
-      {first !== null && <>
-        <ListItem>
-          <Text as="span" color="red.600">{first ? "1到4" : "5 到 8"}</Text>
-          {formatUserName(other?.name ?? null, "friendly")}{first ? "5 到 8" : "1 到 4"}。
-        </ListItem>
-        <ListItem><Text color="red.600"></Text></ListItem>
-      </>}
-    </UnorderedList>
-    <b></b>
-    <UnorderedList>
-    <ListItem>
-        <Link isExternal href="">
-          <ExternalLinkIcon />
-        </Link>
-      </ListItem>
-      <ListItem>
-        <Link isExternal href="">
-          <ExternalLinkIcon />
-        </Link>
-      </ListItem>
-    </UnorderedList>
-  </Flex>;
-}
-
 type Feedback = {
+  summary: string,
   dimensions: FeedbackDimension[],
 };
 
@@ -117,7 +66,7 @@ type FeedbackDimension = {
 };
 
 const defaultScore = 1;
-const defaultComment = "";
+const defaultCommentAndSummary = "";
 
 function findDimension(f: Feedback | null, dimensionName: string): FeedbackDimension | null {
   if (!f) return null;
@@ -134,6 +83,10 @@ function FeedbackEditor({ interview }: {
   interview: Interview,
 }) {
   const [me] = useUserContext();
+  const [feedback, setFeedback] = useState<Feedback>({
+    summary: defaultCommentAndSummary,
+    dimensions: [],
+  });
 
   const getFeedbackId = () => {
     const feedbacks = interview.feedbacks.filter(f => f.interviewer.id === me.id);
@@ -143,18 +96,22 @@ function FeedbackEditor({ interview }: {
 
   const feedbackId = getFeedbackId();
   const { data: interviewFeedback } = trpcNext.interviewFeedbacks.get.useQuery<InterviewFeedback | null>(feedbackId);
-  const getFeedback = () => interviewFeedback ? interviewFeedback.feedback as Feedback : { dimensions: [] };
+  useEffect(() => {
+    if (interviewFeedback?.feedback) setFeedback(interviewFeedback.feedback as Feedback);
+  }, [interviewFeedback]);
 
   const dimensionNames = ["", "", "", "", "", "", "", ""];
-  const summaryDimensionName = "";
-  const summaryDimensions = getFeedback().dimensions.filter(d => d.name === summaryDimensionName);
-  const summaryDimension = summaryDimensions.length == 1 ? summaryDimensions[0] : null;
+
+  const save = async (f: Feedback) => {
+    if (_.isEqual(f, feedback)) return;
+    setFeedback(f);
+    await trpc.interviewFeedbacks.update.mutate({ id: feedbackId, feedback: f });
+  };
 
   const saveDimension = async (edited: FeedbackDimension) => {
-    const old = getFeedback();
-    const f = structuredClone(old);
+    const f = structuredClone(feedback);
     const d = findDimension(f, edited.name);
-    if (edited.score == defaultScore && edited.comment == defaultComment) {
+    if (edited.score == defaultScore && edited.comment == defaultCommentAndSummary) {
       f.dimensions = f.dimensions.filter(d => d.name !== edited.name);
     } else if (d) {
       d.score = edited.score;
@@ -162,48 +119,44 @@ function FeedbackEditor({ interview }: {
     } else {
       f.dimensions.push(edited);
     }
-    
-    if (_.isEqual(f, old)) return;
-    await trpc.interviewFeedbacks.update.mutate({ id: feedbackId, feedback: f });    
+    await save(f);
+  };
+
+  const saveSummary = async (edited: string) => {
+    const f = structuredClone(feedback);
+    f.summary = edited;
+    await save(f);
   };
 
   return !interviewFeedback ? <Loader /> : <Flex direction="column" gap={6}>
-    <FeedbackDimensionEditor 
-      editorKey={`${feedbackId}-${summaryDimensionName}`}
-      dimensionName={summaryDimensionName}
-      dimensionLabel={summaryDimensionName}
-      scoreLabels={["", "", "", ""]}
-      initialScore={summaryDimension?.score || defaultScore}
-      initialComment={summaryDimension?.comment || defaultComment}
-      onSave={async (d) => await saveDimension(d)}
-    />
-
-    {dimensionNames.map((dn, idx) => {
-      const d = findDimension(getFeedback(), dn);
+    {dimensionNames.map(dn => {
+      const d = findDimension(interviewFeedback.feedback as Feedback, dn);
       return <FeedbackDimensionEditor 
         key={dn} 
-        editorKey={`${feedbackId}-${dn}`}
-        dimensionName={dn}
-        dimensionLabel={`${idx + 1}. ${dn}`}
-        scoreLabels={["", "", "", "", ""]}
+        editorKey={`${feedbackId}-${dn}`} 
+        name={dn}
         initialScore={d?.score || defaultScore}
-        initialComment={d?.comment || defaultComment}
+        initialComment={d?.comment || defaultCommentAndSummary}
         onSave={async (d) => await saveDimension(d)}
       />;
     })}
+
+    <Box><b></b></Box>
+    <AutosavingMarkdownEditor
+      key={`${feedbackId}-summary`}
+      initialValue={(interviewFeedback.feedback as Feedback | null)?.summary || defaultCommentAndSummary}
+      onSave={async (s) => await saveSummary(s)}
+      placeholder=""
+      toolbar={false} 
+      status={false} 
+      maxHeight="200px" 
+    />
   </Flex>;
 }
 
-/**
- * N.B. scores are 1-indexed while labels are 0-index.
- */
-function FeedbackDimensionEditor({ 
-  editorKey, dimensionName, dimensionLabel, scoreLabels, initialScore, initialComment, onSave,
-}: {
+function FeedbackDimensionEditor({ editorKey, name, initialScore, initialComment, onSave }: {
   editorKey: string,
-  dimensionName: string,
-  dimensionLabel: string,
-  scoreLabels: string[],
+  name: string,
   initialScore: number,
   initialComment: string,
   onSave: (d: FeedbackDimension) => Promise<void>,
@@ -212,21 +165,27 @@ function FeedbackDimensionEditor({
   const [comment, setComment] = useState<string>(initialComment);
   const [showTooltip, setShowTooltip] = useState(false);
 
+  const labels = ["", "", "", "", ""];  
+
   return <>
     <Flex direction="row" gap={3}>
-      <Box minWidth={140}><b>{dimensionLabel}</b></Box>
-      <Slider min={1} max={scoreLabels.length} step={1} defaultValue={initialScore}
+      <Box minWidth={120}><b>{name}</b></Box>
+      <Slider min={1} max={5} step={1} defaultValue={initialScore}
         onChange={setScore}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         <SliderTrack><SliderFilledTrack bg="brand.b" /></SliderTrack>
-        {scoreLabels.map((_, idx) => <SliderMark key={idx} value={idx + 1}>.</SliderMark>)}
+        <SliderMark value={1}>.</SliderMark>
+        <SliderMark value={2}>.</SliderMark>
+        <SliderMark value={3}>.</SliderMark>
+        <SliderMark value={4}>.</SliderMark>
+        <SliderMark value={5}>.</SliderMark>
         <Tooltip
           hasArrow
           placement='top'
           isOpen={showTooltip}
-          label={`${score}: ${scoreLabels[score - 1]}`}
+          label={`${score}: ${labels[score - 1]}`}
         >
           <SliderThumb bg="brand.b" />
         </Tooltip>
@@ -234,17 +193,17 @@ function FeedbackDimensionEditor({
       <Autosaver
         // This conditional is to prevent initial page loading from triggering auto saving.
         data={score == initialScore ? null : score} 
-        onSave={async (_) => await onSave({ name: dimensionName, score, comment })}
+        onSave={async (_) => await onSave({ name, score, comment })}
       />
     </Flex>
     <AutosavingMarkdownEditor
       key={editorKey} 
       initialValue={initialComment} 
-      onSave={async (edited) => { setComment(edited); await onSave({ name: dimensionName, score, comment: edited }); }}
+      onSave={async (edited) => { setComment(edited); await onSave({ name, score, comment: edited }); }}
       placeholder=""
       toolbar={false} 
       status={false} 
-      maxHeight="120px" 
+      maxHeight="80px" 
     />
   </>;
 }
