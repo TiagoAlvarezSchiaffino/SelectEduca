@@ -99,7 +99,7 @@ function Instructions({ interviewers }: {
       <ListItem><Icon as={BsWechat} marginX={1.5} /></ListItem>
       {first !== null && <>
         <ListItem>
-          <Text as="span" color="red.600">{first ? "1到4" : "5 到 8"}</Text>
+            <Text as="span" color="red.600">{first ? "1  4" : "5  8"}</Text>
           {formatUserName(other?.name ?? null, "friendly")}{first ? "5 到 8" : "1 到 4"}。
         </ListItem>
         <ListItem><Text color="red.600"></Text></ListItem>
