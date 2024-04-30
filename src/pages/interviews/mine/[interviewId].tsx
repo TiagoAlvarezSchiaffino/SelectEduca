@@ -17,6 +17,7 @@ import { Flex, Grid, GridItem,
   UnorderedList,
   ListItem,
   Text,
+  Center,
 } from '@chakra-ui/react';
 import { sidebarBreakpoint } from 'components/Navbars';
 import { useUserContext } from 'UserContext';
@@ -33,52 +34,36 @@ import MenteeApplication from 'components/MenteeApplication';
 import { BsWechat } from "react-icons/bs";
 import { MinUser } from 'shared/User';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
-import moment from "moment";
-import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
 
 const Page: NextPageWithLayout = () => {
   const interviewId = parseQueryParameter(useRouter(), 'interviewId');
   const { data: interview } = trpcNext.interviews.get.useQuery(interviewId);
-  const { data: meNoCache } = trpcNext.users.meNoCache.useQuery();
-
-  const interviewerTestPassed = () => {
-    const passed = meNoCache?.menteeInterviewerTestLastPassedAt;
-    return passed ? moment().diff(moment(passed), "days") < 300 : false;
-  }
-
+  
   if (!interview) return <Loader />;
 
   return <>
     <PageBreadcrumb current={formatUserName(interview.interviewee.name, "formal")} parents={[{
       name: "", link: "/interviews/mine",
     }]}/>
-
-    {!meNoCache ? <Loader /> : !interviewerTestPassed() ? <PassTestFirst /> :
-      <Grid templateColumns={{ base: "100%", [sidebarBreakpoint]: "47% 47%" }} gap={sectionSpacing}>
-        <GridItem>
-          <Flex direction="column" gap={sectionSpacing}>
-            <Instructions interviewers={interview.feedbacks.map(f => f.interviewer)} />
-            <FeedbackEditor interview={interview} />
-          </Flex>
-        </GridItem>
-        <GridItem>
-          {interview.type == "MenteeInterview" ? <MenteeApplication menteeUserId={interview.interviewee.id} /> : <Box />}
-        </GridItem>
-      </Grid>
-    }
+    {/* <GroupBar group={interview.group} showGroupName={false} showJoinButton marginBottom={8} /> */}
+    {/* TODO: For some reason "1fr 1fr" doens't work */}
+    <Grid templateColumns={{ base: "100%", [sidebarBreakpoint]: "40% 50%" }} gap={10}>
+      <GridItem>
+        <Flex direction="column" gap={10}>
+          <Instructions interviewers={interview.feedbacks.map(f => f.interviewer)} />
+          <FeedbackEditor interview={interview} />
+        </Flex>
+      </GridItem>
+      <GridItem>
+        {interview.type == "MenteeInterview" ? <MenteeApplication menteeUserId={interview.interviewee.id} /> : <Box />}
+      </GridItem>
+    </Grid>
   </>;
 };
 
 Page.getLayout = (page) => <AppLayout unlimitedPageWidth>{page}</AppLayout>;
 
 export default Page;
-
-function PassTestFirst() {
-  return <Flex direction="column" gap={paragraphSpacing}>
-    <b></b>
-    <p><Link isExternal href=""></Link></p>
-  </Flex>;
-}
 
 function Instructions({ interviewers }: {
   interviewers: MinUser[],
@@ -94,17 +79,20 @@ function Instructions({ interviewers }: {
   }
 
   const marginEnd = 1.5;
-  return <Flex direction="column" gap={sectionSpacing}>
+  return <Flex direction="column" gap={6}>
     <UnorderedList>
       <ListItem><Icon as={BsWechat} marginX={1.5} /></ListItem>
       {first !== null && <>
         <ListItem>
-            <mark>{first ? "1  4" : "5  8"} </mark>
+          <Text as="span" color="red.600">{first ? "1到4" : "5 到 8"}</Text>
           {formatUserName(other?.name ?? null, "friendly")}{first ? "5 到 8" : "1 到 4"}。
         </ListItem>
-        <ListItem><mark></mark></ListItem>
+        <ListItem><Text color="red.600"></Text></ListItem>
       </>}
-      <ListItem>
+    </UnorderedList>
+    <b></b>
+    <UnorderedList>
+    <ListItem>
         <Link isExternal href="">
           <ExternalLinkIcon />
         </Link>
@@ -183,7 +171,7 @@ function FeedbackEditor({ interview }: {
     <FeedbackDimensionEditor 
       editorKey={`${feedbackId}-${summaryDimensionName}`}
       dimensionName={summaryDimensionName}
-      dimensionLabel={`${summaryDimensionName}`}
+      dimensionLabel={summaryDimensionName}
       scoreLabels={["", "", "", ""]}
       initialScore={summaryDimension?.score || defaultScore}
       initialComment={summaryDimension?.comment || defaultComment}
