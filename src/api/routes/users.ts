@@ -1,10 +1,10 @@
 import { procedure, router } from "../trpc";
 import { z } from "zod";
 import Role, { AllRoles, RoleProfiles, isPermitted, zRoles } from "../../shared/Role";
-import User from "../database/models/User";
+import db from "../database/db";
 import { Op } from "sequelize";
 import { authUser, invalidateLocalUserCache } from "../auth";
-import { zUser } from "../../shared/User";
+import User, { zUser } from "../../shared/User";
 import { toPinyin } from "../../shared/strings";
 import invariant from 'tiny-invariant';
 import { email } from "../sendgrid";
@@ -43,7 +43,7 @@ const create = procedure
 {
   checkUserFields(input.name, input.email);
   checkPermissionForManagingPrivilegedRoles(ctx.user.roles, input.roles);
-  await User.create({
+  await db.User.create({
     name: input.name,
     pinyin: toPinyin(input.name),
     email: input.email,
@@ -60,7 +60,7 @@ const list = procedure
   .output(z.array(zUserProfile))
   .query(async ({ input }) => 
 {
-  return await User.findAll({ 
+  return await db.User.findAll({ 
     order: [['pinyin', 'ASC']],
     ...input?.searchTerm ? {
       where: {
@@ -92,7 +92,7 @@ const update = procedure
     throw noPermissionError("", input.id);
   }
 
-  const user = await User.findByPk(input.id);
+  const user = await db.User.findByPk(input.id);
   if (!user) {
     throw notFoundError("", input.id);
   }
@@ -118,6 +118,35 @@ const update = procedure
   invalidateLocalUserCache();
 });
 
+const getMenteeApplication = procedure
+  .use(authUser())
+  .input(z.string())
+  .output(z.record(z.string(), z.any()).nullable())
+  .query(async ({ ctx, input: menteeUserId }) =>
+{
+  // Only allow interviewers of the mentee to read.
+  const interviews = await db.Interview.findAll({
+    where: {
+      type: "MenteeInterview",
+      intervieweeId: menteeUserId,
+    },
+    attributes: [],
+    include: [{
+      model: db.InterviewFeedback,
+      attributes: [],
+      where: { interviewerId: ctx.user.id },
+    }, {
+      model: db.User,
+      attributes: ["menteeApplication"],
+    }],
+  });
+  if (interviews.length == 0) {
+    throw noPermissionError("", menteeUserId);
+  }
+
+  return interviews[0].interviewee.menteeApplication;
+});
+
 /**
  * List all users and their roles who have privileged user data access. See RoleProfile.privilegeUserDataAccess for an
  * explanation.
@@ -130,7 +159,7 @@ const listPriviledgedUserDataAccess = procedure
   })))
   .query(async () => 
 {
-  return await User.findAll({ 
+  return await db.User.findAll({ 
     // TODO: Optimize with postgres `?|` operator
     where: {
       [Op.or]: AllRoles.filter(r => RoleProfiles[r].privilegedUserDataAccess).map(r => ({
@@ -148,6 +177,7 @@ const users = router({
   list,
   update,
   listPriviledgedUserDataAccess,
+  getMenteeApplication,
 });
 export default users;
 
@@ -173,7 +203,7 @@ async function emailUserAboutNewPrivilegedRoles(userManagerName: string, user: U
     const rp = RoleProfiles[r];
     await email('d-7b16e981f1df4e53802a88e59b4d8049', [{
       to: [{ 
-        name: user.name, 
+        name: formatUserName(user.name, 'formal'), 
         email: user.email 
       }],
       dynamicTemplateData: {

@@ -137,11 +137,11 @@ export async function updateInterview(id: string, type: InterviewType, interview
   if (type !== i.type) {
     throw generalBadRequestError("");
   }
-  if (intervieweeId !== i.intervieweeId && i.feedbacks.some(f => f.feedbackCreatedAt != null)) {
+  if (intervieweeId !== i.intervieweeId && i.feedbacks.some(f => f.feedbackUpdatedAt != null)) {
     throw generalBadRequestError("");
   }
   for (const f of i.feedbacks) {
-    if (f.feedbackCreatedAt && !interviewerIds.includes(f.interviewer.id)) {
+    if (f.feedbackUpdatedAt && !interviewerIds.includes(f.interviewer.id)) {
       throw generalBadRequestError(`${formatUserName(f.interviewer.name, "formal")}`);
     }
   }

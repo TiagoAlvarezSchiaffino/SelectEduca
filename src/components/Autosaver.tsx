@@ -65,7 +65,7 @@ async function saveWithRetry(
         break;
       } catch (e) {
         console.error(`Autosaver: error during saving. retry in ${retryIntervalSec} secs:`, e);
-        setError(`${e}`);
+        setError(``);
         await sleep(retryIntervalSec * 1000);
     }
     }

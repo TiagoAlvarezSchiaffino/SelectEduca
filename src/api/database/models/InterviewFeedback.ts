@@ -41,7 +41,7 @@ import {
     feedback: Record<string, any> | null;
 
     @Column(DATE)
-    feedbackCreatedAt: string | null;
+    feedbackUpdatedAt: string | null;
 
     /**
     * Associations
