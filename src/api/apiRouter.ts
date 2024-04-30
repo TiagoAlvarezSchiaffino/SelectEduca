@@ -1,5 +1,4 @@
 import { router } from './trpc';
-import me from "./routes/me";
 import users from "./routes/users";
 import meetings from "./routes/meetings";
 import groups from "./routes/groups";
@@ -10,7 +9,6 @@ import partnerships from './routes/partnerships';
 import assessments from './routes/assessments';
 
 export const apiRouter = router({
-  me,
   users,
   groups,
   meetings,
