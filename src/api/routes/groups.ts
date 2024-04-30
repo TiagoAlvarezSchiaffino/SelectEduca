@@ -127,7 +127,7 @@ const listMyUnowned = procedure
     },
     include: [{
       model: db.Group,
-      include: [User, Transcript],
+      include: [...includeForGroup, Transcript],
       where: {
         partnershipId: null,
       }
