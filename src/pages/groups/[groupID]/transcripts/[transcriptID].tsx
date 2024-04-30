@@ -18,7 +18,7 @@ import useUserContext from "../../../../useUserContext";
 import { trpcNext } from "../../../../trpc";
 import moment from 'moment';
 import GroupBar from 'components/GroupBar';
-import { GetTranscriptResponse } from 'api/routes/transcripts';
+import { Transcript } from '../../../../shared/Transcript';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import { useRouter } from 'next/router';
 import invariant from 'tiny-invariant';
