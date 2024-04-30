@@ -93,7 +93,7 @@ function FeedbackEditor({ interview }: {
 
   const feedbackId = getFeedbackId();
   const { data: interviewFeedback } = trpcNext.interviewFeedbacks.get.useQuery<InterviewFeedback | null>(feedbackId);
-  const getFeedback = () => interviewFeedback ? interviewFeedback.feedback as Feedback : { dimensions: [] };
+  const getFeedback = () => interviewFeedback?.feedback ? interviewFeedback.feedback as Feedback : { dimensions: [] };
   
   useEffect(() => {
     if (interviewFeedback?.feedback) setFeedback(interviewFeedback.feedback as Feedback);

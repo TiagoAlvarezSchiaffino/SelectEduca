@@ -36,10 +36,8 @@ import {
       {interviews.map(i => (
         <LinkBox as={Tr} key={i.id}>
           <Td>
-            {i.type === "MenteeInterview" ? "" : ""}
-          </Td>
-          <Td>
             <LinkOverlay as={NextLink} href={`/interviews/mine/${i.id}`}>
+              {i.type === "MenteeInterview" ? "" : ""}：
               {formatUserName(i.interviewee.name, "formal")}
             </LinkOverlay>
           </Td>
