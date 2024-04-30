@@ -23,6 +23,7 @@ import {
   Wrap,
   WrapItem,
   Flex,
+  Divider,
 } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import AppLayout from 'AppLayout'
@@ -37,10 +38,12 @@ import { useUserContext } from 'UserContext';
 import { AddIcon, EditIcon } from '@chakra-ui/icons';
 import Loader from 'components/Loader';
 import z from "zod";
+import User, { UserFilter } from 'shared/User';
+import UserFilterSelector from 'components/UserFilterSelector';
 
 const Page: NextPageWithLayout = () => {
-  const { data, refetch } : { data: UserProfile[] | undefined, refetch: () => void } = trpcNext.users.list.useQuery();
-  const [userBeingEdited, setUserBeingEdited] = useState<UserProfile | null>(null);
+  const [filter, setFilter] = useState<UserFilter>({});
+  const { data: users, refetch } = trpcNext.users.list.useQuery<User[] | null>(filter);  const [userBeingEdited, setUserBeingEdited] = useState<UserProfile | null>(null);
   const [creatingNewUser, setCreatingNewUser] = useState(false);
   const [me] = useUserContext();
   
@@ -55,10 +58,13 @@ const Page: NextPageWithLayout = () => {
     {creatingNewUser && <UserEditor onClose={closeUserEditor}/>}
 
     <Flex direction='column' gap={6}>
-      <Box>
+      <Wrap spacing={4} align="center">
         <Button variant='brand' leftIcon={<AddIcon />} onClick={() => setCreatingNewUser(true)}></Button>
-      </Box>
-      {!data ? <Loader /> :
+        <Divider orientation="vertical" />
+        <UserFilterSelector filter={filter} onChange={f => setFilter(f)} />
+      </Wrap>
+
+      {!users ? <Loader /> :
         <Table minWidth={200}>
           <Thead>
             <Tr>
@@ -70,7 +76,7 @@ const Page: NextPageWithLayout = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {data.map((u: any) => (
+            {users.map((u: any) => (
               <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer'>
                 <Td>{u.email}</Td>
                 <Td>{u.name} {me.id === u.id ? "" : ""}</Td>

@@ -29,15 +29,6 @@ class Group extends ParanoidModel<
   @Column(STRING)
   name: string | null;
 
-  @BelongsToMany(() => User, { through: () => GroupUser })
-  users: NonAttribute<User[]>;
-
-  @HasMany(() => GroupUser)
-  groupUsers: NonAttribute<GroupUser[]>;
-
-  @HasMany(() => Transcript)
-  transcripts: NonAttribute<Transcript[]>;
-
   @ForeignKey(() => Partnership)
   @Column(UUID)
   partnershipId: string | null;
@@ -47,6 +38,19 @@ class Group extends ParanoidModel<
   @Column(UUID)
   interviewId: string | null;
 
+  /**
+  * Associations
+  */
+
+  @BelongsToMany(() => User, { through: () => GroupUser })
+  users: NonAttribute<User[]>;
+  
+  @HasMany(() => GroupUser)
+  groupUsers: NonAttribute<GroupUser[]>;
+  
+  @HasMany(() => Transcript)
+  transcripts: NonAttribute<Transcript[]>;
+  
   @BeforeDestroy
   static async cascadeDestroy(group: Group, options: any) {
     const promises1 = (await GroupUser.findAll({
