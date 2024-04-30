@@ -30,6 +30,11 @@ if (apiEnv.hasSendGrid()) mail.setApiKey(apiEnv.SENDGRID_API_KEY);
     }, ...]
  */
 export async function email(templateId: string, personalization: PersonalizationData[], baseUrl: string) {
+  
+  // Skip everything in unittest.
+  // TODO: Use mocking instead
+  if (typeof global.it === 'function') return;
+  
   // Always attach `base_url` as dynamic template data
   const ps: any[] = structuredClone(personalization);
   for (const p of ps) {

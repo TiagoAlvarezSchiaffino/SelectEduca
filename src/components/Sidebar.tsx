@@ -50,6 +50,12 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     name: '',
+    path: '/interviews/mine',
+    icon: MdGroup,
+    role: 'Interviewer',
+  },
+  {
+    name: '',
     path: '/groups/lab',
     icon: MdScience,
     role: 'SummaryEngineer',
@@ -68,7 +74,13 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     name: '',
-    path: '/interviews',
+    path: '/interviews?type=mentee',
+    icon: MdGroup,
+    role: 'InterviewManager',
+  },
+  {
+    name: '',
+    path: '/interviews?type=mentor',
     icon: MdGroup,
     role: 'InterviewManager',
   },

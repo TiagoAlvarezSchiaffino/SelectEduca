@@ -4,17 +4,13 @@ import {
   Button,
   Center,
   Flex,
-  HStack,
-  Modal,
   ModalHeader,
   ModalContent,
   ModalCloseButton,
   ModalOverlay,
   ModalBody,
   ModalFooter,
-  SimpleGridProps,
-  Tag,
-  Tooltip,
+  SimpleGrid,
   Spacer,
   Text,
   Wrap,
@@ -23,7 +19,8 @@ import {
   LinkOverlay,
   AvatarGroup,
   ButtonProps,
-  SimpleGridProps
+  SimpleGridProps,
+  Tag,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import trpc from "../trpc";
@@ -34,10 +31,8 @@ import { formatGroupName } from 'shared/strings';
 import ModalWithBackdrop from './ModalWithBackdrop';
 import { sidebarBreakpoint } from './Navbars';
 import UserChip from './UserChip';
-import { MinUserProfile } from 'shared/UserProfile';
-import { Group, GroupCountingTranscripts } from 'shared/Group';
-import QuestionIconTooltip from './QuestionIconTooltip';
-const [showMeetingQuotaWarning, setShowMeetingQuotaWarning] = useState(false);
+import { MinUser } from 'shared/User';
+import { Group, GroupCountingTranscripts, isOwned } from 'shared/Group';
 
 export default function GroupBar({
   group, showSelf, showJoinButton, showTranscriptCount, showTranscriptLink, abbreviateOnMobile, showGroupName, ...rest
@@ -53,6 +48,7 @@ export default function GroupBar({
   const [user] = useUserContext();
   const transcriptCount = ("transcripts" in group ? group.transcripts : []).length;
   const [isJoiningMeeting, setJoining] = useState(false);
+  const [showMeetingQuotaWarning, setShowMeetingQuotaWarning] = useState(false);
   const launchMeeting = async (groupId: string) => {
     setJoining(true);
     try {
@@ -74,7 +70,6 @@ export default function GroupBar({
     }
   }
 
-  
   if (showGroupName == undefined) showGroupName = true;
 
   return (
@@ -86,19 +81,11 @@ export default function GroupBar({
     >
       {showMeetingQuotaWarning && <OngoingMeetingWarning onClose={() => setShowMeetingQuotaWarning(false)}/>}
       {/* row 1 col 1 */}
-      {props.showJoinButton && <Box />}
+      {showGroupName && showJoinButton && <Box />}
 
       {/* row 1 col 2 */}
-      {showGroupName ?
-        <HStack spacing={4}>
-          {ownerTag(group)}
-          <Text color='grey' fontSize='sm'>{formatGroupName(group.name, group.users.length)}</Text>
-        </HStack>
-        :
-        null
-      }
+      {showGroupName ? <GroupTagOrName group={group} /> : null}
 
-      
       {/* row 2 col 1 */}
       {showJoinButton &&
         <Box>
@@ -138,8 +125,16 @@ export default function GroupBar({
   );
 }
 
-function ownerTag(group: Group) {
-  return group.partnershipId ? <Tag color="white" bgColor="gray"></Tag> : null;
+function GroupTagOrName({ group }: { group: Group }) {
+  return isOwned(group) ?
+    // Without this Box the tag will fill the whole grid row
+    <Box justifyItems="left">
+      <Tag color="white" bgColor="gray">
+        {group.partnershipId ? "" : "" }
+      </Tag>
+    </Box>
+    :
+    <Text color='grey' fontSize='sm'>{formatGroupName(group.name, group.users.length)}</Text>;
 }
 
 export function JoinButton(props: ButtonProps) {
@@ -161,7 +156,7 @@ export function OngoingMeetingWarning(props: {
       <ModalHeader></ModalHeader>
       <ModalCloseButton />
       <ModalBody>
-        <p></p>
+        <p><br /><br /></p>
       </ModalBody>
       <ModalFooter>
         <Button onClick={props.onClose}>
@@ -173,10 +168,9 @@ export function OngoingMeetingWarning(props: {
   );
 }
 
-
 export function UserChips(props: { 
   currentUserId?: string, 
-  users: MinUserProfile[],
+  users: MinUser[],
   abbreviateOnMobile?: boolean, // default: true
 }) {
   const displayUsers = props.users.filter((u: any) => props.currentUserId != u.id);

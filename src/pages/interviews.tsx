@@ -8,7 +8,7 @@ import {
     FormControl,
     FormLabel,
     VStack,
-    FormErrorMessage,
+    Text,
     Table,
     Thead,
     Tbody,
@@ -16,10 +16,12 @@ import {
     Th,
     Td,
     Flex,
-    Link,
     TableContainer,
-    HStack,
-    Icon,
+    Box,
+    WrapItem,
+    Wrap,
+    LinkOverlay,
+    LinkBox,
   } from '@chakra-ui/react'
   import React, { useState } from 'react'
   import AppLayout from 'AppLayout'
@@ -28,55 +30,61 @@ import {
   import ModalWithBackdrop from 'components/ModalWithBackdrop';
   import trpc from 'trpc';
   import Loader from 'components/Loader';
-  import { PartnershipCountingAssessments, isValidPartnershipIds } from 'shared/Partnership';
   import UserSelector from 'components/UserSelector';
   import invariant from 'tiny-invariant';
-  import { useUserContext } from 'UserContext';
-  import { isPermitted } from 'shared/Role';
-  import NextLink from 'next/link';
   import { formatUserName, toPinyin } from 'shared/strings';
-  import { MdFace, MdPerson3 } from 'react-icons/md';
-  
+  import { useRouter } from 'next/router';
+  import { Interview, InterviewType } from 'shared/Interview';
+  import { AddIcon } from '@chakra-ui/icons';  
   const Page: NextPageWithLayout = () => {
-    const [user] = useUserContext();
-    const { data: partnerships, refetch } = trpcNext.partnerships.list.useQuery
-      <PartnershipCountingAssessments[] | undefined>();
-    const [ modalIsOpen, setModalIsOpen ] = useState(false);
+    const type: InterviewType = useRouter().query.type === "mentee" ? "MenteeInterview" : "MentorInterview";
   
-    const showAddButton = isPermitted(user.roles, 'InterviewManager');
-    const showFeedback = isPermitted(user.roles, 'PartnershipAssessor');
+    const { data: interviews, refetch } = trpcNext.interviews.list.useQuery<Interview[] | undefined>(type);
+    const [editorIsOpen, setEditorIsOpen] = useState(false);
+    const [interviewBeingEdited, setInterviewBeingEdited] = useState<Interview | null>(null);
+  
+    const editInterview = (i: Interview | null) => {
+      setInterviewBeingEdited(i);
+      setEditorIsOpen(true);
+    }
   
     return <Flex direction='column' gap={6}>
-      {showAddButton && <HStack spacing={6}>
-        <Button variant='brand' leftIcon={<Icon as={MdFace} />} onClick={() => setModalIsOpen(true)}></Button>
-        <Button variant='brand' leftIcon={<Icon as={MdPerson3} />} onClick={() => setModalIsOpen(true)}></Button>
-      </HStack>}
+      <Box>
+        <Button variant='brand' leftIcon={<AddIcon />} onClick={() => editInterview(null)}>
+          {type == "MenteeInterview" ? "": ""}
+        </Button>
+      </Box>
   
-      {modalIsOpen && <AddModel onClose={() => {
-        setModalIsOpen(false);
+      {editorIsOpen && <Editor type={type} interview={interviewBeingEdited} onClose={() => {
+      setEditorIsOpen(false);
         refetch();
       }} />}
   
-      {!partnerships ? <Loader /> : <TableContainer><Table>
+      <Text></Text>
+
+      {!interviews ? <Loader /> : <TableContainer><Table>
         <Thead>
           <Tr>
-            <Th></Th><Th></Th><Th></Th><Th></Th>
-            {showFeedback && <Th></Th>}
+            <Th></Th><Th></Th><Th></Th>
           </Tr>
         </Thead>
         <Tbody>
-        {partnerships.map(p => (
-          <Tr key={p.id}>
-            <Td>{formatUserName(p.mentee.name, "formal")}</Td>
-            <Td>{toPinyin(p.mentee.name ?? "")}</Td>
-            <Td>{formatUserName(p.mentor.name, "formal")}</Td>
-            <Td>{toPinyin(p.mentor.name ?? "")}</Td>
-            {showFeedback && <Td>
-              <Link as={NextLink} href={`/partnerships/${p.id}/assessments`}>
-                {p.assessments.length}）
-              </Link>
-            </Td>}
-          </Tr>
+        {interviews.map(i => (
+        <LinkBox as={Tr} key={i.id}>
+          <Td>
+            <LinkOverlay href="#" onClick={() => editInterview(i)}>
+              {formatUserName(i.interviewee.name, "formal")}
+            </LinkOverlay>
+          </Td>
+          <Td>{toPinyin(i.interviewee.name ?? "")}</Td>
+          <Td><Wrap spacing="2">
+            {i.feedbacks.map(f => 
+              <WrapItem key={f.id} fontWeight={f.feedbackCreatedAt ? "bold" : "normal"}>
+                {formatUserName(f.interviewer.name, "formal")}
+              </WrapItem>
+            )}
+          </Wrap></Td>
+        </LinkBox>
         ))}
         </Tbody>
       </Table></TableContainer>}
@@ -88,49 +96,73 @@ import {
   
   export default Page;
   
-  function AddModel(props: { 
+  function Editor({ type, interview, onClose }: {
+    type: InterviewType,
+    interview: Interview | null,  // Create a new interview when null
     onClose: () => void,
   }) {
-    const [menteeId, setMenteeId] = useState<string | null>(null);
-    const [mentorId, setMentorId] = useState<string | null>(null);
+    invariant(interview == null || interview.type == type);
+
+    const [intervieweeId, setIntervieweeId] = useState<string | null>(
+      interview ? interview.interviewee.id : null);
+    const [interviewerIds, setInterviewerIds] = useState<string[]>(
+      interview ? interview.feedbacks.map(f => f.interviewer.id) : []);
     const [saving, setSaving] = useState(false);
   
-    const menteeAndMentorAreSameUser = menteeId !== null && menteeId === mentorId;
+    const isValid = () => intervieweeId != null && interviewerIds.length > 0;
   
     const save = async () => {
       setSaving(true);
       try {
-        invariant(menteeId);
-        invariant(mentorId);
-        await trpc.partnerships.create.mutate({
-          mentorId, menteeId
-        });
-        props.onClose();
+        invariant(isValid());
+        invariant(intervieweeId);
+        if (interview) {
+          await trpc.interviews.update.mutate({
+            id: interview.id, type, intervieweeId, interviewerIds,
+          });
+        } else {
+          await trpc.interviews.create.mutate({
+            type, intervieweeId, interviewerIds
+          });
+        }
+        onClose();
       } finally {
         setSaving(false);
       }
     }
   
-    return <ModalWithBackdrop isOpen onClose={props.onClose}>
+    return <ModalWithBackdrop isOpen onClose={onClose}>
       <ModalContent>
         <ModalHeader></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <VStack spacing={6}>
             <FormControl>
-              <FormLabel></FormLabel>
-              <UserSelector onSelect={userIds => setMenteeId(userIds.length ? userIds[0] : null)}/>
+              <FormLabel>{type == "MenteeInterview" ? "": ""}</FormLabel>
+              <UserSelector
+                onSelect={userIds => setIntervieweeId(userIds.length ? userIds[0] : null)}
+                initialValue={!interview ? [] : [{
+                  label: interview.interviewee.name ?? "",
+                  value: interview.interviewee.id,
+                }]}
+              />
             </FormControl>
-            <FormControl isInvalid={menteeAndMentorAreSameUser}>
+            <FormControl>
               <FormLabel></FormLabel>
-              <UserSelector onSelect={userIds => setMentorId(userIds.length ? userIds[0] : null)}/>
-              <FormErrorMessage></FormErrorMessage>
+              <UserSelector
+                isMulti 
+                onSelect={userIds => setInterviewerIds(userIds)}
+                initialValue={!interview ? [] : interview.feedbacks.map(f => ({
+                  label: f.interviewer.name ?? "",
+                  value: f.interviewer.id,
+                }))}
+              />
             </FormControl>
           </VStack>
         </ModalBody>
         <ModalFooter>
           <Button variant='brand' 
-            isDisabled={!isValidPartnershipIds(menteeId, mentorId)}
+            isDisabled={!isValid()}
             isLoading={saving} onClick={save}></Button>
         </ModalFooter>
       </ModalContent>
