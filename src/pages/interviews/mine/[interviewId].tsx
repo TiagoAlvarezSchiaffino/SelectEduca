@@ -99,27 +99,22 @@ function Instructions({ interviewers }: {
       <ListItem><Icon as={BsWechat} marginX={1.5} /></ListItem>
       {first !== null && <>
         <ListItem>
-            <Text as="span" color="red.600">{first ? "1  4" : "5  8"}</Text>
+            <mark>{first ? "1  4" : "5  8"} </mark>
           {formatUserName(other?.name ?? null, "friendly")}{first ? "5 到 8" : "1 到 4"}。
         </ListItem>
-        <ListItem><Text color="red.600"></Text></ListItem>
+        <ListItem><mark></mark></ListItem>
       </>}
-    </UnorderedList>
-    <Flex direction="column" gap={paragraphSpacing}>
-      <b></b>
-      <UnorderedList>
       <ListItem>
-          <Link isExternal href="">
-            <ExternalLinkIcon />
-          </Link>
-        </ListItem>
-        <ListItem>
-          <Link isExternal href="">
-            <ExternalLinkIcon />
-          </Link>
-        </ListItem>
-      </UnorderedList>
-    </Flex>
+        <Link isExternal href="">
+          <ExternalLinkIcon />
+        </Link>
+      </ListItem>
+      <ListItem>
+        <Link isExternal href="">
+          <ExternalLinkIcon />
+        </Link>
+      </ListItem>
+    </UnorderedList>
   </Flex>;
 }
 
@@ -188,7 +183,7 @@ function FeedbackEditor({ interview }: {
     <FeedbackDimensionEditor 
       editorKey={`${feedbackId}-${summaryDimensionName}`}
       dimensionName={summaryDimensionName}
-      dimensionLabel={summaryDimensionName}
+      dimensionLabel={`${summaryDimensionName}`}
       scoreLabels={["", "", "", ""]}
       initialScore={summaryDimension?.score || defaultScore}
       initialComment={summaryDimension?.comment || defaultComment}

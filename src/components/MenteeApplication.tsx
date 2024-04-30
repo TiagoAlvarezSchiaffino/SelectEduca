@@ -4,6 +4,7 @@ import {
     Link,
     UnorderedList,
     ListItem,
+    Heading,
   } from '@chakra-ui/react'
   import React from 'react'
   import { DownloadIcon } from '@chakra-ui/icons';
@@ -19,6 +20,7 @@ import {
     const { data: app, isLoading } = trpcNext.users.getMenteeApplication.useQuery(menteeUserId);
   
     return isLoading ? <Loader /> : <Flex direction="column" gap={sectionSpacing}>
+      <Heading size="md"></Heading>
       {!app ? "" : menteeApplicationFields.map(f => {
         if (f.name in app) {
           return <Flex key={f.name} direction="column" gap={paragraphSpacing}>
