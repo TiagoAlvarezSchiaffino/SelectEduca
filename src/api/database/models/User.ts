@@ -45,6 +45,9 @@ class User extends ParanoidModel<
   @Column(DATE)
   consentFormAcceptedAt: Date | null;
 
+  @Column(DATE)
+  menteeInterviewerTestLastPassedAt: string | null;
+
   @Column(STRING)
   sex: string | null;
 
