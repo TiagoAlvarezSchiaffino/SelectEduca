@@ -19,7 +19,8 @@ import {
   import InterviewFeedback from "./InterviewFeedback";
   import Group from "./Group";
   import { InterviewType, zInterviewType } from "../../../shared/Interview";
-  
+  import Calibration from "./Calibration";
+
   @Table({
     paranoid: true,
   })
@@ -40,6 +41,10 @@ import {
     @Column(UUID)
     intervieweeId: string;
   
+    @ForeignKey(() => Calibration)
+    @Column(UUID)
+    calibrationId: string | null;
+
     /**
      * Associations
      */

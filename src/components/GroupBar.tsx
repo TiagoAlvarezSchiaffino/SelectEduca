@@ -130,7 +130,7 @@ function GroupTagOrName({ group }: { group: Group }) {
     // Without this Box the tag will fill the whole grid row
     <Box justifyItems="left">
       <Tag color="white" bgColor="gray">
-        {group.partnershipId ? "" : "" }
+        {group.partnershipId ? "" : group.calibrationId ? "" : "" }
       </Tag>
     </Box>
     :

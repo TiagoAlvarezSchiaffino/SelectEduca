@@ -53,7 +53,7 @@ export const includeForInterviewFeedback = [{
  * Interview
  */
 
-export const interviewAttributes = ["id", "type"];
+export const interviewAttributes = ["id", "type", "calibrationId"];
 
 export const includeForInterview = [{
   model: User,
@@ -63,3 +63,9 @@ export const includeForInterview = [{
   attributes: minInterviewFeedbackAttributes,
   include: includeForInterviewFeedback,
 }];
+
+/**
+ * Callibration
+ */
+
+export const calibrationAttributes = ["id", "type", "name"];
