@@ -72,7 +72,7 @@ export const RoleProfiles: { [key: string]: {
     displayName: '',
     actions: '',
     privileged: true,
-    privilegedUserDataAccess: false,
+    privilegedUserDataAccess: true,
   },
   Mentor: {
     displayName: '',

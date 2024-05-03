@@ -10,7 +10,6 @@ const SimpleMDE = dynamic(
 
 const options = {
   spellChecker: false,
-  autofocus: true,
   // This has no effect. Need more research.
   // readOnly: true,
 } /* as SimpleMDE.Options -- ts warns on this due to the above hack */;

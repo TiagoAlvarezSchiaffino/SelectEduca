@@ -53,11 +53,12 @@ import {
         <Tbody>
           <Tr>
             <Td></Td>
-            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('SummaryEngineer')}</Td>
+            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('SummaryEngineer')}、{dp('InterviewManager')}
+          </Td>
           </Tr>
           <Tr>
             <Td></Td>
-            <Td>{dp('UserManager')}、{dp('GroupManager')}</Td>
+            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('InterviewManager')}</Td>
           </Tr>
           <Tr>
             <Td></Td>

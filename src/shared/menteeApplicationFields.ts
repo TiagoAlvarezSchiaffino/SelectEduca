@@ -4,11 +4,13 @@ export type ApplicationField = {
     jsjProxiedField?: string,
   };
   
+  export const menteeSourceField = "";
+
   /**
    * Field order dictates the order the fields are displayed.
    */
   const menteeApplicationFields: ApplicationField[] = [
-    { jsjField: "field_165", jsjProxiedField: "field_165", name: "", },
+    { jsjField: "field_165", jsjProxiedField: "field_165", name: menteeSourceField, },
     { jsjField: "field_149", jsjProxiedField: "field_149", name: "", },
     { jsjField: "field_161", name: "", },
     { jsjField: "field_107", jsjProxiedField: "field_108", name: "", },

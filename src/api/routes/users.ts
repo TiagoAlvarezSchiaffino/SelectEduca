@@ -9,10 +9,10 @@ import { toPinyin } from "../../shared/strings";
 import invariant from 'tiny-invariant';
 import { email } from "../sendgrid";
 import { formatUserName } from '../../shared/strings';
-import { generalBadRequestError, noPermissionError, notFoundError } from "../errors";
+import { generalBadRequestError, noPermissionError, notFoundError, notImplemnetedError } from "../errors";
 import { userAttributes } from "../database/models/attributesAndIncludes";
 import Interview from "api/database/models/Interview";
-import { InterviewType } from "shared/Interview";
+import { InterviewType, zInterviewType } from "shared/InterviewType";
 
 const me = procedure
   .use(authUser())
@@ -57,11 +57,12 @@ const create = procedure
  * Returned users are ordered by Pinyin.
  */
 const list = procedure
-  .use(authUser(['UserManager', 'GroupManager']))
+  .use(authUser(['UserManager', 'GroupManager', 'InterviewManager']))
   .input(zUserFilter)
   .output(z.array(zUserProfile))
-  .query(async ({ input: filter }) => 
+  .query(async ({ input: filter }) =>
 {
+  if (filter.hasMentorApplication) throw notImplemnetedError();
   // Force typescript checking
   const interviewType: InterviewType = "MenteeInterview";
 
@@ -141,34 +142,47 @@ const update = procedure
   invalidateLocalUserCache();
 });
 
-const getMenteeApplication = procedure
+const getApplication = procedure
   .use(authUser())
-  .input(z.string())
+  .input(z.object({
+    userId: z.string(),
+    type: zInterviewType,
+  }))
   .output(z.record(z.string(), z.any()).nullable())
-  .query(async ({ ctx, input: menteeUserId }) =>
+  .query(async ({ ctx, input }) =>
 {
-  // Only allow interviewers of the mentee to read.
-  const interviews = await db.Interview.findAll({
-    where: {
-      type: "MenteeInterview",
-      intervieweeId: menteeUserId,
-    },
-    attributes: [],
-    include: [{
-      model: db.InterviewFeedback,
-      attributes: [],
-      where: { interviewerId: ctx.user.id },
-    }, {
-      model: db.User,
+  if (input.type !== "MenteeInterview") throw notImplemnetedError();
+  if (isPermitted(ctx.user.roles, "InterviewManager")) {
+    // for interview managers, directly query users table
+    const u = await db.User.findByPk(input.userId, {
       attributes: ["menteeApplication"],
-    }],
-  });
-  if (interviews.length == 0) {
-    throw noPermissionError("", menteeUserId);
-  }
+    });
+    if (!u) throw notFoundError("", input.userId);
+    return u.menteeApplication;
 
-  return interviews[0].interviewee.menteeApplication;
-});
+  } else {
+    // for other users, only allows their access if they are an interviewer of the applicant.
+    const interviews = await db.Interview.findAll({
+      where: {
+        type: "MenteeInterview",
+        intervieweeId: input.userId,
+      },
+      attributes: [],
+      include: [{
+        model: db.InterviewFeedback,
+        attributes: [],
+        where: { interviewerId: ctx.user.id },
+      }, {
+        model: db.User,
+        attributes: ["menteeApplication"],
+      }],
+    });
+    if (interviews.length == 0) {
+      throw noPermissionError("", input.userId);
+    }
+
+    return interviews[0].interviewee.menteeApplication;
+  }
 
 /**
  * List all users and their roles who have privileged user data access. See RoleProfile.privilegeUserDataAccess for an
@@ -200,7 +214,7 @@ const users = router({
   list,
   update,
   listPriviledgedUserDataAccess,
-  getMenteeApplication,
+  getApplication,
 });
 export default users;
 
