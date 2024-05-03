@@ -13,6 +13,7 @@ import InterviewFeedbackEditor from 'components/InterviewFeedbackEditor';
 import { formatUserName, compareUUID } from 'shared/strings';
 import { useUserContext } from 'UserContext';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
+import MobileExperienceAlert from 'components/MobileExperienceAlert';
 
 const Page: NextPageWithLayout = () => {
   const interviewId = parseQueryParameter(useRouter(), 'interviewId');
@@ -21,6 +22,8 @@ const Page: NextPageWithLayout = () => {
   const [me] = useUserContext();
 
   if (!interview) return <Loader />;
+
+  <MobileExperienceAlert />
 
   return <>
     <Grid 
