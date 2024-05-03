@@ -16,7 +16,8 @@ import { ExternalLinkIcon } from '@chakra-ui/icons';
 
 const Page: NextPageWithLayout = () => {
   const interviewId = parseQueryParameter(useRouter(), 'interviewId');
-  const { data: interview } = trpcNext.interviews.get.useQuery(interviewId);
+  // See Editor()'s comment on the reason for `catchTime: 0`
+  const { data } = trpcNext.interviews.get.useQuery(interviewId, { cacheTime: 0 });
   const [me] = useUserContext();
 
   if (!interview) return <Loader />;

@@ -22,7 +22,7 @@ import { Transcript } from '../../../../shared/Transcript';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import { useRouter } from 'next/router';
 import invariant from 'tiny-invariant';
-import { capitalizeFirstChar } from 'shared/string';
+import { capitalizeFirstChar } from 'shared/strings';
 import MarkdownEditor from 'components/MarkdownEditor';
 import Loader from 'components/Loader';
 

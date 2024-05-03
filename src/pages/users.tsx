@@ -77,7 +77,7 @@ const Page: NextPageWithLayout = () => {
           </Thead>
           <Tbody>
             {users.map((u: any) => (
-              <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer'>
+              <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer' _hover={{ bg: "white" }}>
                 <Td>{u.email}</Td>
                 <Td>{u.name} {me.id === u.id ? "" : ""}</Td>
                 <Td>{toPinyin(u.name ?? '')}</Td>

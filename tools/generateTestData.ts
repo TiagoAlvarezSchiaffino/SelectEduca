@@ -8,7 +8,7 @@ import _ from "lodash";
 import { upsertSummary } from "../src/api/routes/summaries";
 import moment from "moment";
 import Role, { AllRoles } from "../src/shared/Role";
-import { toPinyin } from "../src/shared/string";
+import { toPinyin } from "../src/shared/strings";
 import { alreadyExistsErrorMessage } from "../src/api/errors";
 
 type TestUser = {
