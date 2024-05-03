@@ -12,11 +12,10 @@ import {
   Textarea,
 } from '@chakra-ui/react';
 import invariant from "tiny-invariant";
-import { AutosavingMarkdownEditor } from 'components/MarkdownEditor';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Autosaver from 'components/Autosaver';
-import { InterviewFeedback } from 'shared/InterviewFeedback';
 import _ from "lodash";
+import { TRPCClientError } from '@trpc/client';
 
 type Feedback = {
   dimensions: FeedbackDimension[],
@@ -24,142 +23,158 @@ type Feedback = {
 
 type FeedbackDimension = {
   name: string,
-  score: number,
-  comment: string,
+  score: number | null,
+  comment: string | null,
 };
 
-const defaultScore = 1;
-const defaultComment = "";
+const dimensionNames = ["", "", "", "", "", "", "", ""];
+const summaryDimensionName = "";
 
-function findDimension(f: Feedback | null, dimensionName: string): FeedbackDimension | null {
-  if (!f) return null;
-  const ds = f.dimensions.filter(d => d.name === dimensionName);
+function getDimension(f: Feedback, name: string): FeedbackDimension {
+  const ds = f.dimensions.filter(d => d.name === name);
   if (ds.length > 0) {
     invariant(ds.length == 1);
     return ds[0];
   } else {
-    return null;
+    return {
+      name,
+      score: null,
+      comment: null,
+    };
   }
 }
 
-export default function InterviewFeedbackEditor({ feedbackId, editable }: { 
+/**
+ * @returns a new Feedback object
+ */
+function setDimension(f: Feedback, dimension: FeedbackDimension): Feedback {
+  return {
+    dimensions: [...f.dimensions.filter(d => dimension.name !== d.name), dimension],
+  };
+}
+
+export default function InterviewFeedbackEditor({ feedbackId, readonly }: { 
   feedbackId: string,
-  editable: boolean,
+  readonly?: boolean,
 }) {
-  const { data: interviewFeedback } = trpcNext.interviewFeedbacks.get.useQuery<InterviewFeedback | null>(feedbackId);
-  const getFeedback = () => interviewFeedback?.feedback ? interviewFeedback.feedback as Feedback : { dimensions: [] };
+  const { data } = trpcNext.interviewFeedbacks.get.useQuery(feedbackId);
 
-  const dimensionNames = ["", "", "", "", "", "", "", ""];
-  const summaryDimensionName = "";
-  const summaryDimensions = getFeedback().dimensions.filter(d => d.name === summaryDimensionName);
-  const summaryDimension = summaryDimensions.length == 1 ? summaryDimensions[0] : null;
+  if (!data) {
+    return <Loader />;
+  } else {
+    const f = data.interviewFeedback;
+    return <InterviewFeedbackEditorWithData
+      id={f.id}
+      feedback={f.feedback ? f.feedback as Feedback : { dimensions: [] }}
+      etag={data.etag}
+      readonly={readonly}
+    />
+  }
+}
 
-  const saveDimension = async (edited: FeedbackDimension) => {
-    const old = getFeedback();
-    const f = structuredClone(old);
-    const d = findDimension(f, edited.name);
-    if (edited.score == defaultScore && edited.comment == defaultComment) {
-      f.dimensions = f.dimensions.filter(d => d.name !== edited.name);
-    } else if (d) {
-      d.score = edited.score;
-      d.comment = edited.comment;
-    } else {
-      f.dimensions.push(edited);
+function InterviewFeedbackEditorWithData({ id, feedback: original, etag, readonly }: {
+  id: string,
+  feedback: Feedback,
+  etag: number,
+  readonly?: boolean,
+}) {
+  // Only load the original feedback once, and do not reload if the parent auto refreshes it.
+  // Reloading during edits may confuses users to hell.
+  const [feedback, setFeedback] = useState<Feedback>(original);
+  const refEtag = useRef<number>(etag);
+
+  const save = async (f: Feedback) => {
+    try {
+      refEtag.current = await trpc.interviewFeedbacks.update.mutate({ 
+        id,
+        feedback: f,
+        etag: refEtag.current,
+      });
+    } catch (e) {
+      if (e instanceof TRPCClientError && e.data.code == "CONFLICT") {
+        window.alert("");
+      }
     }
-    
-    if (_.isEqual(f, old)) return;
-    await trpc.interviewFeedbacks.update.mutate({ id: feedbackId, feedback: f });    
   };
 
-  return !interviewFeedback ? <Loader /> : <Flex direction="column" gap={6}>
+  return <Flex direction="column" gap={6}>
     <FeedbackDimensionEditor 
-      editorKey={`${feedbackId}-${summaryDimensionName}`}
-      dimensionName={summaryDimensionName}
+      dimension={getDimension(feedback, summaryDimensionName)}
       dimensionLabel={`${summaryDimensionName}`}
       scoreLabels={["", "", "", ""]}
-      initialScore={summaryDimension?.score || defaultScore}
-      initialComment={summaryDimension?.comment || defaultComment}
-      onSave={async (d) => await saveDimension(d)}
-      placeholder=""
-      editable={editable}
+      commentPlaceholder=""
+      readonly={readonly}
+      onChange={d => setFeedback(setDimension(feedback, d))}
     />
 
-    {dimensionNames.map((dn, idx) => {
-      const d = findDimension(getFeedback(), dn);
-      return <FeedbackDimensionEditor 
-        key={dn} 
-        editorKey={`${feedbackId}-${dn}`}
-        dimensionName={dn}
-        dimensionLabel={`${idx + 1}. ${dn}`}
-        scoreLabels={["", "", "", "", ""]}
-        initialScore={d?.score || defaultScore}
-        initialComment={d?.comment || defaultComment}
-        onSave={async (d) => await saveDimension(d)}
-        placeholder=""
-        editable={editable}
-      />;
-    })}
+    {dimensionNames.map((name, idx) => <FeedbackDimensionEditor 
+      key={name}
+      dimension={getDimension(feedback, name)}
+      dimensionLabel={`${idx + 1}. ${name}`}
+      scoreLabels={["", "", "", "", ""]}
+      commentPlaceholder=""
+      readonly={readonly}
+      onChange={d => setFeedback(setDimension(feedback, d))}
+    />)}
+
+    {!readonly && <Autosaver
+      // This conditional is to prevent initial page loading from triggering auto saving.
+      data={_.isEqual(feedback, original) ? null : feedback}
+      onSave={f => save(f)}
+    />}
   </Flex>;
 }
 
-/**
- * N.B. scores are 1-indexed while labels are 0-index.
- */
 function FeedbackDimensionEditor({ 
-  editorKey, dimensionName, dimensionLabel, scoreLabels, initialScore, initialComment, onSave, placeholder, editable
+  dimension: d, dimensionLabel, scoreLabels, commentPlaceholder, readonly, onChange,
 }: {
-  editorKey: string,
-  dimensionName: string,
+  dimension: FeedbackDimension,
   dimensionLabel: string,
   scoreLabels: string[],
-  initialScore: number,
-  initialComment: string,
-  placeholder: string,
-  onSave: (d: FeedbackDimension) => Promise<void>,
-  editable: boolean,
+  commentPlaceholder: string,
+  onChange: (d: FeedbackDimension) => void,
+  readonly?: boolean,
 }) {
-  const [score, setScore] = useState<number>(initialScore);
-  const [comment, setComment] = useState<string>(initialComment);
   const [showTooltip, setShowTooltip] = useState(false);
 
   return <>
     <Flex direction="row" gap={3}>
       <Box minWidth={140}><b>{dimensionLabel}</b></Box>
-      <Slider min={1} max={scoreLabels.length} step={1} defaultValue={initialScore} isReadOnly={!editable}
-        onChange={setScore}
+      <Slider min={1} max={scoreLabels.length} step={1} isReadOnly={readonly}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
+        value={d.score == null ? 1 : d.score}
+        onChange={v => onChange({
+          name: d.name,
+          score: v,
+          comment: d.comment,
+        })}
       >
         <SliderTrack><SliderFilledTrack bg="brand.b" /></SliderTrack>
         {scoreLabels.map((_, idx) => <SliderMark key={idx} value={idx + 1}>.</SliderMark>)}
+        
         <Tooltip
           hasArrow
           placement='top'
           isOpen={showTooltip}
-          label={`${score}: ${scoreLabels[score - 1]}`}
+          // N.B. scores are 1-indexed while labels are 0-index.
+          label={`${d.score}: ${scoreLabels[d.score ? d.score - 1 : 0]}`}
         >
           <SliderThumb bg="brand.b" />
         </Tooltip>
       </Slider>
-      {editable && <Autosaver
-        // This conditional is to prevent initial page loading from triggering auto saving.
-        data={score == initialScore ? null : score} 
-        onSave={async (_) => await onSave({ name: dimensionName, score, comment })}
-      />}
     </Flex>
-    {editable ?
-      // TODO: Change to use Textarea.
-      <AutosavingMarkdownEditor
-        key={editorKey} 
-        initialValue={initialComment} 
-        onSave={async (edited) => { setComment(edited); await onSave({ name: dimensionName, score, comment: edited }); }}
-        placeholder={placeholder}
-        toolbar={false}
-        status={false}
-        maxHeight="120px"
-      />
-      :
-      <Textarea resize="none" isReadOnly value={initialComment} height="142px" />
-    }
+
+    <Textarea
+      isReadOnly={readonly} 
+      placeholder={commentPlaceholder}
+      height="150px"
+      {...readonly ? {} : { background: "white" }}
+      {...d.comment ? { value: d.comment } : {}}
+      onChange={e => onChange({
+        name: d.name,
+        score: d.score,
+        comment: e.target.value,
+      })} />
   </>;
 }
