@@ -24,9 +24,6 @@ import {
   Input,
   Select,
   Tooltip,
-  HStack,
-  Input,
-  Select,
 } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import AppLayout from 'AppLayout'
@@ -42,9 +39,9 @@ import { useRouter } from 'next/router';
 import { Interview } from 'shared/Interview';
 import { AddIcon, CheckIcon, EditIcon, ViewIcon } from '@chakra-ui/icons';
 import { InterviewType } from 'shared/InterviewType';
-import Link from 'next/link';
 import { MinUser } from 'shared/User';
 import { menteeSourceField } from 'shared/menteeApplicationFields';
+import TdLink from 'components/TdLink';
 
 const Page: NextPageWithLayout = () => {
   const type: InterviewType = useRouter().query.type === "mentee" ? "MenteeInterview" : "MentorInterview";
@@ -118,6 +115,10 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
    */
   const [interviewInEditor, setInterviewInEditor] = useState<Interview | null | undefined>(undefined);
 
+  const TdEditLink = ({ children }: TableCellProps) => <TdLink href="#" onClick={() => setInterviewInEditor(interview)}>
+    {children}
+  </TdLink>;
+
   return <>
     {interviewInEditor !== undefined && <InterviewEditor type={type}
       applicant={applicant} interview={interviewInEditor}
@@ -128,32 +129,28 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
     />}
 
     <Tr key={applicant.id}>
-      <Td>
-        <Link href="#" onClick={() => setInterviewInEditor(interview)}>
-          {interview ? <EditIcon /> : <AddIcon />}
-        </Link>
-      </Td>
-      <Td>
-        {interview && <Link href={`/interviews/${interview.id}`}><ViewIcon /></Link>}
-      </Td>
-      <Td>
+      <TdEditLink>
+        {interview ? <EditIcon /> : <AddIcon />}
+      </TdEditLink>
+      {interview ? <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink> : <Td />}
+      <TdEditLink>
         {formatUserName(applicant.name, "formal")}
-      </Td>
-      <Td>{toPinyin(applicant.name ?? "")}</Td>
-      <Td>
+      </TdEditLink>
+      <TdEditLink>{toPinyin(applicant.name ?? "")}</TdEditLink>
+      <TdEditLink>
         {source && <Tooltip label={source}>
           <Text isTruncated maxWidth="130px">{source}</Text>
         </Tooltip>}
-      </Td>
-      <Td><Wrap spacing="2">
+      </TdEditLink>
+      <TdEditLink><Wrap spacing="2">
         {interview && interview.feedbacks.map(f => <WrapItem key={f.id}>
           {formatUserName(f.interviewer.name, "formal")}
           {f.feedbackUpdatedAt && <CheckIcon marginStart={1} />}
         </WrapItem>)}
-      </Wrap></Td>
-      <Td>
+      </Wrap></TdEditLink>
+      <TdEditLink>
         {interview && interview.calibration?.name}
-      </Td>
+      </TdEditLink>
     </Tr>
   </>;
 }
