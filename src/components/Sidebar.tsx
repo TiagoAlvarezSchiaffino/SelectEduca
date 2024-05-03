@@ -36,10 +36,8 @@ export interface SidebarItem {
   name: string,
   icon: IconType,
   path: string,
+  regex: RegExp,
   role?: Role,
-  
-  basePath?: string,
-  queryParam?: string,
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -47,47 +45,55 @@ const sidebarItems: SidebarItem[] = [
     name: '',
     path: '/',
     icon: MdHome,
+    regex: /'^\/$|\/groups\/.'/,
   },
   {
     name: '',
     path: '/interviews/mine',
     icon: MdGroup,
+    regex: /'\/interviews\/mine'/,
     role: 'Interviewer',
   },
   {
     name: '',
     path: '/groups/lab',
     icon: MdScience,
+    regex: /'\/groups\/lab'/,
     role: 'SummaryEngineer',
   },
   {
     name: '',
     path: '/users',
     icon: MdPerson,
+    regex: /'\/user'/,
     role: 'UserManager',
   },
   {
     name: '',
     path: '/groups',
     icon: MdGroups,
+    regex: /'^\/groups$'/,
     role: 'GroupManager',
   },
   {
     name: '',
     path: '/interviews?type=mentee',
     icon: MdGroup,
+    regex: /'\/interviews\\?type=mentee'/,
     role: 'InterviewManager',
   },
   {
     name: '',
     path: '/interviews?type=mentor',
     icon: MdGroup,
+    regex: /'\/interviews\\?type=mentor'/,
     role: 'InterviewManager',
   },
   {
     name: '',
     path: '/partnerships',
     icon: MdGroup,
+    regex: /'^\/partnerships$'/,
     role: 'PartnershipManager',
   },
 ];
@@ -98,8 +104,7 @@ function partnerships2Items(partnerships: Partnership[] | undefined): SidebarIte
     name: formatUserName(p.mentee.name, "formal"),
     icon: MdFace,
     path: `/partnerships/${p.id}`,
-    basePath: "/partnerships/",
-    queryParam: "partnershipId",
+    regex: /'\/partnerships\/.'/,
   }));
 }
 
@@ -164,8 +169,7 @@ const SidebarRow = ({ item, onClose, ...rest }: {
   item: SidebarItem,
 } & SidebarProps) => {
   const router = useRouter();
-  const active = item.path === router.pathname || 
-    item.path === item.basePath + parseQueryParameter(router, item.queryParam || "");
+  const active = item.regex.test(router.pathname) || item.regex.test(router.asPath);
   return (
     <Link 
       as={NextLink} 
