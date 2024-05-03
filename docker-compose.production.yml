@@ -1,0 +1,13 @@
+version: '3'
+
+# WIP, might not be usable.
+services:
+  tiago-app:
+    extends:
+      file: docker-compose.yml
+      service: tiago-app-dev
+    build:
+      args:
+        - env=prod
+    environment:
+      NODE_ENV: production
