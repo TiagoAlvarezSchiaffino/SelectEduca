@@ -12,7 +12,7 @@ import { formatUserName } from '../../shared/strings';
 import { generalBadRequestError, noPermissionError, notFoundError, notImplemnetedError } from "../errors";
 import { userAttributes } from "../database/models/attributesAndIncludes";
 import Interview from "api/database/models/Interview";
-import { InterviewType, zInterviewType } from "shared/InterviewType";
+import { InterviewType } from "shared/InterviewType";
 
 const me = procedure
   .use(authUser())

@@ -35,6 +35,7 @@ const Page: NextPageWithLayout = () => {
   const { data: calibrations } = trpcNext.calibrations.listMine.useQuery();
 
   return <Flex direction='column' gap={6}>
+    <Text><CheckIcon /></Text>
     <Tabs isLazy>
       <TabList>
         <Tab></Tab>
@@ -50,7 +51,6 @@ const Page: NextPageWithLayout = () => {
         {calibrations && calibrations.map(c => <TabPanel key={c.id}><Calibration calibration={c} /></TabPanel>)}
       </TabPanels>
     </Tabs>
-    <Text fontSize="sm"><CheckIcon /></Text>
   </Flex>;
 }
 
@@ -81,7 +81,7 @@ function Interviews({ interviews, showMe }: {
           {i.feedbacks.filter(f => showMe || f.interviewer.id !== me.id).map(f => 
             <WrapItem key={f.id}>
               {formatUserName(f.interviewer.name, "formal")}
-              {f.feedbackUpdatedAt && <CheckIcon marginStart={1} />}
+              {f.feedbackUpdatedAt && <CheckIcon />}
             </WrapItem>
           )}
         </Wrap></Td>

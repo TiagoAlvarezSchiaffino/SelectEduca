@@ -17,13 +17,24 @@ import {
   Td,
   Flex,
   TableContainer,
-  Box,
   WrapItem,
   Wrap,
-  HStack,
-  Input,
   Select,
   Tooltip,
+  TableCellProps,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Editable,
+  EditablePreview,
+  EditableInput,
+  Switch,
+  useEditableControls,
+  IconButton,
+  Box,
+  UnorderedList,
+  ListItem,
 } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import AppLayout from 'AppLayout'
@@ -34,7 +45,7 @@ import trpc from 'trpc';
 import Loader from 'components/Loader';
 import UserSelector from 'components/UserSelector';
 import invariant from 'tiny-invariant';
-import { formatUserName, toPinyin } from 'shared/strings';
+import { formatUserName, prettifyDate, toPinyin } from 'shared/strings';
 import { useRouter } from 'next/router';
 import { Interview } from 'shared/Interview';
 import { AddIcon, CheckIcon, EditIcon, ViewIcon } from '@chakra-ui/icons';
@@ -42,31 +53,45 @@ import { InterviewType } from 'shared/InterviewType';
 import { MinUser } from 'shared/User';
 import { menteeSourceField } from 'shared/menteeApplicationFields';
 import TdLink from 'components/TdLink';
+import moment from 'moment';
+import { Calibration } from 'shared/Calibration';
+import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
+import TabsWithUrlParam from 'components/TabsWithUrlParam';
 
 const Page: NextPageWithLayout = () => {
   const type: InterviewType = useRouter().query.type === "mentee" ? "MenteeInterview" : "MentorInterview";
 
   const { data: applicants } = trpcNext.users.list.useQuery(type == "MenteeInterview" ?
     { hasMenteeApplication: true } : { hasMentorApplication: true });
-  const { data: interviews, refetch } = trpcNext.interviews.list.useQuery(type);
-  const [calibrationEditorIsOpen, setCalibrationEditorIsOpen] = useState(false);
+  const { data: interviews, refetch: refetchInterview } = trpcNext.interviews.list.useQuery(type);
+  const { data: calibrations, refetch: refetchCalibrations } = trpcNext.calibrations.list.useQuery(type);
 
   return <Flex direction='column' gap={6}>
-    <Box>
-      <HStack spacing={4}>
-        <Button leftIcon={<AddIcon />} onClick={() => setCalibrationEditorIsOpen(true)}>
-        </Button>
-      </HStack>
-    </Box>
+    <TabsWithUrlParam isLazy>
+      <TabList>
+        <Tab>{type == "MenteeInterview" ? "" : ""}</Tab>
+        <Tab></Tab>
+      </TabList>
 
-    {calibrationEditorIsOpen && <CalibrationEditor type={type} onClose={
-      () => setCalibrationEditorIsOpen(false)}
-    />}
-
-    {!interviews || !applicants ? <Loader /> : 
-      <Applicants type={type} applicants={applicants} interviews={interviews} refetchInterviews={refetch} />}
-
-    <Text fontSize="sm"><CheckIcon /></Text>
+      <TabPanels>
+        <TabPanel>
+          {!interviews || !applicants ? <Loader /> : 
+            <Applicants type={type} applicants={applicants} interviews={interviews} 
+              refetchInterviews={refetchInterview} 
+            />
+          }
+        </TabPanel>
+        <TabPanel>
+          {!calibrations ? <Loader /> : 
+            <Calibrations type={type} calibrations={calibrations} refetch={() => {
+              refetchCalibrations();
+              // When calibration name changes, interviews may need a refetch as well.
+              refetchInterview();
+            }} />
+          }
+        </TabPanel>
+      </TabPanels>
+    </TabsWithUrlParam>
   </Flex>
 }
 
@@ -80,19 +105,23 @@ function Applicants({ type, applicants, interviews, refetchInterviews }: {
   interviews: Interview[], 
   refetchInterviews: () => any,
 }) {
-  return <TableContainer><Table>
-    <Thead>
-      <Tr>
-        <Th></Th><Th></Th><Th></Th><Th></Th><Th></Th>
-        <Th></Th><Th></Th>
-      </Tr>
-    </Thead>
-    <Tbody>
-      {applicants.map(a => 
-        <Applicant key={a.id} type={type} applicant={a} interviews={interviews} refetchInterviews={refetchInterviews} />)
-      }
-    </Tbody>
-  </Table></TableContainer>;
+  return <TableContainer>
+    <Table>
+      <Thead>
+        <Tr>
+          <Th></Th><Th></Th><Th></Th><Th></Th>
+          <Th></Th><Th></Th><Th></Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {applicants.map(a => 
+          <Applicant key={a.id} type={type} applicant={a} interviews={interviews} refetchInterviews={refetchInterviews} />)
+        }
+      </Tbody>
+    </Table>
+
+    <Text marginTop={sectionSpacing} fontSize="sm"><CheckIcon /></Text>
+  </TableContainer>;
 }
 
 function Applicant({ type, applicant, interviews, refetchInterviews } : {
@@ -128,11 +157,7 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
       }} 
     />}
 
-    <Tr key={applicant.id}>
-      <TdEditLink>
-        {interview ? <EditIcon /> : <AddIcon />}
-      </TdEditLink>
-      {interview ? <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink> : <Td />}
+    <Tr key={applicant.id} _hover={{ bg: "white" }}>
       <TdEditLink>
         {formatUserName(applicant.name, "formal")}
       </TdEditLink>
@@ -149,8 +174,12 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
         </WrapItem>)}
       </Wrap></TdEditLink>
       <TdEditLink>
-        {interview && interview.calibration?.name}
+      <TdEditLink>
+        {interview ? <EditIcon /> : <AddIcon />}
       </TdEditLink>
+        {interview ? <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink> : <Td />}
+      </TdEditLink>
+      {interview ? <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink> : <Td />}
     </Tr>
   </>;
 }
@@ -168,6 +197,7 @@ function InterviewEditor({ type, applicant, interview, onClose }: {
   const [saving, setSaving] = useState(false);
 
   const { data: calibrations } = trpcNext.calibrations.list.useQuery(type);
+  // When selecting "-“ <Select> emits "".
   const [calibrationId, setCalibrationId] = useState<string>(interview?.calibration?.id || "");
   
   const isValid = () => interviewerIds.length > 0;
@@ -195,7 +225,7 @@ function InterviewEditor({ type, applicant, interview, onClose }: {
 
   return <ModalWithBackdrop isOpen onClose={onClose}>
     <ModalContent>
-      <ModalHeader>{interview ? "" : ""}{type == "MenteeInterview" ? "": ""}</ModalHeader>
+      <ModalHeader>{interview ? "" : "创建"}{type == "MenteeInterview" ? "": ""}</ModalHeader>
       <ModalCloseButton />
       <ModalBody>
         <VStack spacing={6}>
@@ -216,7 +246,7 @@ function InterviewEditor({ type, applicant, interview, onClose }: {
           </FormControl>
           <FormControl>
             <FormLabel></FormLabel>
-            <Select placeholder=""
+            <Select placeholder="-"
               onChange={e => setCalibrationId(e.target.value)}
               value={calibrationId}
             >
@@ -234,48 +264,85 @@ function InterviewEditor({ type, applicant, interview, onClose }: {
   </ModalWithBackdrop>;
 }
 
-
-function CalibrationEditor({ type, onClose }: {
+function Calibrations({ type, calibrations, refetch }: {
   type: InterviewType,
-  onClose: () => void,
+  calibrations: Calibration[],
+  refetch: () => void,
 }) {
-  const [name, setName] = useState<string>('');
-  const [saving, setSaving] = useState<boolean>(false);
-
-  const isValid = () => name.length > 0;
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      invariant(isValid());
-      await trpc.calibrations.create.mutate({ type, name });
-      onClose();
-    } finally {
-      setSaving(false);
-    }
+  const create = async () => {
+    // Find an unused name
+    let name: string;
+    let count = 1;
+    do {
+      name = `(${count++})`;
+    } while (calibrations.some(c => c.name === name));
+    await trpc.calibrations.create.mutate({ type, name });
+    refetch();
   }
 
-  return <ModalWithBackdrop isOpen onClose={onClose}>
-    <ModalContent>
-      <ModalHeader></ModalHeader>
-      <ModalCloseButton />
-      <ModalBody>
-        <VStack spacing={6}>
-          <FormControl>
-            <FormLabel></FormLabel>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)} 
-              placeholder="2024"
-            />
-          </FormControl>
-        </VStack>
-      </ModalBody>
-      <ModalFooter>
-        <Button variant='brand' 
-          isDisabled={!isValid()}
-          isLoading={saving} onClick={save}></Button>
-      </ModalFooter>
-    </ModalContent>
-  </ModalWithBackdrop>;
+  const update = async (old: Calibration, name: string, active: boolean) => {
+    if (old.name === name && old.active === active) return;
+    await trpc.calibrations.update.mutate({ id: old.id, name, active });
+    refetch();
+  };
+
+  return <Flex direction="column" gap={paragraphSpacing}>
+    <Box>
+      <UnorderedList>
+        <ListItem></ListItem>
+        <ListItem></ListItem>
+        <ListItem></ListItem>
+        <ListItem></ListItem>
+      </UnorderedList>
+    </Box>
+
+    <Box><Button leftIcon={<AddIcon />} onClick={create}></Button></Box>
+
+    <TableContainer><Table>
+      <Thead>
+        <Tr>
+          <Th></Th><Th></Th><Th></Th><Th></Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {calibrations
+          // Sort by creation time desending
+          .sort((c1, c2) => moment(c2.createdAt).diff(moment(c1.createdAt), "seconds"))
+          .map(c => {
+            return <Tr key={c.id}>
+              <Td>
+                <EditableCalibrationName calibration={c} update={update} />
+              </Td>
+              <Td>
+                <Switch isChecked={c.active} onChange={e => update(c, c.name, e.target.checked)} />
+                {" "} {c.active ? "" : ""}
+              </Td>
+              <Td>
+                {c.createdAt && prettifyDate(c.createdAt)}
+              </Td>
+              <TdLink href={`/calibrations/${c.id}`}>
+                <ViewIcon />
+              </TdLink>
+            </Tr>;
+          })
+        }
+      </Tbody>
+    </Table></TableContainer>
+  </Flex>;
+}
+
+function EditableCalibrationName({ calibration: c, update }: {
+  calibration: Calibration,
+  update: (c: Calibration, name: string, active: boolean) => void,
+}) {
+  const EditableControls = () => {
+    const { isEditing, getEditButtonProps } = useEditableControls();
+    return isEditing ? null : <IconButton aria-label='Edit' icon={<EditIcon />} {...getEditButtonProps()} />;
+  }
+
+  return <Editable defaultValue={c.name} maxWidth={60} onSubmit={v => update(c, v, c.active)}>
+    <EditablePreview />
+    <EditableInput />
+    <EditableControls />
+  </Editable>;
 }
