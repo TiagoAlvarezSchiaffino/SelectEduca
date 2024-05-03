@@ -1,5 +1,5 @@
 """
-Please set environment variable TOKEN
+Please set environment variable INTEGRATION_AUTH_TOKEN for beta.yuanjian.org
 """
 
 import requests
@@ -32,8 +32,8 @@ model = model.eval()
 url_get = ""
 url_post = ''
 params = {"key": "", "excludeTranscriptsWithKey": "xxx_llm_1000"}
-headers_get = {"Authorization": "Bearer {}".format(os.environ['TOKEN'])}
-headers_post = ["Authorization: Bearer {}".format(os.environ['TOKEN']),
+headers_get = {"Authorization": "Bearer {}".format(os.environ['INTEGRATION_AUTH_TOKEN'])}
+headers_post = ["Authorization: Bearer {}".format(os.environ['INTEGRATION_AUTH_TOKEN']),
                 "Content-Type: application/x-www-form-urlencoded"]  #
 
 
