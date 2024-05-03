@@ -84,12 +84,17 @@ function InterviewFeedbackEditorWithData({ id, feedback: original, etag, readonl
   const refEtag = useRef<number>(etag);
 
   const save = async (f: Feedback) => {
+    const data = {
+      id,
+      feedback: f,
+      etag: refEtag.current,
+    };
+
+    // TODO: A holistic solution.
+    await trpc.interviewFeedbacks.logUpdateAttempt.mutate(data);
+
     try {
-      refEtag.current = await trpc.interviewFeedbacks.update.mutate({ 
-        id,
-        feedback: f,
-        etag: refEtag.current,
-      });
+      refEtag.current = await trpc.interviewFeedbacks.update.mutate(data);
     } catch (e) {
       if (e instanceof TRPCClientError && e.data.code == "CONFLICT") {
         window.alert("");
