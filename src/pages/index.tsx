@@ -1,3 +1,4 @@
+
 import {
   Box,
   Button,
@@ -16,13 +17,14 @@ import React, { useState } from 'react';
 import { NextPageWithLayout } from "../NextPageWithLayout";
 import AppLayout from "../AppLayout";
 import { useUserContext } from "../UserContext";
+import trpc from "../trpc";
 import { trpcNext } from "../trpc";
-import trpcNext from "../trpcNext";
 import GroupBar from 'components/GroupBar';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import ConsentModal, { consentFormAccepted } from '../components/ConsentModal';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
-import Loader from 'components/Loader'
+import Loader from 'components/Loader';
+import { isPermitted } from 'shared/Role';
 
 const Index: NextPageWithLayout = () => {
   const [user] = useUserContext();
@@ -30,7 +32,7 @@ const Index: NextPageWithLayout = () => {
   return <>
     {!userHasName && <SetNameModal />}
     {userHasName && !consentFormAccepted(user) && <ConsentModal />}
-    <Box paddingTop={'80px'}><Meetings /></Box>
+    <Meetings />
   </>;
 }
 
@@ -51,6 +53,7 @@ function SetNameModal() {
   };
 
   return (
+    // onClose returns undefined to prevent user from closing the modal without entering name.
     <ModalWithBackdrop isOpen onClose={() => undefined}>
       <ModalContent>
         <ModalHeader>👋</ModalHeader>
@@ -69,7 +72,6 @@ function SetNameModal() {
                 onClick={handleSubmit}
                 isDisabled={(name)}
                 variant='brand' w='100%' mb='24px'>
-                
               </Button>
             </FormControl>
           </Box>
@@ -80,30 +82,30 @@ function SetNameModal() {
 }
 
 function Meetings() {
-  const { data: groups, isLoading } = trpcNext.groups.listMyUnowned.useQuery();
+  const [me] = useUserContext();
+  const { data: groups, isLoading } = trpcNext.groups.listMine.useQuery({
+    // TODO: This is a hack. Do it properly.
+    includeOwned: isPermitted(me.roles, "Mentee"),
+  });
 
   return (<>
     <PageBreadcrumb current='' parents={[]} />
     {isLoading && <Loader />}
     
-    {groups && groups.length == 0 && !isLoading && <>
-      <Text></Text>
-      <br />
-      <UnorderedList>
-        <ListItem>
-          （<Link isExternal href="https://meeting.tencent.com/download/"></Link>）
-        </ListItem>
-        <br />
-        <ListItem>
-          （<Link isExternal href="https://voovmeeting.com/download-center.html"></Link>）
-        </ListItem>
-      </UnorderedList>
-    </>}
+    {groups && groups.length == 0 && !isLoading && <Text>
+      
+      <br /><br />
+      （<Link isExternal href=""></Link>）
+      <br /><br />
+      🌎 （<Link isExternal href=""></Link>）
+    </Text>}
     
     <VStack divider={<StackDivider />} align='left' spacing='6'>
       {groups &&
         groups.map(group => 
-          <GroupBar key={group.id} group={group} showJoinButton showTranscriptCount showTranscriptLink />)
+          <GroupBar key={group.id} group={group} 
+            showJoinButton showTranscriptCount showTranscriptLink abbreviateOnMobile
+          />)
       }
     </VStack>
   </>);

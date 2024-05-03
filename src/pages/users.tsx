@@ -78,6 +78,7 @@ const Page: NextPageWithLayout = () => {
           <Tbody>
             {users.map((u: any) => (
               <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer' _hover={{ bg: "white" }}>
+                <Td><EditIcon /></Td>
                 <Td>{u.email}</Td>
                 <Td>{u.name} {me.id === u.id ? "" : ""}</Td>
                 <Td>{toPinyin(u.name ?? '')}</Td>
@@ -93,7 +94,6 @@ const Page: NextPageWithLayout = () => {
                   })}
                   </Wrap>
                 </Td>
-                <Td><EditIcon /></Td>
               </Tr>
             ))}
           </Tbody>

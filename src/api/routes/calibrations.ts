@@ -13,6 +13,7 @@ import { Transaction } from "sequelize";
 import invariant from "tiny-invariant";
 import Calibration from "api/database/models/Calibration";
 import { zInterview } from "../../shared/Interview";
+import { isPermitted } from "shared/Role";
 
 const create = procedure
   .use(authUser("InterviewManager"))
@@ -32,11 +33,31 @@ export async function createCalibration(type: InterviewType, name: string): Prom
 {
   if (!name.length) throw generalBadRequestError("");
   return await sequelizeInstance.transaction(async (transaction) => {
-    const c = await db.Calibration.create({ type, name }, { transaction });
+    const c = await db.Calibration.create({ type, name, active: false }, { transaction });
     await createGroup(null, [], null, null, c.id, transaction);
     return c.id;
   });
 }
+
+const update = procedure
+  .use(authUser("InterviewManager"))
+  .input(z.object({
+    id: z.string(),
+    name: z.string(),
+    active: z.boolean(),
+  }))
+  .mutation(async ({ input }) =>
+{
+  const [affected] = await db.Calibration.update({
+    name: input.name,
+    active: input.active,
+  }, {
+    where: { id: input.id },
+  });
+
+  invariant(affected <= 1);
+  if (!affected) throw notFoundError("", input.id);
+})
 
 const list = procedure
   .use(authUser("InterviewManager"))
@@ -50,6 +71,9 @@ const list = procedure
   })
 });
 
+/**
+ * List only active calibrations.
+ */
 const listMine = procedure
   .use(authUser())
   .output(z.array(zCalibration))
@@ -70,7 +94,7 @@ const listMine = procedure
   const cs: Calibration[] = [];
   for (const f of feedbacks) {
     const fic = f.interview.calibration;
-    if (!fic) continue;
+    if (!fic || !fic.active) continue;
     if (!cs.some(c => c.id == fic.id)) cs.push(fic);
   }
 
@@ -78,7 +102,24 @@ const listMine = procedure
 });
 
 /**
- * Access is allowed only if the current user is one of the interviewers the calibration includes.
+ * TODO: return zCaibrationWithInterview and merge with getInterviews?
+ */
+const get = procedure
+  .use(authUser("InterviewManager"))
+  .input(z.string())
+  .output(zCalibration)
+  .query(async ({ input: id }) =>
+{
+  const c = await db.Calibration.findByPk(id, {
+    attributes: calibrationAttributes,
+  });
+  if (!c) throw notFoundError("", id);
+  return c;
+});
+
+/**
+ * Access is allowed only if 1) the current user is one of the interviewers the calibration includes or an
+ * InterviewManager.
  * 
  * @param Calibration Id
  */
@@ -94,7 +135,9 @@ const getInterviews = procedure
     include: includeForInterview,
   });
 
-  if (!interviews.some(i => i.feedbacks.some(f => f.interviewer.id == ctx.user.id))) {
+  if (!isPermitted(ctx.user.roles, "InterviewManager") 
+    && !interviews.some(i => i.feedbacks.some(f => f.interviewer.id == ctx.user.id))) 
+  {
     throw noPermissionError("", calibrationId);
   }
 
@@ -103,8 +146,10 @@ const getInterviews = procedure
 
 export default router({
   create,
+  update,
   list,
   listMine,
+  get,
   getInterviews,
 });
 

@@ -10,7 +10,7 @@ import {
     Unique,
     HasOne,
   } from "sequelize-typescript";
-  import { CreationOptional, STRING, UUID, UUIDV4 } from "sequelize";
+  import { BOOLEAN, CreationOptional, STRING, UUID, UUIDV4 } from "sequelize";
   import ZodColumn from "../modelHelpers/ZodColumn";
   import Interview from "./Interview";
   import Group from "./Group";
@@ -32,9 +32,14 @@ import {
     type: InterviewType;
   
     @AllowNull(false)
+    @Unique
     @Column(STRING)
     name: string;
   
+    @AllowNull(false)
+    @Column(BOOLEAN)
+    active: boolean;
+
     /**
      * Associations
      */
