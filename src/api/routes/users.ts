@@ -5,21 +5,21 @@ import db from "../database/db";
 import { Op } from "sequelize";
 import { authUser, invalidateLocalUserCache } from "../auth";
 import User, { zUser, zUserFilter } from "../../shared/User";
-import { toPinyin } from "../../shared/strings";
+import { isValidChineseName, toPinyin } from "../../shared/strings";
 import invariant from 'tiny-invariant';
 import { email } from "../sendgrid";
 import { formatUserName } from '../../shared/strings';
-import { generalBadRequestError, noPermissionError, notFoundError, notImplemnetedError } from "../errors";
-import { userAttributes } from "../database/models/attributesAndIncludes";
+import { generalBadRequestError, noPermissionError, notFoundError } from "../errors";
 import Interview from "api/database/models/Interview";
 import { InterviewType } from "shared/InterviewType";
+import { userAttributes } from "../database/models/attributesAndIncludes";
 
 const me = procedure
   .use(authUser())
   .output(zUser)
   .query(async ({ ctx }) => ctx.user);
 
-  const meNoCache = procedure
+const meNoCache = procedure
   .use(authUser())
   .output(zUser)
   .query(async ({ ctx }) => 
@@ -57,12 +57,11 @@ const create = procedure
  * Returned users are ordered by Pinyin.
  */
 const list = procedure
-  .use(authUser(['UserManager', 'GroupManager', 'InterviewManager']))
+  .use(authUser(['UserManager', 'GroupManager']))
   .input(zUserFilter)
-  .output(z.array(zUserProfile))
-  .query(async ({ input: filter }) =>
+  .output(z.array(zUser))
+  .query(async ({ input: filter }) => 
 {
-  if (filter.hasMentorApplication) throw notImplemnetedError();
   // Force typescript checking
   const interviewType: InterviewType = "MenteeInterview";
 
@@ -93,7 +92,7 @@ const list = procedure
       }],
     ],
   });
-  
+
   if (filter.isMenteeInterviewee == false) return res.filter(u => u.interviews.length == 0);
   else return res;
 });
@@ -104,7 +103,7 @@ const list = procedure
  */
 const update = procedure
   .use(authUser())
-  .input(zUserProfile)
+  .input(zUser)
   .mutation(async ({ input, ctx }) => 
 {
   checkUserFields(input.name, input.email);
@@ -142,47 +141,38 @@ const update = procedure
   invalidateLocalUserCache();
 });
 
-const getApplication = procedure
+/**
+ * Only InterviewManagers and interviewers of the application are allowed to call this route.
+ */
+const getMenteeApplication = procedure
   .use(authUser())
-  .input(z.object({
-    userId: z.string(),
-    type: zInterviewType,
-  }))
+  .input(z.string())
   .output(z.record(z.string(), z.any()).nullable())
-  .query(async ({ ctx, input }) =>
+  .query(async ({ ctx, input: menteeUserId }) =>
 {
-  if (input.type !== "MenteeInterview") throw notImplemnetedError();
-  if (isPermitted(ctx.user.roles, "InterviewManager")) {
-    // for interview managers, directly query users table
-    const u = await db.User.findByPk(input.userId, {
-      attributes: ["menteeApplication"],
-    });
-    if (!u) throw notFoundError("", input.userId);
-    return u.menteeApplication;
+  const isIM = isPermitted(ctx.user.roles, "InterviewManager");
 
-  } else {
-    // for other users, only allows their access if they are an interviewer of the applicant.
-    const interviews = await db.Interview.findAll({
-      where: {
-        type: "MenteeInterview",
-        intervieweeId: input.userId,
-      },
+  const interviews = await db.Interview.findAll({
+    where: {
+      type: "MenteeInterview",
+      intervieweeId: menteeUserId,
+    },
+    attributes: [],
+    include: [{
+      model: db.InterviewFeedback,
       attributes: [],
-      include: [{
-        model: db.InterviewFeedback,
-        attributes: [],
-        where: { interviewerId: ctx.user.id },
-      }, {
-        model: db.User,
-        attributes: ["menteeApplication"],
-      }],
-    });
-    if (interviews.length == 0) {
-      throw noPermissionError("", input.userId);
-    }
-
-    return interviews[0].interviewee.menteeApplication;
+      ...isIM ? {} : { where: { interviewerId: ctx.user.id } }
+    }, {
+      model: db.User,
+      attributes: ["menteeApplication"],
+    }],
+  });
+  if (interviews.length == 0) {
+    throw noPermissionError("", menteeUserId);
   }
+
+  return interviews[0].interviewee.menteeApplication;
+});
 
 /**
  * List all users and their roles who have privileged user data access. See RoleProfile.privilegeUserDataAccess for an
@@ -207,19 +197,18 @@ const listPriviledgedUserDataAccess = procedure
   });
 });
 
-const users = router({
+export default router({
   me,
   meNoCache,
   create,
   list,
   update,
   listPriviledgedUserDataAccess,
-  getApplication,
+  getMenteeApplication,
 });
-export default users;
 
 function checkUserFields(name: string | null, email: string) {
-  if (!name) {
+  if (!isValidChineseName(name)) {
     throw generalBadRequestError("");
   }
 

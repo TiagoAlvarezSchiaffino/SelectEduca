@@ -14,8 +14,9 @@ import {
   import z from "zod";
   import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
   
-  export default function MenteeApplication({ menteeUserId } : {
+  export default function MenteeApplication({ menteeUserId, title } : {
     menteeUserId: string,
+    title?: string,
   }) {
     const { data: app, isLoading } = trpcNext.users.getApplication.useQuery({ 
       userId: menteeUserId, 
@@ -23,7 +24,7 @@ import {
     });
   
     return isLoading ? <Loader /> : <Flex direction="column" gap={sectionSpacing}>
-      <Heading size="md"></Heading>
+      <Heading size="md">{title || ""}</Heading>
       {!app ? "" : menteeApplicationFields.map(f => {
         if (f.name in app) {
           return <Flex key={f.name} direction="column" gap={paragraphSpacing}>

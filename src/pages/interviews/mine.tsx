@@ -69,7 +69,7 @@ function Interviews({ interviews, showMe }: {
     </Thead>
     <Tbody>
     {interviews.map(i => (
-      <TrLink key={i.id} href={`/interviews/mine/${i.id}`}>
+      <TrLink key={i.id} href={`/interviews/${i.id}/feedback`}>
         <Td>
           {formatUserName(i.interviewee.name, "formal")}
         </Td>
