@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { zMinUserProfile } from "./UserProfile";
 import { zAssessment } from "./Assessment";
-import { zGroup } from "./Group";
-
+import { zGroupCountingTranscripts } from "./Group";
 
 export const zPrivateMentorNotes = z.object({
   memo: z.string().optional(),
@@ -17,7 +16,7 @@ export const zPartnership = z.object({
 export type Partnership = z.TypeOf<typeof zPartnership>;
 
 export const zPartnershipWithGroupAndNotes = zPartnership.merge(z.object({
-  group: zGroup,  privateMentorNotes: zPrivateMentorNotes.nullable(),
+  group: zGroupCountingTranscripts,
 }));
 export type PartnershipWithGroupAndNotes = z.TypeOf<typeof zPartnershipWithGroupAndNotes>;
 
