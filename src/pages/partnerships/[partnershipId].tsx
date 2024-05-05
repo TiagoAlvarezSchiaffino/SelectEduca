@@ -18,7 +18,7 @@ const Page: NextPageWithLayout = () => {
   if (!partnership) return <Loader />
 
   return <>
-    <GroupBar group={partnership.group} showJoinButton showGroupName={false} marginBottom={8} />
+    <GroupBar group={partnership.group} showJoinButton showGroupName={false} marginBottom={sectionSpacing + 2} />
     <Grid templateColumns={{ base: "1fr", [sidebarBreakpoint]: "0.382fr 0.618fr" }} gap={10}>
       <GridItem>
         <PrivateNotes 
