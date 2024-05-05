@@ -13,7 +13,7 @@ import {
   import { CreationOptional, DATE, JSONB, UUID, UUIDV4 } from "sequelize";
   import User from "./User";
   import ZodColumn from "../modelHelpers/ZodColumn";
-  import z from "zod";
+  import { Feedback, zFeedback } from "../../../shared/InterviewFeedback";
   import Interview from "./Interview";
   
   @Table({
@@ -37,8 +37,8 @@ import {
     @Column(UUID)
     interviewerId: string;
   
-    @ZodColumn(JSONB, z.record(z.string(), z.any()).nullable())
-    feedback: Record<string, any> | null;
+    @ZodColumn(JSONB, zFeedback.nullable())
+    feedback: Feedback | null;
 
     @Column(DATE)
     feedbackUpdatedAt: string | null;

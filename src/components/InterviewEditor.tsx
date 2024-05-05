@@ -16,40 +16,24 @@ import { useRef, useState } from 'react';
 import Autosaver from 'components/Autosaver';
 import _ from "lodash";
 import { TRPCClientError } from '@trpc/client';
-import { Feedback } from "shared/InterviewFeedback";
+import { Feedback as SharedFeedback } from "shared/InterviewFeedback";
 import { useUserContext } from 'UserContext';
 import { isPermitted } from 'shared/Role';
 
-/**
- * This data type is only used by the frontend. The backend / database is unaware of it and instead uses
- * shared/InterviewFeedbak:Feedback. Therefore, type conversion is necesary.
- * 
- * TODO: use EditorFeedback as a shared type?
- */
-export type EditorFeedback = {
-  dimensions: EditorFeedbackDimension[],
+type Feedback = {
+  dimensions: FeedbackDimension[],
 };
 
-export type EditorFeedbackDimension = {
+type FeedbackDimension = {
   name: string,
   score: number | null,
   comment: string | null,
 };
 
-export const summaryDimensionName = "";
-export const summaryScoreLabels = ["", "", "", ""];
+const dimensionNames = ["", "", "", "", "", "", "", ""];
+const summaryDimensionName = "";
 
-export function getScoreColor(scoreLabels: string[], score: number): string {
-  invariant(scoreLabels.length == 4 || scoreLabels.length == 5);
-  const backgrounds = [
-    "red.600", "orange", 
-    ...scoreLabels.length == 4 ? [] : ["grey"],
-    "green.300", "green.600"
-  ];
-  return backgrounds[score - 1];
-}
-
-function getDimension(f: EditorFeedback, name: string): EditorFeedbackDimension {
+function getDimension(f: Feedback, name: string): FeedbackDimension {
   const ds = f.dimensions.filter(d => d.name === name);
   if (ds.length > 0) {
     invariant(ds.length == 1);
@@ -66,7 +50,7 @@ function getDimension(f: EditorFeedback, name: string): EditorFeedbackDimension 
 /**
  * @returns a new Feedback object
  */
-function setDimension(f: EditorFeedback, dimension: EditorFeedbackDimension): EditorFeedback {
+function setDimension(f: Feedback, dimension: FeedbackDimension): Feedback {
   return {
     dimensions: [...f.dimensions.filter(d => dimension.name !== d.name), dimension],
   };
@@ -76,13 +60,12 @@ export function InterviewFeedbackEditor({ interviewFeedbackId, readonly }: {
   interviewFeedbackId: string,
   readonly?: boolean,
 }) {
-  // See Editor()'s comment on the reason for `catchTime: 0`
-  // See Editor()'s comment on the reason for `catchTime: 0`
-  const { data } = trpcNext.interviewFeedbacks.get.useQuery(interviewFeedbackId, { cacheTime: 0 });  if (!data) return <Loader />;
+  const { data } = trpcNext.interviewFeedbacks.get.useQuery(interviewFeedbackId);
+  if (!data) return <Loader />;
 
   const f = data.interviewFeedback;
 
-  const save = async (feedback: EditorFeedback, etag: number) => {
+  const save = async (feedback: Feedback, etag: number) => {
     const data = {
       id: f.id,
       feedback,
@@ -98,12 +81,12 @@ export function InterviewFeedbackEditor({ interviewFeedbackId, readonly }: {
 
 export function InterviewDecisionEditor({ interviewId, decision, etag }: { 
   interviewId: string,
-  decision: Feedback | null,
+  decision: SharedFeedback | null,
   etag: number,
 }) {
   const [me] = useUserContext();
 
-  const save = async (decision: EditorFeedback, etag: number) => {
+  const save = async (decision: Feedback, etag: number) => {
     return await trpc.interviews.updateDecision.mutate({
       interviewId,
       decision,
@@ -116,25 +99,19 @@ export function InterviewDecisionEditor({ interviewId, decision, etag }: {
   />;
 }
 
-/**
- * WARNING: Set useQuery()'s option { catchTime: 0 } when fetching `defaultFeedback`. Otherwise, useQuery() may return
- * cached but stale data first and then return newer data after a fetch. Becuase the editor ignors subsequent data loads
- * (see `useState` below), this would cause etag validation error when the user attempts to edit data.
- */
-
 function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
-  defaultFeedback: Feedback | null,
+  defaultFeedback: SharedFeedback | null,
   etag: number,
-  save: (f: EditorFeedback, etag: number) => Promise<number>,
+  save: (f: Feedback, etag: number) => Promise<number>,
   showDimensions: boolean,
   readonly?: boolean,
 }) {
   // Only load the original feedback once, and not when the parent auto refetches it.
   // Changing content during edits may confuses the user to hell.
-  const [feedback, setFeedback] = useState<EditorFeedback>(defaultFeedback as EditorFeedback || { dimensions: [] });
+  const [feedback, setFeedback] = useState<Feedback>(defaultFeedback as Feedback || { dimensions: [] });
   const refEtag = useRef<number>(etag);
 
-  const onSave = async (f: EditorFeedback) => {
+  const onSave = async (f: Feedback) => {
     try {
       refEtag.current = await save(f, refEtag.current);
     } catch (e) {
@@ -148,14 +125,13 @@ function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
     <DimensionEditor 
       dimension={getDimension(feedback, summaryDimensionName)}
       dimensionLabel={`${summaryDimensionName}`}
-      scoreLabels={summaryScoreLabels}
+      scoreLabels={["", "", "", ""]}
       commentPlaceholder=""
       readonly={readonly}
       onChange={d => setFeedback(setDimension(feedback, d))}
     />
 
-    {showDimensions && ["", "", "", "", "", "", "", ""]
-    .map((name, idx) => <DimensionEditor 
+    {showDimensions && dimensionNames.map((name, idx) => <DimensionEditor 
       key={name}
       dimension={getDimension(feedback, name)}
       dimensionLabel={`${idx + 1}. ${name}`}
@@ -165,29 +141,25 @@ function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
       onChange={d => setFeedback(setDimension(feedback, d))}
     />)}
 
-    {!readonly && <Autosaver data={feedback} onSave={onSave} />}
+    {!readonly && <Autosaver
+      // This conditional is to prevent initial page loading from triggering auto saving.
+      data={_.isEqual(feedback, defaultFeedback) ? null : feedback}
+      onSave={onSave}
+    />}
   </Flex>;
 }
 
 function DimensionEditor({ 
   dimension: d, dimensionLabel, scoreLabels, commentPlaceholder, readonly, onChange,
 }: {
-  dimension: EditorFeedbackDimension,
+  dimension: FeedbackDimension,
   dimensionLabel: string,
   scoreLabels: string[],
   commentPlaceholder: string,
-  onChange: (d: EditorFeedbackDimension) => void,
+  onChange: (d: FeedbackDimension) => void,
   readonly?: boolean,
 }) {
-  invariant(scoreLabels.length == 4 || scoreLabels.length == 5);
-  const backgrounds = [
-    "orange.600", "orange", 
-    ...scoreLabels.length == 4 ? [] : ["grey"],
-    "green.400", "green"
-  ];
-
   const [showTooltip, setShowTooltip] = useState(false);
-  const score = d.score ?? 1;
 
   return <>
     <Flex direction="row" gap={3}>
@@ -195,23 +167,24 @@ function DimensionEditor({
       <Slider min={1} max={scoreLabels.length} step={1} isReadOnly={readonly}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        value={score}
+        value={d.score == null ? 1 : d.score}
         onChange={v => onChange({
           name: d.name,
           score: v,
           comment: d.comment,
         })}
       >
-        <SliderTrack><SliderFilledTrack bg={backgrounds[score - 1]} /></SliderTrack>
+        <SliderTrack><SliderFilledTrack bg="brand.b" /></SliderTrack>
         {scoreLabels.map((_, idx) => <SliderMark key={idx} value={idx + 1}>.</SliderMark>)}
         
         <Tooltip
           hasArrow
           placement='top'
           isOpen={showTooltip}
-          label={`${score}: ${scoreLabels[score - 1]}`}
+          // N.B. scores are 1-indexed while labels are 0-index.
+          label={`${d.score ?? 1}: ${scoreLabels[d.score ? d.score - 1 : 0]}`}
         >
-          <SliderThumb bg={backgrounds[score - 1]} />
+          <SliderThumb bg="brand.b" />
         </Tooltip>
       </Slider>
     </Flex>
@@ -219,7 +192,7 @@ function DimensionEditor({
     <Textarea
       isReadOnly={readonly}
       {...readonly ? {} : { placeholder: commentPlaceholder }}
-      height="200px"
+      height="150px"
       {...readonly ? {} : { background: "white" }}
       {...d.comment ? { value: d.comment } : {}}
       onChange={e => onChange({
