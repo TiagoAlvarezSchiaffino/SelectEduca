@@ -178,10 +178,16 @@ function DimensionEditor({
   commentPlaceholder: string,
   onChange: (d: EditorFeedbackDimension) => void,
   readonly?: boolean,
-}) {  
+}) {
+  invariant(scoreLabels.length == 4 || scoreLabels.length == 5);
+  const backgrounds = [
+    "orange.600", "orange", 
+    ...scoreLabels.length == 4 ? [] : ["grey"],
+    "green.400", "green"
+  ];
+
   const [showTooltip, setShowTooltip] = useState(false);
   const score = d.score ?? 1;
-  const color = getScoreColor(scoreLabels, score);
 
   return <>
     <Flex direction="row" gap={3}>
@@ -196,7 +202,7 @@ function DimensionEditor({
           comment: d.comment,
         })}
       >
-        <SliderTrack><SliderFilledTrack bg={color} /></SliderTrack>
+        <SliderTrack><SliderFilledTrack bg={backgrounds[score - 1]} /></SliderTrack>
         {scoreLabels.map((_, idx) => <SliderMark key={idx} value={idx + 1}>.</SliderMark>)}
         
         <Tooltip
@@ -205,7 +211,7 @@ function DimensionEditor({
           isOpen={showTooltip}
           label={`${score}: ${scoreLabels[score - 1]}`}
         >
-          <SliderThumb bg={color} />
+          <SliderThumb bg={backgrounds[score - 1]} />
         </Tooltip>
       </Slider>
     </Flex>
