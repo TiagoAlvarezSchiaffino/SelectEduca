@@ -54,7 +54,7 @@ const Page: NextPageWithLayout = () => {
         <GridItem>
           <Flex direction="column" gap={sectionSpacing}>
             <Instructions interviewers={interview.feedbacks.map(f => f.interviewer)} />
-            <InterviewFeedbackEditor feedbackId={getMyFeedbackId()} />
+            <InterviewFeedbackEditor interviewFeedbackId={getMyFeedbackId()} />
           </Flex>
         </GridItem>
         <GridItem>
