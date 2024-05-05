@@ -12,13 +12,14 @@ import {
 } from "sequelize-typescript";
 import Fix from "../modelHelpers/Fix";
 import ParanoidModel from "../modelHelpers/ParanoidModel";
-import { STRING, UUID } from "sequelize";
+import { ARRAY, STRING, UUID } from "sequelize";
 import GroupUser from "./GroupUser";
 import User from "./User";
 import Transcript from "./Transcript";
 import Partnership from "./Partnership";
 import Interview from "./Interview";
 import Calibration from "./Calibration"
+import Role from "shared/Role";
 
 @Table({ tableName: "groups", modelName: "group" })
 @Fix
@@ -34,6 +35,12 @@ class Group extends ParanoidModel<
   @ForeignKey(() => Partnership)
   @Column(UUID)
   partnershipId: string | null;
+
+  // A user is a member of this group if they are associated with this group via GroupUser,
+  // or isPermitted(user.roles, roles) is true.
+  @AllowNull(true)
+  @Column(ARRAY(STRING))
+  roles: Role[];
 
   // A group is said to be "owned" by an interview if this field is non-null.
   @ForeignKey(() => Interview)

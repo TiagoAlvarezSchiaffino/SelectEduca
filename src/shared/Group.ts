@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { zMinUserProfile } from "./UserProfile";
+import { zRoles } from "./Role";
 
 export const zGroup = z.object({
   id: z.string(),
   name: z.string().nullable(),
+  roles: zRoles,
   users: z.array(zMinUserProfile),
   partnershipId: z.string().uuid().nullable(),
   interviewId: z.string().uuid().nullable(),

@@ -5,7 +5,7 @@ import db from "../database/db";
 import { Includeable, Transaction } from "sequelize";
 import invariant from "tiny-invariant";
 import _ from "lodash";
-import { isPermitted } from "../../shared/Role";
+import Role, { isPermitted } from "../../shared/Role";
 import sequelizeInstance from "../database/sequelizeInstance";
 import { formatUserName, formatGroupName } from "../../shared/strings";
 import nzh from 'nzh';
@@ -14,6 +14,7 @@ import { alreadyExistsError, noPermissionError, notFoundError } from "../errors"
 import { Group, GroupCountingTranscripts, whereUnowned, zGroup, zGroupCountingTranscripts, 
   zGroupWithTranscripts } from "../../shared/Group";
 import { groupAttributes, groupCountingTranscriptsInclude, groupInclude } from "../database/models/attributesAndIncludes";
+import User from "shared/User";
 
 async function listGroups(userIds: string[], additionalWhere?: { [k: string]: any }):
   Promise<GroupCountingTranscripts[]> 
@@ -35,9 +36,10 @@ const create = procedure
   }))
   .mutation(async ({ ctx, input }) =>
 {
-  const res = await createGroupDeprecated(input.userIds);
-  await emailNewUsersOfGroupIgnoreError(ctx, res.group.id, input.userIds);
-  return res;
+  await sequelizeInstance.transaction(async t => {
+    const g = await createGroup(null, input.userIds, [], null, null, null, t);
+    await emailNewUsersOfGroupIgnoreError(ctx, g.id, input.userIds);
+  });
 });
 
 const update = procedure
@@ -170,6 +172,7 @@ const get = procedure
   .query(async ({ input, ctx }) => 
 {
   const g = await db.Group.findByPk(input.id, {
+    attributes: groupAttributes,
     include: [...groupInclude, {
       model: db.Transcript,
       include: [{
@@ -182,9 +185,7 @@ const get = procedure
     ],
   });
   if (!g) throw notFoundError("", input.id);
-  if (!isPermitted(ctx.user.roles, 'SummaryEngineer') && !g.users.some(u => u.id === ctx.user.id)) {
-    throw noPermissionError("", input.id);
-  }
+  checkPermissionForGroup(ctx.user, g);
   return g;
 });
 
@@ -198,6 +199,13 @@ const groups = router({
   get,
 });
 export default groups;
+
+export function checkPermissionForGroup(u: User, g: Group) {
+  if (isPermitted(u.roles, 'SummaryEngineer')) return;
+  if (isPermitted(u.roles, g.roles)) return;
+  if (g.users.some(u => u.id === u.id)) return;
+  throw noPermissionError("", g.id);
+}
 
 /**
  * @returns groups that contain all the given users.
@@ -232,38 +240,23 @@ export async function findGroups(userIds: string[], mode: 'inclusive' | 'exclusi
   return res;
 }
 
-export async function createGroup(name: string | null, userIds: string[], partnershipId: string | null, interviewId: string | null, 
-  calibrationId: string | null, t: Transaction): Promise<Group>
+export async function createGroup(
+  name: string | null,
+  userIds: string[],
+  roles: Role[],
+  partnershipId: string | null, 
+  interviewId: string | null, 
+  calibrationId: string | null,
+  transaction: Transaction): Promise<Group>
 {
   invariant(!partnershipId || !interviewId);
 
-  const g = await db.Group.create({ name, partnershipId, interviewId, calibrationId }, { transaction: t });
+  const g = await db.Group.create({ name, roles, partnershipId, interviewId, calibrationId }, { transaction });
   await db.GroupUser.bulkCreate(userIds.map(userId => ({
     userId,
     groupId: g.id,
-  })), { transaction: t });
+  })), { transaction });
   return g;
-}
-
-/**
- * Use createGroup instead
- */
-export async function createGroupDeprecated(userIds: string[]) {
-  const existing = await findGroups(userIds, 'exclusive');
-  if (existing.length > 0) {
-    throw alreadyExistsError("");
-  }
-
-  const group = await db.Group.create({});
-  const groupUsers = await db.GroupUser.bulkCreate(userIds.map(userId => ({
-    userId: userId,
-    groupId: group.id,
-  })));
-
-  return {
-    group,
-    groupUsers,
-  }
 }
 
 async function emailNewUsersOfGroupIgnoreError(ctx: any, groupId: string, userIds: string[]) {
