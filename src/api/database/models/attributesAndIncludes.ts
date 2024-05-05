@@ -2,6 +2,7 @@
  * Collect things in this file as opposed to model files to avoid cyclic dependencies.
  */
 import Calibration from "./Calibration";
+import Group from "./Group";
 import InterviewFeedback from "./InterviewFeedback";
 import User from "./User";
 
@@ -16,6 +17,8 @@ export const userAttributes = [...minUserAttributes, "email", "roles", "consentF
 /**
  * Group
  */
+
+export const groupAttributes = ["id", "name", "partnershipId", "interviewId", "calibrationId"];
 
 export const includeForGroup = [{
   model: User,
@@ -56,6 +59,12 @@ export const includeForInterviewFeedback = [{
 
 export const calibrationAttributes = ["id", "type", "name", "active", "createdAt"];
 
+export const includeForCalibration = [{
+  model: Group,
+  attributes: groupAttributes,
+  include: includeForGroup,
+}];
+
 /**
  * Interview
  */
@@ -65,6 +74,7 @@ export const interviewAttributes = ["id", "type"];
 export const includeForInterview = [{
   model: User,
   attributes: minUserAttributes,
+  include: includeForCalibration,
 }, {
   model: InterviewFeedback,
   attributes: minInterviewFeedbackAttributes,
