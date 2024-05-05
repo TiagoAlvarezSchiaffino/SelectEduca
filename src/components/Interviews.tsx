@@ -19,7 +19,8 @@ import {
   import { CheckIcon, EditIcon, ViewIcon } from '@chakra-ui/icons';
   import TrLink from 'components/TrLink';
   import { sectionSpacing } from 'theme/metrics';
-  
+  import { MdChevronRight } from 'react-icons/md';
+
   /**
    * @param forCalibration when true, show the current user in the interviewer list, and link to `/interviews/<id>` as
    * opposed to `/interviews/<id>/feedback`.
