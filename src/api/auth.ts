@@ -2,15 +2,12 @@ import { middleware } from "./trpc";
 import { TRPCError } from "@trpc/server";
 import Role, { isPermitted } from "../shared/Role";
 import { createUser } from "./database/models/User";
-import db from "./database/db";
-import invariant from "tiny-invariant";
 import apiEnv from "./apiEnv";
 import { UniqueConstraintError } from "sequelize";
 import { AuthenticationClient } from 'authing-js-sdk';
 import { LRUCache } from 'lru-cache';
 import { emailRoleIgnoreError } from './sendgrid';
 import User from "../shared/User";
-import { userAttributes } from "./database/models/attributesAndIncludes";
 
 const USER_CACHE_TTL_IN_MS = 60 * 60 * 1000;
 
