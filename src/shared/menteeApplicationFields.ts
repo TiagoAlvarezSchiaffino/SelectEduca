@@ -20,6 +20,7 @@ export type ApplicationField = {
     { jsjField: "field_168", name: "", },
     { jsjField: "field_156", name: "", },
     { jsjField: "field_162", name: "", },
+    { jsjProxiedField: "field_173", name: "", },
     { jsjProxiedField: "field_170", name: "", },
     { jsjProxiedField: "field_171", name: "", },
     { jsjField: "field_155", name: "", },
