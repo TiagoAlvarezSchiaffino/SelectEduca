@@ -1,5 +1,5 @@
 """
-Please set environment variable INTEGRATION_AUTH_TOKEN for beta.yuanjian.org
+Please set environment variable INTEGRATION_AUTH_TOKEN
 """
 
 import requests
@@ -31,7 +31,6 @@ model = model.eval()
 
 url_get = ""
 url_post = ''
-params = {"key": "", "excludeTranscriptsWithKey": "xxx_llm_1000"}
 headers_get = {"Authorization": "Bearer {}".format(os.environ['INTEGRATION_AUTH_TOKEN'])}
 headers_post = ["Authorization: Bearer {}".format(os.environ['INTEGRATION_AUTH_TOKEN']),
                 "Content-Type: application/x-www-form-urlencoded"]  #
@@ -180,51 +179,47 @@ def section_summarize(df, section_len, part_len):
         print(response)
         print("\n")
 
-    return df_s, summary_total, summary_bytheme
+    return df_s, summary_total, summary_bytheme, first_summary
 
 
 if __name__ == '__main__':
+    for part_len in [1000, 1200, 1500]:
+        for write_mode in ["short", "long"]:
+            # transcript list
+            summaryKey = "{}_summary_{}".format(write_mode, part_len)
+            params = {"key": "原始文字", "excludeTranscriptsWithKey": summaryKey}
+            data = get_list(url_get, headers_get, params)  ##transcriptId,summary
+            # print (data)
 
-    # transcript list
+            for d in data:
 
-    data = get_list(url_get, headers_get, params)  ##transcriptId,summary
-    # print (data)
+                transid = d["transcriptId"]  # transciptId
+                txt = d["summary"].split('\n')
 
-    #
-    for d in data:
+                name = set()
+                for t in txt[:1000]:
+                    if len(t.strip()) > 0:
+                        name.add(t[:t.find("(")].strip())
+                name = list(name)
 
-        transid = d["transcriptId"]  # transciptId
-        txt = d["summary"].split('\n')  #
+                person = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S",
+                          "T"]  # 20
+                person_dict = {}
+                for i in range(len(name)):
+                    person_dict[name[i]] = person[i]
+                print(person_dict)
 
-        #
-        name = set()
-        for t in txt[:1000]:
-            if len(t.strip()) > 0:
-                name.add(t[:t.find("(")].strip())
-        name = list(name)
+                # section_len = 500
+                df = preprocess(txt, name, person_dict)
 
-        # dict
-        person = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S",
-                  "T"]  # 20
-        person_dict = {}
-        for i in range(len(name)):
-            person_dict[name[i]] = person[i]
-        print(person_dict)
+                for section_len in [500]:
+                    df_s, summary_total, summary_bytheme, first_summary = section_summarize(df, section_len, part_len)
+                    if write_mode == "short":
+                        result_summary = "\n:\n" + "\n".join(summary_bytheme)
+                    else:
+                        result_summary = ":\n{}\n".format(first_summary) + "\n\n" + summary_total
 
-        #
-        # section_len = 500
-        df = preprocess(txt, name, person_dict)
-
-        for part_len in [1000]:
-            for section_len in [500]:
-                df_s, summary_total, summary_bytheme = section_summarize(df, section_len, part_len)
-                result_summary = "\n:\n" + "\n".join(summary_bytheme)
-
-                for n in name:  #
-                    result_summary = re.sub(person_dict[n], "{{" + n + "}}", result_summary)
-
-                #
-                summaryKey = "xxx_llm_" + str(part_len)
-
-                post_summary(url_post, headers_post, transid, summaryKey, result_summary)
-                print("{} with {} is done".format(transid, summaryKey))
+                    for n in name: 
+                        result_summary = re.sub(person_dict[n], "{{" + n + "}}", result_summary)
+                    post_summary(url_post, headers_post, transid, summaryKey, result_summary)
+                    print("{} with {} is done".format(transid, summaryKey))

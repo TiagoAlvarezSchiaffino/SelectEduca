@@ -145,7 +145,7 @@ function UserEditor(props: {
     } finally {
       setSaving(false);
     }
-  }
+  };
 
   return <ModalWithBackdrop isOpen onClose={props.onClose}>
     <ModalContent>
