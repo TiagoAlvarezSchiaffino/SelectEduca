@@ -1,36 +1,44 @@
 import AppLayout from 'AppLayout';
 import { NextPageWithLayout } from '../../NextPageWithLayout';
 import { useRouter } from 'next/router';
-import { parseQueryParameter } from 'parseQueryParamter';
+import { parseQueryStringOrUnknown } from 'parseQueryString';
 import trpc, { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
-import { Flex, Grid, GridItem, Text, Tabs, TabList, TabPanels, Tab, TabPanel, Tooltip } from '@chakra-ui/react';
+import { Flex, Grid, GridItem, Text, TabList, TabPanels, Tab, TabPanel, Tooltip } from '@chakra-ui/react';
 import GroupBar from 'components/GroupBar';
 import { sidebarBreakpoint } from 'components/Navbars';
 import { AutosavingMarkdownEditor } from 'components/MarkdownEditor';
 import AssessmentsPanel from 'components/AssessmentsPanel';
 import { PrivateMentorNotes } from 'shared/Partnership';
 import { QuestionIcon } from '@chakra-ui/icons';
-import { sectionSpacing } from 'theme/metrics';
+import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
+import MobileExperienceAlert from 'components/MobileExperienceAlert';
+import MenteeApplicant from 'components/MenteeApplicant';
+import TabsWithUrlParam from 'components/TabsWithUrlParam';
+import Transcripts from 'components/Transcripts';
 
 const Page: NextPageWithLayout = () => {
-  const partnershipId = parseQueryParameter(useRouter(), 'partnershipId');
+  const partnershipId = parseQueryStringOrUnknown(useRouter(), 'partnershipId');
   const { data: partnership } = trpcNext.partnerships.get.useQuery(partnershipId);
   if (!partnership) return <Loader />
 
   return <>
+    <MobileExperienceAlert marginBottom={paragraphSpacing} />
     <GroupBar group={partnership.group} showJoinButton showGroupName={false} marginBottom={sectionSpacing + 2}
       showTranscriptCount showTranscriptLink
     />
-    <Grid templateColumns={{ base: "1fr", [sidebarBreakpoint]: "0.382fr 0.618fr" }} gap={10}>
+    <Grid gap={10} templateColumns={{ 
+      base: "1fr", 
+      [sidebarBreakpoint]: "2fr 1fr", // "0.618fr 0.382fr",
+    }}>
+      <GridItem>
+        <MenteeTabs partnershipId={partnershipId} menteeId={partnership.mentee.id} groupId={partnership.group.id} />
+      </GridItem>
       <GridItem>
         <PrivateNotes 
           partnershipId={partnershipId}
           loading={partnership == null}
           notes={partnership?.privateMentorNotes} />
-      </GridItem>
-      <GridItem>
-        <MenteeTabs partnershipId={partnershipId} />
       </GridItem>
     </Grid>
   </>;
@@ -65,40 +73,38 @@ function PrivateNotes({ partnershipId, notes, loading }: {
   </Flex>;
 }
 
-type PartnershipProps = {
+function MenteeTabs({ partnershipId, menteeId, groupId }: {
   partnershipId: string,
-};
-
-function MenteeTabs({ partnershipId } : PartnershipProps) {
+  menteeId: string,
+  groupId: string,
+}) {
 
   const TabHead = ({ children }: any) => <Text>{children}</Text>;
 
-  return <Tabs isFitted isLazy index={2}>
+  return <TabsWithUrlParam isFitted isLazy>
     <TabList>
-      <Tab isDisabled><TabHead></TabHead></Tab>
-      <Tab isDisabled><TabHead></TabHead></Tab>
-      <Tab isDisabled><TabHead></TabHead></Tab>
+      <Tab><TabHead></TabHead></Tab>
+      <Tab><TabHead></TabHead></Tab>
       <Tab><TabHead></TabHead></Tab>
     </TabList>
 
     <TabPanels>
       <TabPanel>
-        TODO
+        <Transcripts groupId={groupId} />
       </TabPanel>
       <TabPanel>
-        TODO
-      </TabPanel>
-      <TabPanel>
-        TODO
+        <MenteeApplicant userId={menteeId} readonly />
       </TabPanel>
       <TabPanel>
         <AssessmentTabPanel partnershipId={partnershipId} />
       </TabPanel>
     </TabPanels>
-  </Tabs>;
+  </TabsWithUrlParam>;
 }
 
-function AssessmentTabPanel({ partnershipId } : PartnershipProps) {
+function AssessmentTabPanel({ partnershipId }: {
+  partnershipId: string,
+}) {
   const { data: assessments } = trpcNext.assessments.listAllOfPartneship.useQuery(partnershipId);
   // @ts-ignore so weird
   return <AssessmentsPanel partnershipId={partnershipId} assessments={assessments} />;
