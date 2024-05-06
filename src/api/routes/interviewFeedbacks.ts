@@ -27,7 +27,7 @@ const get = procedure
   const f = await getInterviewFeedback(id, ctx.user, /*allowOnlyInterviewer=*/ false);
   return {
     interviewFeedback: f,
-    etag: updatedAt2etag(f.feedbackUpdatedAt),
+    etag: date2etag(f.feedbackUpdatedAt),
   }
 });
 
@@ -53,8 +53,8 @@ async function getInterviewFeedback(id: string, me: User, allowOnlyInterviewer: 
   throw noPermissionError("", id);
 }
 
-export function updatedAt2etag(feedbackUpdatedAt: string | Date | null) {
-  return feedbackUpdatedAt ? moment(feedbackUpdatedAt).unix() : 0;
+export function date2etag(feedbackUpdatedAt: string | Date | null) {
+  return feedbackUpdatedAt ? moment(feedbackUpdatedAt).valueOf() : 0;
 }
 
 /**
@@ -74,7 +74,7 @@ const update = procedure
 {
   // TODO: Use transaction
   const f = await getInterviewFeedback(input.id, ctx.user, /*allowOnlyInterviewer=*/ true);
-  if (updatedAt2etag(f.feedbackUpdatedAt) !== input.etag) {
+  if (date2etag(f.feedbackUpdatedAt) !== input.etag) {
     throw conflictError();
   }
 
@@ -84,7 +84,7 @@ const update = procedure
     feedbackUpdatedAt: now,
   });
 
-  return updatedAt2etag(now);
+  return date2etag(now);
 });
 
 const logUpdateAttempt = procedure
