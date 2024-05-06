@@ -2057,6 +2057,11 @@
   resolved "https://registry.npmjs.org/@types/qs/-/qs-6.9.14.tgz"
   integrity sha512-5khscbd3SwWMhFqylJBLQ0zIu7c1K6Vz0uBIt915BI3zV0q1nfjRQD3RqSBcPaO6PHEF4ov/t9y89fSiyThlPA==
 
+"@types/random-number-csprng@^1.0.0":
+  version "1.0.2"
+  resolved "https://registry.npmjs.org/@types/random-number-csprng/-/random-number-csprng-1.0.2.tgz"
+  integrity sha512-XbeG7OD/kORHFnXAn3Sa3o9pKcp+KPGFp44nkO/mmgr0nDyBBMKs+6Hn6q376drXKttCgZ4+l6mlUS+Sni/xpA==
+
 "@types/react-calendar@^3.5.2":
   version "3.9.0"
   resolved "https://registry.npmjs.org/@types/react-calendar/-/react-calendar-3.9.0.tgz"
@@ -2877,7 +2882,7 @@ blob-util@^2.0.2:
   resolved "https://registry.npmjs.org/blob-util/-/blob-util-2.0.2.tgz"
   integrity sha512-T7JQa+zsXXEa6/8ZhHcQEW1UFfVM49Ts65uBkFL6fz2QmrElqmbajIDJvuA0tEhRe5eIjpV9ZF+0RfZR9voJFQ==
 
-bluebird@^3.7.2:
+bluebird@^3.3.3, bluebird@^3.7.2:
   version "3.7.2"
   resolved "https://registry.npmjs.org/bluebird/-/bluebird-3.7.2.tgz"
   integrity sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==
@@ -3671,6 +3676,11 @@ cosmiconfig@^7.0.0:
     parse-json "^5.0.0"
     path-type "^4.0.0"
     yaml "^1.10.0"
+
+create-error@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.npmjs.org/create-error/-/create-error-0.3.1.tgz"
+  integrity sha512-n/Q4aSCtYuuDneEW5Q+nd0IIZwbwmX/oF6wKcDUhXGJNwhmp2WHEoWKz7X+/H7rBtjimInW7f0ceouxU0SmuzQ==
 
 create-require@^1.1.0:
   version "1.1.1"
@@ -8977,6 +8987,14 @@ raf@^3.1.0:
   integrity sha512-Sq4CW4QhwOHE8ucn6J34MqtZCeWFP2aQSmrlroYgqAV1PjStIhJXxYuTgUIfkEk7zTLjmIjLmU5q+fbD1NnOJA==
   dependencies:
     performance-now "^2.1.0"
+
+random-number-csprng@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.npmjs.org/random-number-csprng/-/random-number-csprng-1.0.2.tgz"
+  integrity sha512-Gb7ZsEXfz6d9xAMCUg2tD0ouRZMOZRRvLsRoUyPlVS4/pNwO31IA88yAx6AEYXon/LzogWJdsCRwFQaFlQTaHw==
+  dependencies:
+    bluebird "^3.3.3"
+    create-error "^0.3.1"
 
 randombytes@^2.1.0:
   version "2.1.0"

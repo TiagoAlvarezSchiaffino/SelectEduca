@@ -8,10 +8,8 @@ export default function AuthPageContainer({ title, children }: {
   title: string,
   children: ReactNode
 }) {
-  return <Flex direction="column" justifyContent="center" alignItems="center" minHeight="100vh"
-    marginX={componentSpacing}
-  >
-    <VStack align="left" spacing={componentSpacing}>
+  return <Flex direction="column" justifyContent="center" alignItems="center" minHeight="100vh">
+    <VStack align="left" spacing={componentSpacing} width={350}>
       <Image src={Logo80x80} alt="" width={60} 
         priority
       />
