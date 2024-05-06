@@ -44,8 +44,9 @@ const sidebarItems: SidebarItem[] = [
   {
     name: '',
     path: '/',
-    icon: MdHome,
-    regex: /'^\/$|\/groups\/.'/,
+    icon: MdVideocam,
+    // match "/", "/groups/.*" but not "/groups/lab.*". "?" is a lookahead sign
+    regex: /^\/$|\/groups\/(?!lab).*/,
   },
   {
     name: '',
