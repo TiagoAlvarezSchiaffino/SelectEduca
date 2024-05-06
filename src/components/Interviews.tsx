@@ -62,6 +62,6 @@ import {
         </Tbody>
       </Table>
       
-      <Text marginTop={sectionSpacing} fontSize="sm"><CheckIcon /></Text>
+      <Text marginTop={sectionSpacing} color="grey" fontSize="sm"><CheckIcon /></Text>
     </TableContainer>;
   }
