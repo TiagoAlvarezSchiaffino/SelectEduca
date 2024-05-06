@@ -173,7 +173,7 @@ function UserEditor(props: {
                 const rp = RoleProfiles[r];
                 return (
                   <Checkbox key={r} value={r} isChecked={isPermitted(roles, r)} onChange={setRole}>
-                    {rp.privileged ? "*" : ""} {rp.displayName}（{r}）
+                    {rp.automatic ? "*" : ""} {rp.displayName}（{r}）
                   </Checkbox>
                 );
               })}

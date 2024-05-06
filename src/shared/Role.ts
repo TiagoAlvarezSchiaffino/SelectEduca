@@ -22,75 +22,68 @@ export const RoleProfiles: { [key: string]: {
 
   actions: string,
 
-  privileged: boolean,
+  // If the role can be automatically added to or removed from users.
+  automatic?: boolean,
 
   privilegedUserDataAccess: boolean,
 }} = {
   SystemAlertSubscriber: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: false,
   },
   PrivilegedRoleManager: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: false,
   },
   UserManager: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: true,
   },
   GroupManager: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: true,
   },
   SummaryEngineer: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: true,
   },
   PartnershipManager: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: false,
   },
   PartnershipAssessor: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: true,
   },
   InterviewManager: {
     displayName: '',
     actions: '',
-    privileged: true,
     privilegedUserDataAccess: true,
   },
   Mentor: {
     displayName: '',
     actions: '',
-    privileged: false,
     privilegedUserDataAccess: false,
+    automatic: true,
   },
   Mentee: {
     displayName: '',
     actions: '',
-    privileged: false,
     privilegedUserDataAccess: false,
+    automatic: true,
   },
   Interviewer: {
     displayName: '',
     actions: '',
-    privileged: false,
     privilegedUserDataAccess: false,
+    automatic: true,
   },
 };
 
