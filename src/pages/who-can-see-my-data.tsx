@@ -11,15 +11,13 @@ import {
     Thead,
     Tbody,
   } from '@chakra-ui/react';
-  import AppLayout from 'AppLayout';
-  import { NextPageWithLayout } from '../NextPageWithLayout';
   import { trpcNext } from "../trpc";
   import Loader from 'components/Loader';
   import PageBreadcrumb from 'components/PageBreadcrumb';
   import Role, { AllRoles, RoleProfiles } from '../shared/Role';
   
-  const { data: privileged } = trpcNext.users.listPriviledgedUserDataAccess.useQuery();
-    const { data: privileged } = trpcNext.users.listPriviledged.useQuery();
+  export default function Page() {
+    const { data: privileged } = trpcNext.users.listPriviledgedUserDataAccess.useQuery();
   
     return (
       <Box paddingTop={'80px'}>
@@ -35,12 +33,8 @@ import {
           <DataTable />
       </Flex>
     </Box>
-    )
+    );
   }
-  
-  Page.getLayout = (page) => <AppLayout>{page}</AppLayout>;
-  
-  export default Page;
   
   const dp = (r: Role) => <>{RoleProfiles[r].displayName}</>;
   

@@ -15,15 +15,13 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useState } from 'react';
-import AppLayout from 'AppLayout';
-import { NextPageWithLayout } from '../NextPageWithLayout';
 import trpc from "../trpc";
 import { CheckIcon, CloseIcon, EditIcon } from '@chakra-ui/icons';
 import { useUserContext } from 'UserContext';
 import Loader from 'components/Loader';
 
 // Dedupe code with index.tsx:SetNameModal
-const UserProfile: NextPageWithLayout = () => {
+export default function Page() {
   const [user, setUser] = useUserContext();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -118,7 +116,3 @@ const UserProfile: NextPageWithLayout = () => {
     </VStack>
   );
 };
-
-UserProfile.getLayout = (page) => <AppLayout>{page}</AppLayout>;
-
-export default UserProfile;
