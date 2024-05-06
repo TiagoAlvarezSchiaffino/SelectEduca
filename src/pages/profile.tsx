@@ -13,10 +13,10 @@ import {
   Spacer,
   HStack,
   SimpleGrid,
-} from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
-import AppLayout from 'AppLayout'
-import { NextPageWithLayout } from '../NextPageWithLayout'
+} from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import AppLayout from 'AppLayout';
+import { NextPageWithLayout } from '../NextPageWithLayout';
 import trpc from "../trpc";
 import { CheckIcon, CloseIcon, EditIcon } from '@chakra-ui/icons';
 import { useUserContext } from 'UserContext';
@@ -29,7 +29,7 @@ const UserProfile: NextPageWithLayout = () => {
   const [notLoaded, setNotLoaded] = useState(false);
 
   useEffect(() => {
-    setName(user.name || '')
+    setName(user.name || '');
   }, [user]);
 
   const handleSubmit = async (newName: string) => {
@@ -57,7 +57,7 @@ const UserProfile: NextPageWithLayout = () => {
       getSubmitButtonProps,
       getCancelButtonProps,
       getEditButtonProps,
-    } = useEditableControls()
+    } = useEditableControls();
 
     return isEditing ? (
       <ButtonGroup justifyContent='center' size='sm'>
@@ -68,8 +68,8 @@ const UserProfile: NextPageWithLayout = () => {
       <ButtonGroup justifyContent='center' size='sm'>
         <IconButton aria-label='edit name button' size='sm' icon={<EditIcon />} {...getEditButtonProps()} />
       </ButtonGroup>
-    )
-  }
+    );
+  };
 
   const EmailField = () => {
     return (
@@ -83,8 +83,8 @@ const UserProfile: NextPageWithLayout = () => {
           </Box>
         </SimpleGrid>
       </FormControl>
-    )
-  }
+    );
+  };
 
   const NameField = () => {
     return (
@@ -115,8 +115,8 @@ const UserProfile: NextPageWithLayout = () => {
         </SimpleGrid>
         <FormErrorMessage></FormErrorMessage>
       </FormControl>
-    )
-  }
+    );
+  };
 
   return (
     <Box paddingTop={'80px'}>
@@ -128,8 +128,8 @@ const UserProfile: NextPageWithLayout = () => {
         }
       </Stack>
     </Box>
-  )
-}
+  );
+};
 
 UserProfile.getLayout = (page) => <AppLayout>{page}</AppLayout>;
 

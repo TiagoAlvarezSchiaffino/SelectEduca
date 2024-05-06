@@ -31,7 +31,7 @@ const cron = router({
 
     return {
       syncedCrudeSummaries: summaries.map((t: any) => t.transcriptId),
-    }
+    };
   }),
 
   updateOngoingMeetings: procedure.mutation(updateOngoingMeetings)

@@ -10,8 +10,8 @@ import {
     Wrap,
     Text,
     Icon,
-  } from '@chakra-ui/react'
-  import React from 'react'
+  } from '@chakra-ui/react';
+  import React from 'react';
   import Loader from 'components/Loader';
   import { formatUserName, compareUUID } from 'shared/strings';
   import { Interview } from 'shared/Interview';

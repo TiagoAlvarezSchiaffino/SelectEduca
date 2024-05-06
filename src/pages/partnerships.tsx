@@ -18,10 +18,10 @@ import {
     Flex,
     Box,
     Link,
-  } from '@chakra-ui/react'
-  import React, { useState } from 'react'
-  import AppLayout from 'AppLayout'
-  import { NextPageWithLayout } from '../NextPageWithLayout'
+  } from '@chakra-ui/react';
+  import React, { useState } from 'react';
+  import AppLayout from 'AppLayout';
+  import { NextPageWithLayout } from '../NextPageWithLayout';
   import { trpcNext } from "../trpc";
   import ModalWithBackdrop from 'components/ModalWithBackdrop';
   import trpc from 'trpc';
@@ -79,8 +79,8 @@ import {
         </Tbody>
       </Table>}
   
-    </Flex>
-  }
+    </Flex>;
+  };
   
   Page.getLayout = (page) => <AppLayout>{page}</AppLayout>;
   
@@ -107,7 +107,7 @@ import {
       } finally {
         setSaving(false);
       }
-    }
+    };
   
     return <ModalWithBackdrop isOpen onClose={props.onClose}>
       <ModalContent>

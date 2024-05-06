@@ -8,7 +8,7 @@ import browserEnv from "./browserEnv";
 import trpc from "./trpc";
 import { BeatLoader } from 'react-spinners';
 import guard from './guard';
-import UserProfile from './shared/UserProfile';
+import User from './shared/User';
 import NavBars, { sidebarBreakpoint, sidebarContentMarginTop, topbarHeight } from 'components/Navbars';
 
 interface AppLayoutProps extends PropsWithChildren {
@@ -59,11 +59,11 @@ const Guarded: FC<{ children: (_: UserProfile) => ReactNode }> = (props) => {
         justifyContent: "center",
         alignItems: "center",
       }}
-    />
+    />;
   }
   return <UserContext.Provider value={[user, setUser]}>
     {props.children(user)}
-  </UserContext.Provider>
+  </UserContext.Provider>;
 };
 
 function AppContent(props: AppLayoutProps) {

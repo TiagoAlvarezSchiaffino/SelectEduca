@@ -1,14 +1,14 @@
-import { ChakraProvider } from '@chakra-ui/react'
-import { AppProps } from 'next/app'
-import React from 'react'
-import theme from '../theme'
-import Head from 'next/head'
+import { ChakraProvider } from '@chakra-ui/react';
+import { AppProps } from 'next/app';
+import React from 'react';
+import theme from '../theme';
+import Head from 'next/head';
 import { trpcNext } from "../trpc";
 import { NextPageWithLayout } from "../NextPageWithLayout";
 import { ToastContainer } from "react-toastify";
 
-import '../app.css'
-import 'horizon-ui/styles/Fonts.css'
+import '../app.css';
+import 'horizon-ui/styles/Fonts.css';
 import 'react-toastify/dist/ReactToastify.min.css';
 
 type AppPropsWithLayout = AppProps & {
@@ -16,7 +16,7 @@ type AppPropsWithLayout = AppProps & {
 }
 
 function MyApp ({ Component, pageProps }: AppPropsWithLayout) {
-  const getLayout = Component.getLayout || (page => page)
+  const getLayout = Component.getLayout || (page => page);
 
   return (
     <ChakraProvider theme={theme}>
@@ -39,7 +39,7 @@ function MyApp ({ Component, pageProps }: AppPropsWithLayout) {
         theme="light"
       />
     </ChakraProvider>
-  )
+  );
 }
 
 export default trpcNext.withTRPC(MyApp);

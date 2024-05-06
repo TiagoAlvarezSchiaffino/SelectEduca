@@ -63,7 +63,7 @@ const list = procedure
     where: { type },
     attributes: interviewAttributes,
     include: interviewInclude,
-  })
+  });
 });
 
 const listMine = procedure
@@ -96,7 +96,7 @@ const create = procedure
   .mutation(async ({ input }) =>
 {
   return await createInterview(input.type, input.calibrationId, input.intervieweeId, input.interviewerIds);
-})
+});
 
 /**
  * @returns the interview id.
@@ -143,7 +143,7 @@ const update = procedure
   .mutation(async ({ input }) =>
 {
   await updateInterview(input.id, input.type, input.calibrationId, input.intervieweeId, input.interviewerIds);
-})
+});
 
 /**
  * @return etag
@@ -175,7 +175,7 @@ const updateDecision = procedure
     }, { transaction });
     return date2etag(now);
   });
-})
+});
 
 export async function updateInterview(id: string, type: InterviewType, calibrationId: string | null,
   intervieweeId: string, interviewerIds: string[]) 

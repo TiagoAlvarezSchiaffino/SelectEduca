@@ -20,10 +20,10 @@ import {
     Flex,
     Spacer,
     Checkbox
-  } from '@chakra-ui/react'
-  import React, { useState } from 'react'
-  import AppLayout from 'AppLayout'
-  import { NextPageWithLayout } from '../NextPageWithLayout'
+  } from '@chakra-ui/react';
+  import React, { useState } from 'react';
+  import AppLayout from 'AppLayout';
+  import { NextPageWithLayout } from '../NextPageWithLayout';
   import { trpcNext } from "../trpc";
   import trpcNext from "../trpcNext";
   import GroupBar, { UserChip } from 'components/GroupBar';
@@ -31,9 +31,9 @@ import {
   import ModalWithBackdrop from 'components/ModalWithBackdrop';
   import { MdEditNote, MdPersonRemove } from 'react-icons/md';
   import { formatGroupName } from 'shared/formatNames';
-  import Loader from 'components/Loader'
+  import Loader from 'components/Loader';
   import UserSelector from '../components/UserSelector';
-  import QuestionIconTooltip from "../components/QuestionIconTooltip"
+  import QuestionIconTooltip from "../components/QuestionIconTooltip";
 
   const Page: NextPageWithLayout = () => {
     const [userIds, setUserIds] = useState<string[]>([]);
@@ -92,8 +92,8 @@ import {
         </VStack>
         {!data && <Loader />}
       </Box>
-    )
-  }
+    );
+  };
   
   Page.getLayout = (page) => <AppLayout>{page}</AppLayout>;
   
@@ -116,7 +116,7 @@ import {
       setWorking(true);
       try {
         const group = structuredClone(props.group);
-        group.name = name
+        group.name = name;
         group.users = [
           ...newUserIds.map(n => ({ id: n, name: null })),
           ...users,
@@ -126,7 +126,7 @@ import {
       } finally {
         setWorking(false);
       }
-    }
+    };
   
     const destroy = async () => {
       setConfirmingDeletion(false);
