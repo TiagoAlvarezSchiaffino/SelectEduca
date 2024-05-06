@@ -171,21 +171,21 @@ function UserEditor(props: {
             <Input value={name} onChange={e => setName(e.target.value)} />
             <FormErrorMessage></FormErrorMessage>
           </FormControl>
-          <FormControl>
+
+          {isPermitted(me.roles, "PrivilegedRoleManager") && <FormControl>
             <FormLabel></FormLabel>
             <Stack>
-              {AllRoles
-                .filter(r => isPermitted(me.roles, "PrivilegedRoleManager") || !RoleProfiles[r].privileged)
-                .map(r => {
-                  const rp = RoleProfiles[r];
-                  return (
-                    <Checkbox key={r} value={r} isChecked={isPermitted(roles, r)} onChange={setRole}>
-                      {rp.privileged ? "*" : ""} {rp.displayName}（{r}）
-                    </Checkbox>
-                  );
-                })}
+              {AllRoles.map(r => {
+                const rp = RoleProfiles[r];
+                return (
+                  <Checkbox key={r} value={r} isChecked={isPermitted(roles, r)} onChange={setRole}>
+                    {rp.privileged ? "*" : ""} {rp.displayName}（{r}）
+                  </Checkbox>
+                );
+              })}
             </Stack>
-          </FormControl>
+          </FormControl>}
+          
         </VStack>
       </ModalBody>
       <ModalFooter>
