@@ -10,9 +10,9 @@ import sequelizeInstance from "../database/sequelizeInstance";
 import { formatUserName, formatGroupName } from "../../shared/strings";
 import nzh from 'nzh';
 import { email } from "../sendgrid";
-import { alreadyExistsError, noPermissionError, notFoundError } from "../errors";
+import { noPermissionError, notFoundError } from "../errors";
 import { Group, GroupCountingTranscripts, whereUnowned, zGroup, zGroupCountingTranscripts, 
-  zGroupWithTranscripts } from "../../shared/Group";
+} from "../../shared/Group";
 import { groupAttributes, groupCountingTranscriptsInclude, groupInclude } from "../database/models/attributesAndIncludes";
 import User from "shared/User";
 
@@ -25,7 +25,7 @@ async function listGroups(userIds: string[], additionalWhere?: { [k: string]: an
       include: groupCountingTranscriptsInclude,
       where: additionalWhere,
     });  } else {
-      const gs = await findGroups(userIds, 'inclusive', groupCountingTranscriptsInclude, additionalWhere)
+      const gs = await findGroups(userIds, 'inclusive', groupCountingTranscriptsInclude, additionalWhere);
       return gs as GroupCountingTranscripts[];  }
 }
 
@@ -98,7 +98,7 @@ export async function updateGroup(id: string, name: string | null, userIds: stri
       groupId: id,
       userId: uid,
       deletedAt: null,
-    }, { transaction })
+    }, { transaction });
   });
   await Promise.all(promises);
 
@@ -167,24 +167,15 @@ const listCountingTranscripts = procedure
 const get = procedure
   // We will throw access denied later if the user isn't a privileged user and isn't in the group.
   .use(authUser())
-  .input(z.object({ id: z.string().uuid() }))
-  .output(zGroupWithTranscripts)
-  .query(async ({ input, ctx }) => 
+  .input(z.string())
+  .output(zGroup)
+  .query(async ({ input: id, ctx }) => 
 {
-  const g = await db.Group.findByPk(input.id, {
+  const g = await db.Group.findByPk(id, {
     attributes: groupAttributes,
-    include: [...groupInclude, {
-      model: db.Transcript,
-      include: [{
-        model: db.Summary,
-        attributes: [ 'summaryKey' ]  // Caller should only need to get the summary count.
-      }],
-    }],
-    order: [
-      [{ model: db.Transcript, as: 'transcripts' }, 'startedAt', 'desc']
-    ],
+    include: groupInclude,
   });
-  if (!g) throw notFoundError("", input.id);
+  if (!g) throw notFoundError("", id);
   checkPermissionForGroup(ctx.user, g);
   return g;
 });

@@ -1,6 +1,6 @@
-import { Box } from '@chakra-ui/react'
-import Footer, { footerBreakpoint, footerMarginTop } from 'components/Footer'
-import { FC, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
+import { Box } from '@chakra-ui/react';
+import Footer, { footerBreakpoint, footerMarginTop } from 'components/Footer';
+import { FC, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react';
 
 import { GuardProvider } from '@authing/guard-react18';
 import UserContext from "./UserContext";
@@ -8,8 +8,8 @@ import browserEnv from "./browserEnv";
 import trpc from "./trpc";
 import { BeatLoader } from 'react-spinners';
 import guard from './guard';
-import UserProfile from './shared/UserProfile'
-import NavBars, { sidebarBreakpoint, sidebarContentMarginTop, topbarHeight } from 'components/Navbars'
+import UserProfile from './shared/UserProfile';
+import NavBars, { sidebarBreakpoint, sidebarContentMarginTop, topbarHeight } from 'components/Navbars';
 
 interface AppLayoutProps extends PropsWithChildren {
   unlimitedPageWidth?: boolean,
@@ -17,7 +17,7 @@ interface AppLayoutProps extends PropsWithChildren {
 export default function AppLayout(props: AppLayoutProps) {
   useEffect(() => {
     // Left-to-right layout
-    window.document.documentElement.dir = 'ltr'
+    window.document.documentElement.dir = 'ltr';
   });
 
   return (
@@ -26,7 +26,7 @@ export default function AppLayout(props: AppLayoutProps) {
     >
       <Guarded>{() => <AppContent {...props} />}</Guarded>
     </GuardProvider>
-  )
+  );
 }
 
 const Guarded: FC<{ children: (_: UserProfile) => ReactNode }> = (props) => {

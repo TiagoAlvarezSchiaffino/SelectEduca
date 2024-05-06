@@ -34,6 +34,18 @@ export const groupCountingTranscriptsInclude = [...groupInclude,
 ];
 
 /**
+ * Transcript
+ */
+
+export const transcriptAttributes = ["transcriptId", "startedAt", "endedAt"];
+
+/**
+ * Summary
+ */
+
+export const summaryAttributes = ['transcriptId', 'summaryKey', 'summary'];
+
+/**
  * Partnership
  */
 
