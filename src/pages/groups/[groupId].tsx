@@ -9,7 +9,6 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import React, { ReactNode } from 'react';
-import AppLayout from "../../AppLayout";
 import { trpcNext } from "../../trpc";
 import GroupBar from 'components/GroupBar';
 import { Transcript } from '../../shared/Transcript';
@@ -17,7 +16,7 @@ import PageBreadcrumb from 'components/PageBreadcrumb';
 import { useRouter } from 'next/router';
 import invariant from 'tiny-invariant';
 import { diffInMinutes, prettifyDate, prettifyDuration } from 'shared/strings';
-import { parseQueryString, parseQueryStringOrUnknown } from '../../parseQueryString';
+import { parseQueryStringOrUnknown } from "shared/strings";
 import Loader from 'components/Loader';
 import ReactMarkdown from 'react-markdown';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
