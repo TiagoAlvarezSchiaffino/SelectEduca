@@ -28,7 +28,6 @@ import {
         <UserChips users={[partnership.mentee, partnership.mentor]} abbreviateOnMobile={false} />
         <Divider />
         <AssessmentsPanel allowEdit partnershipId={partnership.id} 
-        // @ts-ignore so weird
         assessments={partnership?.assessments} />
       </Flex>
     </>;

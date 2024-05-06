@@ -43,7 +43,7 @@ export default function UserSelector(props: {
     loadingMessage={() => "..."}
     placeholder={props.placeholder ?? '...'}
     onChange={value => {
-      // @ts-ignore
+      // @ts-expect-error
       setValue(value);
       if (isMulti) props.onSelect((value as Option[]).map(o => o.value));
       else props.onSelect(value ? [(value as Option).value] : []);
