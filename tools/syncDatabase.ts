@@ -1,32 +1,12 @@
-import inquirer from 'inquirer';
 import sequelizeInstance from "../src/api/database/sequelizeInstance";
 import migrateData from "./migrateData";
 
-inquirer
-  .prompt([
-    {
-      type: 'list',
-      name: 'action',
-      prefix: 'Affected tables: \n' + Object.values(sequelizeInstance.modelManager.all).map(m => '\t' + m.tableName).join('\n') + '\n',
-      message: 'Choose your action',
-      choices: [
-        'Alter tables without dropping anything',
-        'Delete tables (if any) and recreate them'
-      ]
-    },
-  ])
-  .then((answers: {action: string}) => {
-    console.log(`Your action is ${answers.action}.`);
+async function sync() {
+  console.log("Syncing database... It may take a while. Grab a coffee.");
+  await sequelizeInstance.sync({ alter: { drop: false } });
+  await migrateData();
+  // This make sure the process doesn't hang waiting for connection closure.
+  await sequelizeInstance.close();
+}
 
-    if (answers.action.startsWith('Delete')) {
-      sequelizeInstance.sync({ force: true }); // this line deletes all the data and recreates the database
-    } else if (answers.action.startsWith('Alter')) {
-      console.log('### NO-OP. Modify source code if you really intend to drop all data.');
-      // sequelizeInstance.sync({ force: true });
-    }
-  })
-  .catch((error) => {
-    console.log(`Error: ${error}`);
-  });
-
-  migrateData().then();
+sync().then();
