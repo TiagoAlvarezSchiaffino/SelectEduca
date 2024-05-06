@@ -5,11 +5,17 @@ import db from "../../../api/database/db";
 import { SendVerificationRequestParams } from "next-auth/providers";
 import { email as sendEmail, emailRoleIgnoreError } from "../../../api/sendgrid";
 import randomNumber from "random-number-csprng";
-import { toChinese } from "shared/strings";
 import { userAttributes } from "api/database/models/attributesAndIncludes";
 import invariant from "tiny-invariant";
 import User from "api/database/models/User";
 import { LRUCache } from "lru-cache";
+
+// The default session user would cause type error when using session user data
+declare module "next-auth" {
+  interface Session {
+    user: User;
+  }
+}
 
 // The default session user would cause type error when using session user data
 declare module "next-auth" {

@@ -30,19 +30,10 @@ export const authIntegration = () => middleware(async ({ ctx, next }) => {
 export const authUser = (permitted?: Role) => middleware(async ({ ctx, next }) => {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
   if (!session) throw unauthorizedError();
-  const email = session.user?.email;
-  invariant(email);
 
-  // TODO: extend next-auth session data to include other user fields, and remove this extra call to db
-  const user = await db.User.findOne({
-    where: { email },
-    attributes: userAttributes,
-  });
-  invariant(user);
+  if (!isPermitted(session.user.roles, permitted)) throw forbiddenError();
 
-  if (!isPermitted(user.roles, permitted)) throw forbiddenError();
-
-  return await next({ ctx: { user, baseUrl: ctx.baseUrl } });
+  return await next({ ctx: { user: session.user, baseUrl: ctx.baseUrl } });
 });
 
 const unauthorizedError = () => new TRPCError({
