@@ -13,24 +13,23 @@ import {
 import NextLink from 'next/link';
 import { useUserContext } from 'UserContext';
 import { isPermitted } from 'shared/Role';
-
+import yuanjianLogo224x97 from '../../public/img/yuanjian-logo-224x97.png';
 import Image from "next/image";
 import { useRouter } from 'next/router';
-import { MdChevronRight, MdFace } from 'react-icons/md';
 import { trpcNext } from 'trpc';
 import { Partnership } from 'shared/Partnership';
 import {
   MdPerson,
-  MdHome,
   MdGroups,
   MdScience,
-  MdGroup,
   MdChevronRight, 
   MdFace, 
   MdFace5, 
   MdFaceUnlock, 
   MdOutlineSyncAlt, 
-  MdVideocam
+  MdVideocam,
+  MdSupervisorAccount,
+  MdMic
 } from 'react-icons/md';
 import Role from "../shared/Role";
 import { IconType } from "react-icons";
@@ -51,12 +50,19 @@ const sidebarItems: SidebarItem[] = [
     path: '/',
     icon: MdVideocam,
     // match "/", "/groups/.*" but not "/groups/lab.*". "?" is a lookahead sign
-    regex: /^\/$|\/groups\/.*/,
+    regex: /^\/$|\/groups\/(?!lab).*/,
+  },
+  {
+    name: '',
+    path: '/coachees',
+    icon: MdSupervisorAccount,
+    regex: /^\/coachees/,
+    role: 'MentorCoach',
   },
   {
     name: '',
     path: '/interviews/mine',
-    icon: MdFace5,
+    icon: MdMic,
     regex: /^\/interviews\/mine/,
     role: 'Interviewer',
   },
@@ -84,21 +90,21 @@ const sidebarItems: SidebarItem[] = [
   {
     name: '',
     path: '/interviews?type=mentee',
-    icon: MdGroup,
+    icon: MdFace5,
     regex: /^\/interviews\?type=mentee/,
     role: 'InterviewManager',
   },
   {
     name: '',
     path: '/interviews?type=mentor',
-    icon: MdGroup,
+    icon: MdFaceUnlock,
     regex: /^\/interviews\?type=mentor/,
     role: 'InterviewManager',
   },
   {
     name: '',
     path: '/partnerships',
-    icon: MdGroup,
+    icon: MdOutlineSyncAlt,
     regex: /^\/partnerships$/,
     role: 'PartnershipManager',
   },
@@ -115,15 +121,18 @@ function partnerships2Items(partnerships: Partnership[] | undefined): SidebarIte
 }
 
 const sidebarItemPaddingY = 4;
+
 interface SidebarProps extends BoxProps {
   onClose: () => void;
 }
+
 const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
   const [me] = useUserContext();
   // Save an API call if the user is not a mentor.
   const { data: partnerships } = isPermitted(me.roles, "Mentor") ? 
     trpcNext.partnerships.listMineAsMentor.useQuery() : { data: undefined };
   const partnershipItems = partnerships2Items(partnerships);
+
   return (
     <Box
       transition="3s ease"
@@ -156,16 +165,20 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
         base: 0,
         [sidebarBreakpoint]: sidebarContentMarginTop - sidebarItemPaddingY,
       }}/>
+
       {sidebarItems
         .filter(item => isPermitted(me.roles, item.role))
         .map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
       
       {partnershipItems?.length > 0 && <Divider marginY={2} />}
+
       {partnershipItems.map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
     </Box>
   );
 };
+
 export default Sidebar;
+
 const SidebarRow = ({ item, onClose, ...rest }: {
   item: SidebarItem,
 } & SidebarProps) => {
