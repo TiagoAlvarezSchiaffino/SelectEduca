@@ -1,7 +1,7 @@
 import pinyin from 'tiny-pinyin';
 import nzh from 'nzh';
 
-export function isValidChineseName(s: string | null): boolean {
+export function Name(s: string | null): boolean {
   return !!s && s.length >= 2 && pinyin.parse(s).every(token => token.type === 2);
 }
 
@@ -15,7 +15,14 @@ export function formatUserName(name: string | null, mood: 'friendly' | 'formal')
 }
 
 export function formatGroupName(name: string | null, userCount: number): string {
-  return name ?? `${nzh.cn.encodeS(userCount)}`;
+  return name ?? `${(userCount)}`;
+}
+
+/**
+ * Convert a number into Chinese presentation, e.g. "十三".
+ */
+export function (n: number): string {
+  return nzh.cn.encodeS(n);
 }
 
 export function prettifyDuration(from: Date | string, to: Date | string) {
