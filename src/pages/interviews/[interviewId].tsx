@@ -4,33 +4,37 @@ import { useRouter } from 'next/router';
 import { parseQueryParameter } from 'parseQueryParamter';
 import { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
-import { Flex, Grid, GridItem, Heading, Text, Link, HStack } from '@chakra-ui/react';
+import { Flex, Grid, GridItem, Heading, Text, Link, Box } from '@chakra-ui/react';
 import { sidebarBreakpoint } from 'components/Navbars';
 import _ from "lodash";
-import MenteeApplication from 'components/MenteeApplication';
+import MenteeApplicant from 'components/MenteeApplicant';
 import { sectionSpacing } from 'theme/metrics';
 import { InterviewDecisionEditor, InterviewFeedbackEditor } from 'components/InterviewEditor';
 import { formatUserName, compareUUID } from 'shared/strings';
 import { useUserContext } from 'UserContext';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
-import MobileExperienceAlert from 'components/MobileExperienceAlert';
 import { Feedback } from 'shared/InterviewFeedback';
+import MobileExperienceAlert from 'components/MobileExperienceAlert';
 
 const Page: NextPageWithLayout = () => {
   const interviewId = parseQueryParameter(useRouter(), 'interviewId');
   // See Editor()'s comment on the reason for `catchTime: 0`
-  const { data } = trpcNext.interviews.get.useQuery(interviewId);
+  const { data } = trpcNext.interviews.get.useQuery(interviewId, { cacheTime: 0 });
   const [me] = useUserContext();
 
   if (!data) return <Loader />;
   const i = data.interviewWithGroup;
 
   return <Flex direction="column" gap={sectionSpacing}>
-    <Link isExternal href="">
-      <ExternalLinkIcon />
-    </Link>
+    <MobileExperienceAlert />
 
-  <MobileExperienceAlert />
+    <Heading size="md">{formatUserName(i.interviewee.name, "formal")}</Heading>
+
+    <Box>
+      <Link isExternal href="">
+        <ExternalLinkIcon />
+      </Link>
+    </Box>
 
     <Grid 
       templateColumns={{ base: "100%", [sidebarBreakpoint]: `repeat(${i.feedbacks.length + 1}, 1fr)` }} 
@@ -50,10 +54,7 @@ const Page: NextPageWithLayout = () => {
         <Flex direction="column" gap={sectionSpacing}>
           <DecisionEditor interviewId={i.id} decision={i.decision} etag={data.etag} />
           {i.type == "MenteeInterview" ?
-            <MenteeApplication 
-              menteeUserId={i.interviewee.id}
-              title={formatUserName(i.interviewee.name, "formal")}
-            />
+            <MenteeApplicant userId={i.interviewee.id} />
             : 
             <Text></Text>
           }
@@ -71,7 +72,8 @@ function DecisionEditor({ interviewId, decision, etag }: {
   interviewId: string,
   decision: Feedback | null,
   etag: number,
-}) {  return <>
+}) {
+  return <>
     <Heading size="md"></Heading>
     <InterviewDecisionEditor interviewId={interviewId} decision={decision} etag={etag} />
   </>;

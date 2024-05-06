@@ -130,8 +130,9 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
   interviews: Interview[],
   refetchInterviews: () => any,
 }) {
-  const { data: application } = trpcNext.users.getApplication.useQuery({ userId: applicant.id, type });
-  const source = (application as Record<string, any> | null)?.[menteeSourceField];
+  // TODO: it's duplicative to fetch the applicant again
+  const { data } = trpcNext.users.getApplicant.useQuery({ userId: applicant.id, type });
+  const source = (data?.application as Record<string, any> | null)?.[menteeSourceField];
 
   const matches = interviews.filter(i => i.interviewee.id == applicant.id);
   invariant(matches.length <= 1);
@@ -167,6 +168,9 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
           <Text isTruncated maxWidth="130px">{source}</Text>
         </Tooltip>}
       </TdEditLink>
+      <TdLink href={`/applicants/${applicant.id}?type=${type == "MenteeInterview" ? "mentee" : "mentor"}`}>
+        <ViewIcon />
+      </TdLink>
       <TdEditLink><Wrap spacing="2">
         {interview && interview.feedbacks.map(f => <WrapItem key={f.id}>
           {formatUserName(f.interviewer.name, "formal")}
@@ -174,10 +178,8 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
         </WrapItem>)}
       </Wrap></TdEditLink>
       <TdEditLink>
-      <TdEditLink>
-        {interview ? <EditIcon /> : <AddIcon />}
-      </TdEditLink>
-        {interview ? <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink> : <Td />}
+      <TdEditLink><EditIcon /></TdEditLink>
+      {interview && <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink>}
       </TdEditLink>
       {interview ? <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink> : <Td />}
     </Tr>
