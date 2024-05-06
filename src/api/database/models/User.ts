@@ -85,6 +85,9 @@ class User extends Model {
 
   interviews: Interview[];
 
+  @HasMany(() => Partnership, { foreignKey: 'mentorId' })
+  partnershipsAsMentor: Partnership[];
+  
   @BeforeDestroy
   static async cascadeDelete(user: User, options: any) {
 

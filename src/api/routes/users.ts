@@ -16,6 +16,7 @@ import { InterviewType, zInterviewType } from "shared/InterviewType";
 import { userAttributes } from "../database/models/attributesAndIncludes";
 import { getCalibrationAndCheckPermissionSafe } from "./calibrations";
 import sequelizeInstance from "api/database/sequelizeInstance";
+import { zPartnership } from "shared/Partnership";
 
 const me = procedure
   .use(authUser())
@@ -127,8 +128,9 @@ const update = procedure
 });
 
 /**
- * Only InterviewManagers, interviewers of the application, and participants of the calibration (only if the calibration
- * is active) are allowed to call this route. If the user is not an InterviewManager, contact information is redacted.
+ * Only InterviewManagers, MentorCoaches, interviewers of the application, and participants of the calibration
+ * (only if the calibration is active) are allowed to call this route. If the user is not an InterviewManager, contact
+ * information is redacted.
  */
 const getApplicant = procedure
   .use(authUser())
@@ -156,6 +158,8 @@ const getApplicant = procedure
   // Redact
   user.email = "redacted@redacted.com";
   user.wechat = "redacted";
+
+  if (isPermitted(ctx.user.roles, "MentorCoach")) return ret;
 
   // Check if the user is an interviewer
   const myInterviews = await db.Interview.findAll({
@@ -237,6 +241,22 @@ const remove = procedure
       }
     }
   });
+});
+
+const listMyCoachees = procedure
+  .use(authUser())
+  .output(z.array(zPartnership))
+  .query(async ({ ctx }) => 
+{
+  return (await db.User.findAll({ 
+    where: { coachId: ctx.user.id },
+    attributes: [],
+    include: [{
+      association: "partnershipsAsMentor",
+      attributes: defaultPartnershipAttributes,
+      include: partnershipInclude,
+    }]
+  })).map(u => u.partnershipsAsMentor).flat();
 });
 
 export default router({

@@ -94,7 +94,7 @@ const listMineAsMentor = procedure
 
 /**
  * Get all information of a partnership including private notes.
- * Only accessible by the mentor
+ * Only accessible by the mentor and mentor coaches
  */
 const get = procedure
   .use(authUser())
@@ -129,7 +129,7 @@ const getWithAssessmentsDeprecated = procedure
       Assessment,
     ]
   });
-  if (!res) throw notFoundError("", id);
+  if (!res || (res.mentorId !== ctx.user.id && !isPermitted(ctx.user.roles, "MentorCoach"))) {
 
   // Only assessors and mentors can access the partnership.
   if (!isPermitted(ctx.user.roles, 'PartnershipAssessor') && res.mentorId !== ctx.user.id) {

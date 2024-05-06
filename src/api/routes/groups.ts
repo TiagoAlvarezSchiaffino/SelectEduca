@@ -192,9 +192,11 @@ const groups = router({
 export default groups;
 
 export function checkPermissionForGroup(u: User, g: Group) {
-  if (isPermitted(u.roles, 'SummaryEngineer')) return;
+  if (isPermitted(u.roles, "SummaryEngineer")) return;
   if (isPermitted(u.roles, g.roles)) return;
-  if (g.users.some(u => u.id === u.id)) return;
+  // Allow coaches to access all partnership groups
+  if (isPermitted(u.roles, "MentorCoach") && g.partnershipId) return;
+  if (g.users.some(gu => gu.id === u.id)) return;
   throw noPermissionError("", g.id);
 }
 
