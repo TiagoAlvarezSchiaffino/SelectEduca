@@ -269,7 +269,7 @@ async function emailNewUsersOfGroup(ctx: any, groupId: string, newUserIds: strin
   });
   if (!group) throw notFoundError('', groupId);
 
-  const formatNames = (names: string[]) =>
+  const formatNames = (names: (string | null)[]) =>
     names.slice(0, 3).join('') + (names.length > 3 ? `${nzh.cn.encodeS(names.length)}` : '');
 
   const personalizations = newUserIds
@@ -283,7 +283,7 @@ async function emailNewUsersOfGroup(ctx: any, groupId: string, newUserIds: strin
     return {
       to: [{ 
         email: thisUser.email, 
-        name: thisUser.name 
+        name: formatUserName(thisUser.name, "formal"),
       }],
       dynamicTemplateData: {
         name: formatUserName(thisUser.name, 'friendly'),

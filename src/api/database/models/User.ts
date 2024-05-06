@@ -36,10 +36,10 @@ class User extends Model {
 
   // Always use `formatUserName` to display user names.
   @Column(STRING)
-  name: string;
+  name: string | null;
 
   @Column(STRING)
-  pinyin: string;
+  pinyin: string | null;
 
   @Unique
   @AllowNull(false)
@@ -50,6 +50,7 @@ class User extends Model {
     using: 'gin'
   })
   @AllowNull(false)
+  @Default([])
   @ZodColumn(JSONB, zRoles)
   roles: Role[];
 
@@ -67,6 +68,14 @@ class User extends Model {
 
   @ZodColumn(JSONB, z.record(z.string(), z.any()).nullable())
   menteeApplication: Record<string, any> | null;
+
+  // Managed by next-auth
+  @Column(DATE)
+  emailVerified: Date | null;
+  
+  // Managed by next-auth
+  @Column(STRING)
+  image: string | null;
   
   /**
    * Associations

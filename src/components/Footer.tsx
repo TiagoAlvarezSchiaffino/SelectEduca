@@ -1,18 +1,11 @@
-/*eslint-disable*/
-
-import { Center, Flex, Link, List, ListItem, Text, useColorModeValue } from '@chakra-ui/react';
-import Image from "next/image";
+import { Flex, Link, List, ListItem, Text } from '@chakra-ui/react';
 
 // The minimal height of the blank space between body and footer.
 export const bodyFooterSpacing = 80;
 
 export default function Footer() {
   const color = 'gray.400';
-  const FooterItem = (props: any) =>
-    <ListItem marginEnd={{
-      base: '20px',
-      md: '44px'
-    }}>{props.children}</ListItem>;
+  const FooterItem = (props: any) => <ListItem marginX={4}>{props.children}</ListItem>;
 
   return (
     <Flex
@@ -32,15 +25,14 @@ export default function Footer() {
     >
       <Text
         color={color}
+        fontWeight='500'
         textAlign={{
           base: 'center',
           xl: 'start'
         }}
-        paddingBottom={{ base: '20px', xl: '0px' }}>
-        {' '}
-        <Text as='span' fontWeight='500' marginStart='4px'>
-          &copy; {new Date().getFullYear()} 
-        </Text>
+        paddingBottom={{ base: '20px', [footerBreakpoint]: '0px' }}
+      >
+        &copy; {new Date().getFullYear()}
       </Text>
       <List display='flex'>
         <FooterItem>
@@ -58,13 +50,6 @@ export default function Footer() {
             
           </Link>
         </FooterItem>
-        <Center opacity='50%'>
-          <ListItem>
-            <Link isExternal href="">
-                <Image src={vercelBanner} alt="Vercel Banner" height="22" />
-              </Link>
-          </ListItem>
-        </Center>
       </List>
     </Flex>
   );

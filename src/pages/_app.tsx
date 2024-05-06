@@ -6,13 +6,14 @@ import Head from 'next/head';
 import { trpcNext } from "../trpc";
 import { NextPageWithLayout } from "../NextPageWithLayout";
 import { ToastContainer } from "react-toastify";
+import { SessionProvider } from "next-auth/react";
 
 import '../app.css';
 import 'horizon-ui/styles/Fonts.css';
 import 'react-toastify/dist/ReactToastify.min.css';
 
-function MyApp ({ Component, pageProps }: {
-  Component: NextPageWithLayout
+function App({ Component, pageProps: { session, ...pageProps } }: {
+  Component: NextPageWithLayout,
 } & AppProps) {
   const getLayout = Component.getLayout || (page => page);
 
@@ -24,8 +25,10 @@ function MyApp ({ Component, pageProps }: {
         <meta name='theme-color' content='#000000' />
       </Head>
 
-      {getLayout(<Component {...pageProps}></Component>)}
-      
+      <SessionProvider session={session}>
+        {getLayout(<Component {...pageProps} />)}
+      </SessionProvider>
+
       <ToastContainer
         position="bottom-center"
         autoClose={5000}
@@ -42,4 +45,4 @@ function MyApp ({ Component, pageProps }: {
   );
 }
 
-export default trpcNext.withTRPC(MyApp);
+export default trpcNext.withTRPC(App);

@@ -58,7 +58,8 @@ import {
         <Thead>
           <Tr>
             <Th></Th><Th></Th>
-            {showAssessment && <Th></Th>} <Th>ID</Th>
+            {showAssessment && <Th></Th>}
+            <Th>ID</Th>
           </Tr>
         </Thead>
         <Tbody>

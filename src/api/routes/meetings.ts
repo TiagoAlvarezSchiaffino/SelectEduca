@@ -38,7 +38,7 @@ const join = procedure
   if (!apiEnv.hasTencentMeeting()) {
     console.log("tMeeting isn't configured. Fake a delay and return a mock meeting link.");
     await sleep(2000);
-    return "/fakeMeeting";
+    return "/fake-meeting";
   }
 
   updateOngoingMeetings();
