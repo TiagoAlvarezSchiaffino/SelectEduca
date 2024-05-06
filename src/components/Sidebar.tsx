@@ -25,7 +25,13 @@ import {
   MdGroups,
   MdScience,
   MdGroup,
-} from 'react-icons/md'
+  MdChevronRight, 
+  MdFace, 
+  MdFace5, 
+  MdFaceUnlock, 
+  MdOutlineSyncAlt, 
+  MdVideocam
+} from 'react-icons/md';
 import Role from "../shared/Role";
 import { IconType } from "react-icons";
 import { sidebarBreakpoint, sidebarContentMarginTop, sidebarWidth, topbarHeight } from './Navbars';
@@ -51,7 +57,7 @@ const sidebarItems: SidebarItem[] = [
   {
     name: '',
     path: '/interviews/mine',
-    icon: MdGroup,
+    icon: MdFace5,
     regex: /'\/interviews\/mine'/,
     role: 'Interviewer',
   },

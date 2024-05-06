@@ -60,7 +60,7 @@ const Page: NextPageWithLayout = () => {
         </GridItem>
         <GridItem>
           {i.type == "MenteeInterview" ? 
-            <MenteeApplicant userId={i.interviewee.id} /> 
+            <MenteeApplicant userId={i.interviewee.id} showTitle readonly /> 
             : 
             <Text></Text>
           }

@@ -1,7 +1,7 @@
 import AppLayout from 'AppLayout';
 import { NextPageWithLayout } from '../../NextPageWithLayout';
 import { useRouter } from 'next/router';
-import { parseQueryStringOrUnknown } from 'parseQueryString';
+import { parseQueryParameter } from 'parseQueryParamter';
 import trpc, { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
 import { Flex, Grid, GridItem, Text, TabList, TabPanels, Tab, TabPanel, Tooltip } from '@chakra-ui/react';
@@ -15,10 +15,9 @@ import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
 import MobileExperienceAlert from 'components/MobileExperienceAlert';
 import MenteeApplicant from 'components/MenteeApplicant';
 import TabsWithUrlParam from 'components/TabsWithUrlParam';
-import Transcripts from 'components/Transcripts';
 
 const Page: NextPageWithLayout = () => {
-  const partnershipId = parseQueryStringOrUnknown(useRouter(), 'partnershipId');
+  const partnershipId = parseQueryParameter(useRouter(), 'partnershipId');
   const { data: partnership } = trpcNext.partnerships.get.useQuery(partnershipId);
   if (!partnership) return <Loader />
 
@@ -32,7 +31,7 @@ const Page: NextPageWithLayout = () => {
       [sidebarBreakpoint]: "2fr 1fr", // "0.618fr 0.382fr",
     }}>
       <GridItem>
-        <MenteeTabs partnershipId={partnershipId} menteeId={partnership.mentee.id} groupId={partnership.group.id} />
+        <MenteeTabs partnershipId={partnershipId} menteeId={partnership.mentee.id} />
       </GridItem>
       <GridItem>
         <PrivateNotes 
@@ -73,10 +72,9 @@ function PrivateNotes({ partnershipId, notes, loading }: {
   </Flex>;
 }
 
-function MenteeTabs({ partnershipId, menteeId, groupId }: {
+function MenteeTabs({ partnershipId, menteeId }: {
   partnershipId: string,
   menteeId: string,
-  groupId: string,
 }) {
 
   const TabHead = ({ children }: any) => <Text>{children}</Text>;
@@ -84,16 +82,20 @@ function MenteeTabs({ partnershipId, menteeId, groupId }: {
   return <TabsWithUrlParam isFitted isLazy>
     <TabList>
       <Tab><TabHead></TabHead></Tab>
-      <Tab><TabHead></TabHead></Tab>
+      <Tab isDisabled><TabHead></TabHead></Tab>
+      <Tab isDisabled><TabHead></TabHead></Tab>
       <Tab><TabHead></TabHead></Tab>
     </TabList>
 
     <TabPanels>
       <TabPanel>
-        <Transcripts groupId={groupId} />
+        <MenteeApplicant userId={menteeId} readonly />
       </TabPanel>
       <TabPanel>
-        <MenteeApplicant userId={menteeId} readonly />
+        TODO
+      </TabPanel>
+      <TabPanel>
+        TODO
       </TabPanel>
       <TabPanel>
         <AssessmentTabPanel partnershipId={partnershipId} />
