@@ -1,15 +1,14 @@
 import { Op } from "sequelize";
 import User from "../src/api/database/models/User";
-import sequelizeInstance from "../src/api/database/sequelizeInstance";
+import sequelize from "../src/api/database/sequelize";
 import { createGroup, findGroups } from "../src/api/routes/groups";
-import { TRPCError } from "@trpc/server";
 import invariant from "tiny-invariant";
 import _ from "lodash";
-import { upsertSummary } from "../src/api/routes/summaries";
 import moment from "moment";
 import Role, { AllRoles } from "../src/shared/Role";
 import { toPinyin } from "../src/shared/strings";
-import { alreadyExistsErrorMessage } from "../src/api/errors";
+import Transcript from "../src/api/database/models/Transcript";
+import Summary from "../src/api/database/models/Summary";
 
 type TestUser = {
   name: string | null,
@@ -18,19 +17,19 @@ type TestUser = {
 };
 
 const mentees: TestUser[] = [{
-  name: '',
-  email: 'mentee-c@test.f',
+  name: 'Student A',
+  email: 'mentee-c@test.foo',
 }, {
-  name: '',
-  email: 'mentee-d@test.f',
+  name: 'Student B',
+  email: 'mentee-d@test.foo',
 }];
 
 const mentors: TestUser[] = [{
-  name: '',
-  email: 'mentor-a@test.f',
+  name: 'Instructor C',
+  email: 'mentor-a@test.foo',
 }, {
-  name: '',
-  email: 'mentor-b@test.f',
+  name: 'Instructor D',
+  email: 'mentor-b@test.foo',
 }];
 
 const allUsers = [...mentees, ...mentors];
@@ -38,9 +37,6 @@ const allUsers = [...mentees, ...mentors];
 main().then();
 
 async function main() {
-  // Force sequelize initialization
-  const _ = sequelizeInstance;
-  
   const mgrs = await getUserManagers();
   if (mgrs.length == 0) {
     console.error('ERROR: No uesr is found. Please follow README.md and log into your local server first.');
@@ -49,6 +45,8 @@ async function main() {
   await upgradeUsers(mgrs);
   await generateUsers();
   await generateGroupsAndSummaries(mgrs);
+  // This make sure the process doesn't hang waiting for connection closure.
+  await sequelize.close();
 }
 
 async function upgradeUsers(users: User[]) {
@@ -84,7 +82,7 @@ async function generateGroupsAndSummaries(include: User[]) {
 
 async function getUserManagers() {
   // Use type system to capture typos.
-  const role : Role = "UserManager";
+  const role: Role = "UserManager";
   return await User.findAll({ where: {
     roles: { [Op.contains]: [role] },
   } });
@@ -95,7 +93,7 @@ async function generateGroup(users: TestUser[]) {
   console.log('Creating group', users.map(u => u.name));
   const userIds = users.map(u => u.id as string);
   if ((await findGroups(userIds, 'exclusive')).length != 0) return;
-  await sequelizeInstance.transaction(async t => await createGroup(null, userIds, [], null, null, null, t));
+  await sequelize.transaction(async t => await createGroup(null, userIds, [], null, null, null, null, t));
 }
 
 async function generateSummaries(users: TestUser[]) {
@@ -107,7 +105,10 @@ async function generateSummaries(users: TestUser[]) {
   const start = moment('2024-4-24', 'YYYY-MM-DD');
   const end = start.clone().add(33, 'minute');
 
-  const md = '\n\n### \n****.\n\n1. **\n2. ';
+  let md = '\n\n### Title 3\nContent **bold**.\n\n1. List *italic*\n2. List ~~strikethrough~~\n\n';
+  for (let i = 0; i < users.length; i++) {
+    md = md + `{{name${i}}}\n\n`;
+  }
   await upsertSummary(gid, `transcript-1-${gid}`, start.valueOf(), end.valueOf(), 'summary-A',
     '> transcript-1, summary-A' + md);
   await upsertSummary(gid, `transcript-1-${gid}`, start.valueOf(), end.valueOf(), 'summary-B',
@@ -119,4 +120,19 @@ async function generateSummaries(users: TestUser[]) {
   const anotherEnd = anotherStart.clone().add(1, 'hour');
   await upsertSummary(gid, `transcript-2-${gid}`, anotherStart.valueOf(), anotherEnd.valueOf(), 'summary-A',
     '> transcript-2, summary-A' + md);
+}
+
+async function upsertSummary(groupId: string, transcriptId: string, startedAt: number, endedAt: number,
+  summaryKey: string, summary: string) {
+  await Transcript.upsert({
+    transcriptId,
+    groupId,
+    startedAt,
+    endedAt
+  });
+  await Summary.upsert({
+    transcriptId,
+    summaryKey,
+    summary
+  });
 }

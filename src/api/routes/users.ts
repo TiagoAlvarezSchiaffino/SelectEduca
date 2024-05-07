@@ -6,7 +6,7 @@ import db from "../database/db";
 import { Op } from "sequelize";
 import { authUser } from "../auth";
 import User, { zUser, zUserFilter } from "../../shared/User";
-import { isValidChineseName, toPinyin } from "../../shared/strings";
+import { Name, toPinyin } from "../../shared/strings";
 import invariant from 'tiny-invariant';
 import { email } from "../sendgrid";
 import { formatUserName } from '../../shared/strings';
