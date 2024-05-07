@@ -1,4 +1,3 @@
-
 import trpc, { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
 import {
@@ -21,12 +20,6 @@ import { Feedback } from "shared/InterviewFeedback";
 import { useUserContext } from 'UserContext';
 import { isPermitted } from 'shared/Role';
 
-/**
- * This data type is only used by the frontend. The backend / database is unaware of it and instead uses
- * shared/InterviewFeedbak:Feedback. Therefore, type conversion is necesary.
- * 
- * TODO: use EditorFeedback as a shared type?
- */
 export type EditorFeedback = {
   dimensions: EditorFeedbackDimension[],
 };
@@ -37,8 +30,8 @@ export type EditorFeedbackDimension = {
   comment: string | null,
 };
 
-export const summaryDimensionName = "";
-export const summaryScoreLabels = ["", "", "", ""];
+export const summaryDimensionName = "Overall";
+export const summaryScoreLabels = ["Reject", "Weak Reject", "Weak Accept", "Accept"];
 
 export function getScoreColor(scoreLabels: string[], score: number): string {
   invariant(scoreLabels.length == 4 || scoreLabels.length == 5);
@@ -77,8 +70,7 @@ export function InterviewFeedbackEditor({ interviewFeedbackId, readonly }: {
   interviewFeedbackId: string,
   readonly?: boolean,
 }) {
-  // See Editor()'s comment on the reason for `catchTime: 0`
-  const { data } = trpcNext.interviewFeedbacks.get.useQuery(interviewFeedbackId, { cacheTime: 0 });
+  const { data } = trpcNext.interviewFeedbacks.get.useQuery(interviewFeedbackId);
   if (!data) return <Loader />;
 
   const f = data.interviewFeedback;
@@ -89,7 +81,6 @@ export function InterviewFeedbackEditor({ interviewFeedbackId, readonly }: {
       feedback,
       etag,
     };
-    // TODO: A holistic solution.
     await trpc.interviewFeedbacks.logUpdateAttempt.mutate(data);
     return await trpc.interviewFeedbacks.update.mutate(data);    
   };
@@ -117,11 +108,6 @@ export function InterviewDecisionEditor({ interviewId, decision, etag }: {
   />;
 }
 
-/**
- * WARNING: Set useQuery()'s option { catchTime: 0 } when fetching `defaultFeedback`. Otherwise, useQuery() may return
- * cached but stale data first and then return newer data after a fetch. Becuase the editor ignors subsequent data loads
- * (see `useState` below), this would cause etag validation error when the user attempts to edit data.
- */
 function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
   defaultFeedback: Feedback | null,
   etag: number,
@@ -130,7 +116,7 @@ function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
   readonly?: boolean,
 }) {
   // Only load the original feedback once, and not when the parent auto refetches it.
-  // Changing content during edits may confuses the user to hell.
+  // Changing content during edits may confuse the user.
   const [feedback, setFeedback] = useState<EditorFeedback>(defaultFeedback as EditorFeedback || { dimensions: [] });
   const refEtag = useRef<number>(etag);
 
@@ -139,7 +125,7 @@ function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
       refEtag.current = await save(f, refEtag.current);
     } catch (e) {
       if (e instanceof TRPCClientError && e.data.code == "CONFLICT") {
-        window.alert("");
+        window.alert("Content has been updated by another user or window. Unable to continue saving on this page. Please refresh to see the latest content.");
       }
     }
   };
@@ -147,25 +133,29 @@ function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
   return <Flex direction="column" gap={6}>
     <DimensionEditor 
       dimension={getDimension(feedback, summaryDimensionName)}
-      dimensionLabel={`${summaryDimensionName}`}
+      dimensionLabel={`${summaryDimensionName} & Comments`}
       scoreLabels={summaryScoreLabels}
-      commentPlaceholder=""
+      commentPlaceholder="Reason for rating, issues for mentors to pay attention to, free text (autosaved)"
       readonly={readonly}
       onChange={d => setFeedback(setDimension(feedback, d))}
     />
 
-    {showDimensions && ["", "", "", "", "", "", "", ""]
+    {showDimensions && ["Excellent Performance", "Compassion", "Intellectual Ability", "Enthusiasm", "Groundedness", "Openness & Growth Mindset", "Individual Potential", "Vision & Values"]
     .map((name, idx) => <DimensionEditor 
       key={name}
       dimension={getDimension(feedback, name)}
       dimensionLabel={`${idx + 1}. ${name}`}
-      scoreLabels={["", "", "", "", ""]}
-      commentPlaceholder=""
+      scoreLabels={["Significantly Below Expectations", "Below Expectations", "Meets Expectations", "Above Expectations", "Significantly Above Expectations"]}
+      commentPlaceholder="Reason for rating, with specific examples of student responses (autosaved)"
       readonly={readonly}
       onChange={d => setFeedback(setDimension(feedback, d))}
     />)}
 
-    {!readonly && <Autosaver data={feedback} onSave={onSave} />}
+    {!readonly && <Autosaver
+      // This conditional is to prevent initial page loading from triggering autosaving.
+      data={_.isEqual(feedback, defaultFeedback) ? null : feedback}
+      onSave={onSave}
+    />}
   </Flex>;
 }
 
@@ -183,12 +173,6 @@ function DimensionEditor({
   const score = d.score ?? 1;
   const color = getScoreColor(scoreLabels, score);
 
-  const change = (v: number) => onChange({
-    name: d.name,
-    score: v,
-    comment: d.comment,
-  });
-
   return <>
     <Flex direction="row" gap={3}>
       <Box minWidth={140}><b>{dimensionLabel}</b></Box>
@@ -196,19 +180,14 @@ function DimensionEditor({
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         value={score}
-        // onChangeEnd is needed to triger events when the user clicks on the lowest score whilc d.score == null.
-        onChangeEnd={change}
-        // onChange is needed to triger events for other cases.
-        onChange={change}
+        onChange={v => onChange({
+          name: d.name,
+          score: v,
+          comment: d.comment,
+        })}
       >
         <SliderTrack><SliderFilledTrack bg={color} /></SliderTrack>
-        {scoreLabels.map((_, idx) =>
-          <SliderMark key={idx} value={idx + 1}
-          marginTop={3} marginLeft={-1} fontSize="xs" color="gray.400"
-          >
-            {idx + 1}
-          </SliderMark>
-        )}
+        {scoreLabels.map((_, idx) => <SliderMark key={idx} value={idx + 1}>.</SliderMark>)}
         
         <Tooltip
           hasArrow
@@ -216,7 +195,7 @@ function DimensionEditor({
           isOpen={showTooltip}
           label={`${score}: ${scoreLabels[score - 1]}`}
         >
-          <SliderThumb bg={color} opacity={d.score == null ? 0 : 1} />
+          <SliderThumb bg={color} />
         </Tooltip>
       </Slider>
     </Flex>
@@ -224,7 +203,7 @@ function DimensionEditor({
     <Textarea
       isReadOnly={readonly}
       {...readonly ? {} : { placeholder: commentPlaceholder }}
-      height="200px"
+      height="150px"
       {...readonly ? {} : { background: "white" }}
       {...d.comment ? { value: d.comment } : {}}
       onChange={e => onChange({
