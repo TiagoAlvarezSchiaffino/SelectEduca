@@ -6,7 +6,7 @@ export default function MobileExperienceAlert(props: AlertProps) {
   return <Alert status="warning" display={{ [sidebarBreakpoint]: "none" }} {...props}>
     <HStack>
       <AlertIcon />
-      <AlertDescription></AlertDescription>
+      <AlertDescription>This page contains a lot of content. For the best user experience, we recommend using a desktop browser.</AlertDescription>
     </HStack>
   </Alert>;
 }
