@@ -4,7 +4,6 @@
 import Calibration from "./Calibration";
 import Group from "./Group";
 import InterviewFeedback from "./InterviewFeedback";
-import Transcript from "./Transcript";
 import User from "./User";
 
 /**
@@ -13,25 +12,25 @@ import User from "./User";
 
 export const minUserAttributes = ['id', 'name'];
 
-export const userAttributes = [...minUserAttributes, "wechat", "genre", "email", "roles", "consentFormAcceptedAt",
+export const userAttributes = [...minUserAttributes, "wechat", "sex", "email", "roles", "consentFormAcceptedAt",
   "menteeInterviewerTestLastPassedAt"];
+
 /**
  * Group
  */
 
-export const groupAttributes = ["id", "name", "roles", "partnershipId", "interviewId", "calibrationId"];
+export const groupAttributes = ["id", "name", "roles", "partnershipId", "interviewId", "calibrationId",
+  "coacheeId"];
 
 export const groupInclude = [{
-  model: User,
+  association: "users",
   attributes: minUserAttributes,
 }];
 
-export const groupCountingTranscriptsInclude = [...groupInclude,
-  {
-    model: Transcript,
-    attributes: ["transcriptId"],
-  }
-];
+export const groupCountingTranscriptsInclude = [...groupInclude, {
+  association: "transcripts",
+  attributes: ["transcriptId", "startedAt", "endedAt"],
+}];
 
 /**
  * Transcript
@@ -46,18 +45,26 @@ export const transcriptAttributes = ["transcriptId", "startedAt", "endedAt"];
 export const summaryAttributes = ['transcriptId', 'summaryKey', 'summary'];
 
 /**
- * Partnership
+ * Partnership / Mentorship
  */
 
-// Don't include private notes.
-export const defaultPartnershipAttributes = ['id', 'menteeId', 'mentorId'];
+// Don't include private notes by default.
+export const mentorshipAttributes = ['id'];
 
-export const partnershipInclude = [{
+export const mentorshipWithNotesAttributes = [...mentorshipAttributes, "privateMentorNotes"];
+
+export const mentorshipInclude = [{
   association: 'mentor',
   attributes: minUserAttributes,
 }, {
   association: 'mentee',
   attributes: minUserAttributes,
+}];
+
+export const mentorshipWithGroupInclude = [...mentorshipInclude, {
+  association: "group",
+  attributes: groupAttributes,
+  include: groupCountingTranscriptsInclude,
 }];
 
 /**
@@ -100,5 +107,35 @@ export const interviewInclude = [{
   include: interviewFeedbackInclude,
 }, {
   model: Calibration,
+  attributes: calibrationAttributes,
   include: calibrationInclude,
+}];
+
+/**
+ * Assessment
+ */
+
+export const assessmentAttributes = ["id", "createdAt", "summary"];
+
+/**
+ * ChatMessage
+ */
+
+export const chatMessageAttributes = ["id", "markdown", "updatedAt", "createdAt"];
+
+export const chatMessageInclude = [{
+  association: "user",
+  attributes: minUserAttributes,
+}];
+
+/**
+ * ChatRoom
+ */
+
+export const chatRoomAttributes = ["id"];
+
+export const chatRoomInclude = [{
+  association: "messages",
+  attributes: chatMessageAttributes,
+  include: chatMessageInclude,
 }];

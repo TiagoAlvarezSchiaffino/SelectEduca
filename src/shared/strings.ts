@@ -1,5 +1,4 @@
 import pinyin from 'tiny-pinyin';
-import nzh from 'nzh';
 
 import { NextRouter } from 'next/router';
 
@@ -11,41 +10,36 @@ export function toPinyin(s: string) {
   return pinyin.convertToPinyin(s, /*separator=*/ '', /*lowerCase=*/ true);
 }
 
-export function formatUserName(name: string | null, mood: 'friendly' | 'formal') {
-  if (!name) return '';
+export function formatUserName(name: string | null, mood?: 'friendly' | 'formal') {
+  if (!name) return '（Anonymous）';
   return mood === 'friendly' ? name.substring(Math.max(0, name.length - 2)) : name;
 }
 
 export function formatGroupName(name: string | null, userCount: number): string {
-  return name ?? `${(userCount)}`;
-}
-
-/**
- * Convert a number into Chinese presentation, e.g. "十三".
- */
-export function (n: number): string {
-  return nzh.cn.encodeS(n);
+  return name ?? `${(userCount)} Participants`;
 }
 
 export function prettifyDuration(from: Date | string, to: Date | string) {
-  return `${diffInMinutes(from, to)}`;
+  return `${diffInMinutes(from, to)} minutes`;
 }
 
 export function prettifyDate(str: Date | string) {
   const date = new Date(str);
   const now = new Date();
   const dim = diffInMinutes(date, now);
-  if (dim < 24 * 60) return `${Math.floor(dim / 60)} `;
-  if (dim < 30 * 24 * 60) return `${Math.floor(dim / 24 / 60)} `;
+  if (dim < 1) return `Just now`;
+  if (dim < 60) return `${dim} minutes ago`;
+  if (dim < 24 * 60) return `${Math.floor(dim / 60)} hours ago`;
+  if (dim < 30 * 24 * 60) return `${Math.floor(dim / 24 / 60)} days ago`;
   if (date.getFullYear() == now.getFullYear()) {
-    return date.toLocaleDateString('', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('en', { day: 'numeric', month: 'short' });
   }
-  return date.toLocaleDateString('', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 // TODO: Sort out this Date-is-not-actually-string nonsense
 export function diffInMinutes(from: Date | string, to: Date | string): number {
-  return Math.floor((new Date(to).getTime() - new Date(from).getTime()) / 1000 / 60) ;
+  return Math.floor((new Date(to).getTime() - new Date(from).getTime()) / 1000 / 60);
 }
 
 export function compareUUID(id1: string, id2: string): number {

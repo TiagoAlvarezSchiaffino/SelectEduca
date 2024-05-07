@@ -1,83 +1,117 @@
 import { procedure, router } from "../trpc";
 import { authUser } from "../auth";
-import _ from "lodash";
 import db from "../database/db";
 import { 
-    zPartnership,
-    zPartnershipCountingAssessments, 
-    zPartnershipWithAssessments, 
-    zPartnershipWithGroupAndNotes, 
-    zPrivateMentorNotes } from "../../shared/Partnership";
+  isValidPartnershipIds,
+  zPartnership,
+  zPartnershipWithAssessmentsDeprecated, 
+  zPartnershipWithGroupAndNotes, 
+  zPrivateMentorNotes } from "../../shared/Partnership";
 import { z } from "zod";
 import Assessment from "../database/models/Assessment";
 import { alreadyExistsError, generalBadRequestError, noPermissionError, notFoundError } from "../errors";
-import sequelizeInstance from "../database/sequelizeInstance";
+import sequelize from "../database/sequelize";
 import { isPermitted } from "../../shared/Role";
 import Group from "api/database/models/Group";
 import { 
-  defaultPartnershipAttributes,
+  mentorshipAttributes,
   groupAttributes,
   groupCountingTranscriptsInclude,
-  partnershipInclude } from "api/database/models/attributesAndIncludes";
+  mentorshipInclude, 
+  mentorshipWithNotesAttributes,
+  mentorshipWithGroupInclude,
+  chatRoomAttributes,
+  chatRoomInclude
+} from "api/database/models/attributesAndIncludes";
 import { createGroup } from "./groups";
 import invariant from "tiny-invariant";
+import { zChatRoom } from "shared/ChatRoom";
+import User from "shared/User";
 
 const create = procedure
   .use(authUser('PartnershipManager'))
   .input(z.object({
-    mentorId: z.string().uuid(),
-    menteeId: z.string().uuid(),
+    mentorId: z.string(),
+    menteeId: z.string(),
   }))
-  .mutation(async ({ input }) => 
+  .mutation(async ({ input: { mentorId, menteeId } }) => 
 {
-  await sequelizeInstance.transaction(async (t) => {
-      const mentor = await db.User.findByPk(input.mentorId, { lock: true, transaction: t });
-      const mentee = await db.User.findByPk(input.menteeId, { lock: true, transaction: t });
-        if (mentor == null || mentee == null || mentor.id === mentee.id) {
-          throw generalBadRequestError('');
-        }
+  if (!isValidPartnershipIds(menteeId, mentorId)) {
+    throw generalBadRequestError('Invalid user ID');
+  }
+
+  await sequelize.transaction(async transaction => {
+    const mentor = await db.User.findByPk(mentorId, { lock: true, transaction });
+    const mentee = await db.User.findByPk(menteeId, { lock: true, transaction });
+    if (!mentor || !mentee) {
+      throw generalBadRequestError('Invalid user ID');
+    }
 
     // Assign appropriate roles.
     mentor.roles = [...mentor.roles.filter(r => r != "Mentor"), "Mentor"];
-    mentor.save({ transaction: t });
+    await mentor.save({ transaction });
     mentee.roles = [...mentee.roles.filter(r => r != "Mentee"), "Mentee"];
-    mentee.save({ transaction: t });
+    await mentee.save({ transaction });
 
     let partnership;
     try {
       partnership = await db.Partnership.create({
-        mentorId: mentor.id,
-        menteeId: mentee.id,
-      }, { transaction: t });
+        mentorId, menteeId
+      }, { transaction });
     } catch (e: any) {
       if ('name' in e && e.name === "SequelizeUniqueConstraintError") {
-        throw alreadyExistsError("");
+        throw alreadyExistsError("One-on-One Match");
       }
     }
 
-    
-    // Create the group
+    // Create groups
     invariant(partnership);
-    await createGroup(null, [input.mentorId, input.menteeId], [], partnership.id, null, null, t);
+    await createGroup(null, [mentorId, menteeId], [], partnership.id, null, null, null, transaction);
   });
+});
+
+const updatePrivateMentorNotes = procedure
+  .use(authUser())
+  .input(z.object({
+    id: z.string(),
+    privateMentorNotes: zPrivateMentorNotes,
+  }))
+  .mutation(async ({ ctx, input }) => 
+{
+  const partnership = await db.Partnership.findByPk(input.id);
+  if (!partnership || partnership.mentor.id !== ctx.user.id) {
+    throw noPermissionError("One-on-One Match", input.id);
+  }
+
+  partnership.privateMentorNotes = input.privateMentorNotes;
+  partnership.save();
 });
 
 const list = procedure
   .use(authUser('PartnershipManager'))
-  .output(z.array(zPartnershipCountingAssessments))
+  .output(z.array(zPartnershipWithGroupAndNotes))
   .query(async () => 
 {
-  const res = await db.Partnership.findAll({
-    attributes: defaultPartnershipAttributes,
-    include: [
-      ...partnershipInclude,
-      {
-        model: Assessment,
-        attributes: ['id'],
-      }
-    ]
+  return await db.Partnership.findAll({ 
+    attributes: mentorshipWithNotesAttributes,
+    include: mentorshipWithGroupInclude,
   });
-  return res;
+});
+
+const listMineAsCoach = procedure
+  .use(authUser())
+  .output(z.array(zPartnershipWithGroupAndNotes))
+  .query(async ({ ctx }) =>
+{
+  return (await db.User.findAll({ 
+    where: { coachId: ctx.user.id },
+    attributes: [],
+    include: [{
+      association: "mentorshipsAsMentor",
+      attributes: mentorshipWithNotesAttributes,
+      include: mentorshipWithGroupInclude,
+    }]
+  })).map(u => u.mentorshipsAsMentor).flat();
 });
 
 const listMineAsMentor = procedure
@@ -87,8 +121,8 @@ const listMineAsMentor = procedure
 {
   return await db.Partnership.findAll({
     where: { mentorId: ctx.user.id },
-    attributes: defaultPartnershipAttributes,
-    include: partnershipInclude,
+    attributes: mentorshipAttributes,
+    include: mentorshipInclude,
   });
 });
 
@@ -103,68 +137,136 @@ const get = procedure
   .query(async ({ ctx, input: id }) => 
 {
   const res = await db.Partnership.findByPk(id, {
-    include: [...partnershipInclude, {
+    attributes: mentorshipWithNotesAttributes,
+    include: [...mentorshipInclude, {
       model: Group,
       attributes: groupAttributes,
       include: groupCountingTranscriptsInclude,
     }],
   });
-  if (!res || res.mentorId !== ctx.user.id) {
-    throw noPermissionError("", id);
+  if (!res || (res.mentor.id !== ctx.user.id && !isPermitted(ctx.user.roles, "MentorCoach"))) {
+    throw noPermissionError("One-on-One Match", id);
   }
   return res;
 });
 
-
+// TODO: remove this function. Use partnership.get + assessments.listAllForMentorship instead.
 const getWithAssessmentsDeprecated = procedure
   .use(authUser())
   .input(z.string())
-  .output(zPartnershipWithAssessments)
-  .query(async ({ ctx, input: id }) => 
+  .output(zPartnershipWithAssessmentsDeprecated)
+  .query(async ({ ctx, input: id }) =>
 {
   const res = await db.Partnership.findByPk(id, {
-    attributes: defaultPartnershipAttributes,
+    attributes: mentorshipAttributes,
     include: [
-      ...partnershipInclude,
+      ...mentorshipInclude,
       Assessment,
     ]
   });
-  if (!res || (res.mentorId !== ctx.user.id && !isPermitted(ctx.user.roles, "MentorCoach"))) {
+  if (!res) throw notFoundError("One-on-One Match", id);
 
   // Only assessors and mentors can access the partnership.
-  if (!isPermitted(ctx.user.roles, 'PartnershipAssessor') && res.mentorId !== ctx.user.id) {
-    throw noPermissionError("", id);
+  if (!isPermitted(ctx.user.roles, 'PartnershipAssessor') && res.mentor.id !== ctx.user.id) {
+    throw noPermissionError("One-on-One Match", id);
   }
 
   return res;
 });
 
-const update = procedure
+const getRoom = procedure
   .use(authUser())
   .input(z.object({
-    id: z.string(),
-    privateMentorNotes: zPrivateMentorNotes,
+    mentorshipId: z.string(),
   }))
-  .mutation(async ({ ctx, input }) => 
+  .output(zChatRoom)
+  .query(async ({ ctx, input: { mentorshipId } }) =>
 {
-  const partnership = await db.Partnership.findByPk(input.id);
-  if (!partnership || partnership.mentorId !== ctx.user.id) {
-    throw noPermissionError("", input.id);
-  }
+  while (true) {
+    const r = await db.ChatRoom.findOne({
+      where: { mentorshipId },
+      attributes: chatRoomAttributes,
+      include: [...chatRoomInclude, {
+        association: "mentorship",
+        attributes: mentorshipAttributes,
+        include: mentorshipInclude,
+      }],
+    });
 
-  partnership.privateMentorNotes = input.privateMentorNotes;
-  partnership.save();
+    if (!r) {
+      await db.ChatRoom.create({ mentorshipId });
+      continue;
+    }
+
+    if (r.mentorship) checkChatRoomPermission(ctx.user, r.mentorship.mentor.id);
+    return r;
+  }
 });
 
+const createMessage = procedure
+  .use(authUser())
+  .input(z.object({
+    roomId: z.string(),
+    markdown: z.string(),
+  }))
+  .mutation(async ({ ctx, input: { roomId, markdown } }) => 
+{
+  await sequelize.transaction(async transaction => {
+    const r = await db.ChatRoom.findByPk(roomId, {
+      attributes: [],
+      include: [{
+        association: "mentorship",
+        attributes: mentorshipAttributes,
+        include: mentorshipInclude,
+      }],
+    });
+    if (!r) throw notFoundError("Discussion Space", roomId);
 
-const routes = router({
+    if (r.mentorship) checkChatRoomPermission(ctx.user, r.mentorship.mentor.id);
+
+    await db.ChatMessage.create({ roomId, markdown, userId: ctx.user.id }, { transaction });
+  });
+});
+
+/**
+ * Only the user who created the message can update it
+ */
+const updaateMessage = procedure
+  .use(authUser())
+  .input(z.object({
+    messageId: z.string(),
+    markdown: z.string(),
+  }))
+  .mutation(async ({ ctx, input: { messageId, markdown } }) => 
+{
+  if (!markdown) throw generalBadRequestError("Message content cannot be empty");
+
+  await sequelize.transaction(async transaction => {
+    const m = await db.ChatMessage.findByPk(messageId, {
+      attributes: ["id", "userId"],
+    });
+    if (!m) throw notFoundError("Discussion Message", messageId);
+    if (m.userId !== ctx.user.id) throw noPermissionError("Discussion Message", messageId);
+    await m.update({ markdown });
+  });
+});
+
+function checkChatRoomPermission(me: User, mentorId: string) {
+  if (!isPermitted(me.roles, "MentorCoach") && me.id !== mentorId) throw noPermissionError("Discussion Space");
+}
+
+export default router({
   create,
-  listAll,
   get,
   getWithAssessmentsDeprecated,
   list,
   listMineAsMentor,
-  update,
-});
+  listMineAsCoach,
+  updatePrivateMentorNotes,
 
-export default routes;
+  internalChat: router({
+    getRoom,
+    createMessage,
+    updaateMessage,
+  }),
+});
