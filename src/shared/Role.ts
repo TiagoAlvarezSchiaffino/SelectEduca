@@ -13,76 +13,80 @@ export const AllRoles = [
   'Mentor',
   'Mentee',
   'Interviewer',
+  'MentorCoach',
 ] as const;
 
 export const RoleProfiles: { [key: string]: {
-  // You may ask, why not simply use displayName as the role key?
-  // Well, we're just too lazy to type Chinese characters everywhere.
   displayName: string,
 
   actions: string,
 
-  // If the role can be automatically added to or removed from users.
   automatic?: boolean,
 
   privilegedUserDataAccess: boolean,
 }} = {
   SystemAlertSubscriber: {
-    displayName: '',
-    actions: '',
+    displayName: 'System Alert Subscriber',
+    actions: 'Receive and handle alerts for system abnormal events',
     privilegedUserDataAccess: false,
   },
   PrivilegedRoleManager: {
-    displayName: '',
-    actions: '',
+    displayName: 'Role Manager',
+    actions: 'Manage user roles',
     privilegedUserDataAccess: false,
   },
   UserManager: {
-    displayName: '',
-    actions: '',
+    displayName: 'User Manager',
+    actions: 'Manage basic user information',
     privilegedUserDataAccess: true,
   },
   GroupManager: {
-    displayName: '',
-    actions: '',
+    displayName: 'Group Manager',
+    actions: 'Manage meeting groups',
     privilegedUserDataAccess: true,
   },
   SummaryEngineer: {
-    displayName: '',
-    actions: '',
+    displayName: 'Summary Engineer',
+    actions: 'Develop automatic meeting summary function',
     privilegedUserDataAccess: true,
   },
   PartnershipManager: {
-    displayName: '',
-    actions: '',
+    displayName: 'One-on-One Mentor Manager',
+    actions: 'Manage mentor matching',
     privilegedUserDataAccess: false,
   },
   PartnershipAssessor: {
-    displayName: '',
-    actions: '',
+    displayName: 'One-on-One Mentor Assessor',
+    actions: 'Track and assess the effectiveness of one-on-one mentorship',
     privilegedUserDataAccess: true,
   },
   InterviewManager: {
-    displayName: '',
-    actions: '',
+    displayName: 'Interview Manager',
+    actions: 'Manage mentor and student interviews',
     privilegedUserDataAccess: true,
   },
   Mentor: {
-    displayName: '',
-    actions: '',
+    displayName: 'Mentor',
+    actions: 'Help young students grow',
     privilegedUserDataAccess: false,
     automatic: true,
   },
   Mentee: {
-    displayName: '',
-    actions: '',
+    displayName: 'Student',
+    actions: 'Accept mentorship',
     privilegedUserDataAccess: false,
     automatic: true,
   },
   Interviewer: {
-    displayName: '',
-    actions: '',
+    displayName: 'Interviewer',
+    actions: 'Interview mentor or student candidates',
     privilegedUserDataAccess: false,
+    automatic: true,
+  },
+  MentorCoach: {
+    displayName: 'Senior Mentor',
+    actions: 'Assist and evaluate non-senior mentors',
+    privilegedUserDataAccess: true,
     automatic: true,
   },
 };

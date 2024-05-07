@@ -8,7 +8,7 @@ export const zMinInterviewFeedback = z.object({
 });
 
 export const zFeedback = z.record(z.string(), z.any());
-export type Feedback = object; // z.ZodType<typeof zFeedback>; For some reason using z.ZodType upsets typescript.
+export type Feedback = object;
 
 export const zInterviewFeedback = zMinInterviewFeedback.merge(z.object({
   feedback: zFeedback.nullable(),

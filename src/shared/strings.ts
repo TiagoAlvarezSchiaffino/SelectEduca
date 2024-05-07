@@ -15,10 +15,6 @@ export function formatUserName(name: string | null, mood?: 'friendly' | 'formal'
   return mood === 'friendly' ? name.substring(Math.max(0, name.length - 2)) : name;
 }
 
-export function formatGroupName(name: string | null, userCount: number): string {
-  return name ?? `${(userCount)} Participants`;
-}
-
 export function prettifyDuration(from: Date | string, to: Date | string) {
   return `${diffInMinutes(from, to)} minutes`;
 }
@@ -37,7 +33,6 @@ export function prettifyDate(str: Date | string) {
   return date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// TODO: Sort out this Date-is-not-actually-string nonsense
 export function diffInMinutes(from: Date | string, to: Date | string): number {
   return Math.floor((new Date(to).getTime() - new Date(from).getTime()) / 1000 / 60);
 }
