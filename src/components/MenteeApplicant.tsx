@@ -18,28 +18,26 @@ import invariant from "tiny-invariant";
 import EditableWithIcon from "components/EditableWithIcon";
 import User from 'shared/User';
 
-export default function MenteeApplicant({ userId, showTitle, useNameAsTitle, showContact, readonly } : {
+export default function MenteeApplicant({ userId, showName, showContact, readonly } : {
   userId: string,
-  readonly: boolean,
-  showTitle?: boolean,
-  useNameAsTitle?: boolean, // Valid only if showTitle is true
+  readonly: boolean
+  showName?: boolean,
   showContact?: boolean,
 }) {
   const { data, refetch } = trpcNext.users.getApplicant.useQuery({ userId, type: "MenteeInterview" });
 
   return !data ? <Loader /> :
-    <LoadedApplicant user={data.user} application={data.application} showTitle={showTitle}
-      useNameAsTitle={useNameAsTitle} showContact={showContact} readonly={readonly} refetch={refetch}
+    <LoadedApplicant user={data.user} application={data.application} showName={showName} showContact={showContact}
+      readonly={readonly} refetch={refetch}
     />;
 }
 
-function LoadedApplicant({ user, application, showTitle, useNameAsTitle, showContact, readonly, refetch } : {
+function LoadedApplicant({ user, application, showName, showContact, readonly, refetch } : {
   user: User,
   application: Record<string, any> | null,
   readonly: boolean
   refetch: () => void,
-  showTitle?: boolean,
-  useNameAsTitle?: boolean,
+  showName?: boolean,
   showContact?: boolean,
 }) {
   const update = async (name: string, value: string) => {
@@ -54,19 +52,20 @@ function LoadedApplicant({ user, application, showTitle, useNameAsTitle, showCon
   };
 
   return <Flex direction="column" gap={sectionSpacing}>
-    {showTitle && <Heading size="md">{useNameAsTitle ? `${formatUserName(user.name)}` : "Application Materials"}</Heading>}
+    <Heading size="md">{showName ? `${formatUserName(user.name, "formal")}` : "Application Materials"}</Heading>
 
-    {user.genre && <FieldRow name="" readonly value={user.genre} />}
+    <FieldRow name="Gender" readonly value={user.genre ?? ''} />
 
     {showContact && <>
-      <FieldRow name="" readonly value={user.wechat ?? ''} />
-      <FieldRow name="" readonly value={user.email} />
+      <FieldRow name="WeChat" readonly value={user.wechat ?? ''} />
+      <FieldRow name="Email" readonly value={user.email} />
     </>}
 
-    {!application ? "" : menteeApplicationFields.map(f => {
+    {!application ? "No application data." : menteeApplicationFields.map(f => {
       invariant(application);
       if (f.name in application) {
         return <FieldRow readonly={readonly} key={f.name} name={f.name}
+          // @ts-ignore
           value={application[f.name]}
           update={v => update(f.name, v)}
         />;
@@ -103,7 +102,7 @@ function FieldValueCell({ value, readonly, update }: {
     </UnorderedList>;
   } else if (z.string().url().safeParse(value).success) {
     return <Link href={value}>
-      <DownloadIcon />
+      Download Link <DownloadIcon />
     </Link>;
   } else if (typeof value === "object") {
     return JSON.stringify(value, null, 2);

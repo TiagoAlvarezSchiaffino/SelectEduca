@@ -1,27 +1,39 @@
-
 import { procedure, router } from "../trpc";
 import { z } from "zod";
 import Role, { AllRoles, RoleProfiles, isPermitted, zRoles } from "../../shared/Role";
 import db from "../database/db";
 import { Op } from "sequelize";
-import { authUser } from "../auth";
+import { authUser, invalidateLocalUserCache } from "../auth";
 import User, { zUser, zUserFilter } from "../../shared/User";
 import { Name, toPinyin } from "../../shared/strings";
 import invariant from 'tiny-invariant';
 import { email } from "../sendgrid";
 import { formatUserName } from '../../shared/strings';
-import { generalBadRequestError, noPermissionError, notFoundError, notImplemnetedError } from "../errors";
+import { generalBadRequestError, noPermissionError, notFoundError, notImplementedError } from "../errors";
 import Interview from "api/database/models/Interview";
 import { InterviewType, zInterviewType } from "shared/InterviewType";
 import { userAttributes } from "../database/models/attributesAndIncludes";
 import { getCalibrationAndCheckPermissionSafe } from "./calibrations";
-import sequelizeInstance from "api/database/sequelizeInstance";
-import { zPartnership } from "shared/Partnership";
 
 const me = procedure
   .use(authUser())
   .output(zUser)
   .query(async ({ ctx }) => ctx.user);
+
+const meNoCache = procedure
+  .use(authUser())
+  .output(zUser)
+  .query(async ({ ctx }) => 
+{
+  // invalidate catch so next time `me` will also return fresh data
+  invalidateLocalUserCache();
+
+  const user = await db.User.findByPk(ctx.user.id, {
+    attributes: userAttributes,
+  });
+  invariant(user);
+  return user;
+});
 
 const create = procedure
   .use(authUser('UserManager'))
@@ -33,7 +45,7 @@ const create = procedure
   .mutation(async ({ ctx, input }) => 
 {
   checkUserFields(input.name, input.email);
-  checkPermissionForManagingRoles(ctx.user.roles, input.roles);
+  checkPermissionForManagingPrivilegedRoles(ctx.user.roles, input.roles);
   await db.User.create({
     name: input.name,
     pinyin: toPinyin(input.name),
@@ -51,7 +63,7 @@ const list = procedure
   .output(z.array(zUser))
   .query(async ({ input: filter }) =>
 {
-  if (filter.hasMentorApplication) throw notImplemnetedError();
+  if (filter.hasMentorApplication) throw notImplementedError();
 
   // Force typescript checking
   const interviewType: InterviewType = "MenteeInterview";
@@ -95,24 +107,23 @@ const update = procedure
 {
   checkUserFields(input.name, input.email);
 
-  const isUserOrRoleManager = isPermitted(ctx.user.roles, ['UserManager', 'PrivilegedRoleManager']);
+  const isUserOrPRManager = isPermitted(ctx.user.roles, ['UserManager', 'PrivilegedRoleManager']);
   const isSelf = ctx.user.id === input.id;
-  // Non-user- and non-role-managers can only update their own profile.
-  if (!isUserOrRoleManager && !isSelf) {
-    throw noPermissionError("", input.id);
+  if (!isUserOrPRManager && !isSelf) {
+    throw noPermissionError("User", input.id);
   }
 
   const user = await db.User.findByPk(input.id);
   if (!user) {
-    throw notFoundError("", input.id);
+    throw notFoundError("User", input.id);
   }
 
   const rolesToAdd = input.roles.filter(r => !user.roles.includes(r));
   const rolesToRemove = user.roles.filter(r => !input.roles.includes(r));
-  checkPermissionForManagingRoles(ctx.user.roles, [...rolesToAdd, ...rolesToRemove]);
+  checkPermissionForManagingPrivilegedRoles(ctx.user.roles, [...rolesToAdd, ...rolesToRemove]);
 
   if (!isSelf) {
-    await emailUserAboutNewManualRoles(ctx.user.name ?? "", user, input.roles, ctx.baseUrl);
+    await emailUserAboutNewPrivilegedRoles(ctx.user.name ?? "", user, input.roles, ctx.baseUrl);
   }
 
   invariant(input.name);
@@ -120,17 +131,17 @@ const update = procedure
     name: input.name,
     pinyin: toPinyin(input.name),
     consentFormAcceptedAt: input.consentFormAcceptedAt,
-    ...isUserOrRoleManager ? {
+    ...isUserOrPRManager ? {
       roles: input.roles,
       email: input.email,
     } : {},
   });
+  invalidateLocalUserCache();
 });
 
 /**
- * Only InterviewManagers, MentorCoaches, interviewers of the application, and participants of the calibration
- * (only if the calibration is active) are allowed to call this route. If the user is not an InterviewManager, contact
- * information is redacted.
+ * Only InterviewManagers, interviewers of the application, and participants of the calibration (only if the calibration
+ * is active) are allowed to call this route. If the user is not an InterviewManager, contact information is redacted.
  */
 const getApplicant = procedure
   .use(authUser())
@@ -144,12 +155,12 @@ const getApplicant = procedure
   }))
   .query(async ({ ctx, input }) =>
 {
-  if (input.type !== "MenteeInterview") throw notImplemnetedError();
+  if (input.type !== "MenteeInterview") throw notImplementedError();
 
   const user = await db.User.findByPk(input.userId, {
     attributes: [...userAttributes, "menteeApplication"],
   });
-  if (!user) throw notFoundError("", input.userId);
+  if (!user) throw notFoundError("User", input.userId);
 
   const ret: { user: User, application: Record<string, any> | null } = { user, application: user.menteeApplication };
 
@@ -158,8 +169,6 @@ const getApplicant = procedure
   // Redact
   user.email = "redacted@redacted.com";
   user.wechat = "redacted";
-
-  if (isPermitted(ctx.user.roles, "MentorCoach")) return ret;
 
   // Check if the user is an interviewer
   const myInterviews = await db.Interview.findAll({
@@ -188,17 +197,33 @@ const getApplicant = procedure
     if (i.calibrationId && await getCalibrationAndCheckPermissionSafe(ctx.user, i.calibrationId)) return ret;
   }
 
-  throw noPermissionError("", user.id);
+  throw noPermissionError("Application Data", user.id);
+});
+
+const updateApplication = procedure
+  .use(authUser("InterviewManager"))
+  .input(z.object({
+    userId: z.string(),
+    type: zInterviewType,
+    application: z.record(z.string(), z.any()),
+  }))
+  .mutation(async ({ input }) =>
+{
+  const [cnt] = await db.User.update({
+    [input.type == "MenteeInterview" ? "menteeApplication" : "mentorApplication"]: input.application,
+  }, { where: { id: input.userId } });
+  invariant(cnt <= 1);
+  if (!cnt) throw notFoundError("User", input.userId);
 });
 
 /**
  * List all users and their roles who have privileged user data access. See RoleProfile.privilegeUserDataAccess for an
  * explanation.
  */
-const listPriviledgedUserDataAccess = procedure
+const listPrivilegedUserDataAccess = procedure
   .use(authUser())
   .output(z.array(z.object({
-    name: z.string().nullable(),
+    name: z.string(),
     roles: zRoles,
   })))
   .query(async () => 
@@ -214,79 +239,35 @@ const listPriviledgedUserDataAccess = procedure
   });
 });
 
-const remove = procedure
-  .use(authUser("UserManager"))
-  .input(z.object({
-    id: z.string(),
-  }))
-  .mutation(async ({ input }) => 
-{
-  await sequelizeInstance.transaction(async transaction => {
-    const user = await db.User.findByPk(input.id, { transaction });
-    if (!user) throw notFoundError("", input.id);
-
-    // Because we soft-delete a user, rename the user's email address before destroying to make sure next time the user
-    // logs in with the same email, account creation will not fail.
-    let i = 0;
-    while (true) {
-      const email = `deleted-${i++}+${user.email}`;
-      if (!await db.User.findOne({
-        where: { email }, 
-        paranoid: false,
-        transaction,
-      })) {
-        await user.update({ email }, { transaction });
-        await user.destroy({ transaction });
-        break;
-      }
-    }
-  });
-});
-
-const listMyCoachees = procedure
-  .use(authUser())
-  .output(z.array(zPartnership))
-  .query(async ({ ctx }) => 
-{
-  return (await db.User.findAll({ 
-    where: { coachId: ctx.user.id },
-    attributes: [],
-    include: [{
-      association: "partnershipsAsMentor",
-      attributes: defaultPartnershipAttributes,
-      include: partnershipInclude,
-    }]
-  })).map(u => u.partnershipsAsMentor).flat();
-});
-
 export default router({
   me,
+  meNoCache,
   create,
   list,
   update,
-  listPriviledgedUserDataAccess,
+  listPrivilegedUserDataAccess,
   getApplicant,
-  remove,
+  updateApplication,
 });
 
 function checkUserFields(name: string | null, email: string) {
-  if (!isValidChineseName(name)) {
-    throw generalBadRequestError("");
+  if (!Name(name)) {
+    throw generalBadRequestError("Invalid  name.");
   }
 
   if (!z.string().email().safeParse(email).success) {
-    throw generalBadRequestError("Email");
+    throw generalBadRequestError("Invalid email address.");
   }
 }
 
-function checkPermissionForManagingRoles(userRoles: Role[], subjectRoles: Role[]) {
-  if (subjectRoles.length && !isPermitted(userRoles, "PrivilegedRoleManager")) {
-    throw noPermissionError("");
+function checkPermissionForManagingPrivilegedRoles(userRoles: Role[], subjectRoles: Role[]) {
+  if (subjectRoles.some(r => RoleProfiles[r].privileged) && !isPermitted(userRoles, "PrivilegedRoleManager")) {
+    throw noPermissionError("User");
   }
 }
 
-async function emailUserAboutNewManualRoles(userManagerName: string, user: User, roles: Role[], baseUrl: string) {
-  const added = roles.filter(r => !user.roles.includes(r)).filter(r => !RoleProfiles[r].automatic);
+async function emailUserAboutNewPrivilegedRoles(userManagerName: string, user: User, roles: Role[], baseUrl: string) {
+  const added = roles.filter(r => !user.roles.includes(r)).filter(r => RoleProfiles[r].privileged);
   for (const r of added) {
     const rp = RoleProfiles[r];
     await email('d-7b16e981f1df4e53802a88e59b4d8049', [{

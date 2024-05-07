@@ -10,14 +10,17 @@ import {
   Spacer,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
-import useUserContext from "../useUserContext";
+import { useUserContext } from "../UserContext";
 import trpc from "../trpc";
-import moment from 'moment';
-import UserProfile from '../shared/UserProfile';
+import User from '../shared/User';
 import ModalWithBackdrop from './ModalWithBackdrop';
 
-export function consentFormAccepted(user: UserProfile) {
-  return user.consentFormAcceptedAt && moment(user.consentFormAcceptedAt) >= moment("20111031", "YYYYMMDD");
+const consentContentLastUpdatedAt = new Date("2024-05-07");
+
+export function consentFormAccepted(user: User) {
+  return user.consentFormAcceptedAt && (
+    new Date(user.consentFormAcceptedAt).getTime() >= consentContentLastUpdatedAt.getTime()
+  );
 }
 
 export default function ConsentModal() {
@@ -25,30 +28,32 @@ export default function ConsentModal() {
   const [declined, setDeclined] = useState<boolean>(false);
 
   const handleSubmit = async () => {
-    const updatedUser = structuredClone(user);
-    updatedUser.consentFormAcceptedAt = new Date();
-    await trpc.users.update.mutate(updatedUser);
-    setUser(updatedUser);
+    const updated = structuredClone(user);
+    updated.consentFormAcceptedAt = new Date().toISOString();
+    await trpc.users.update.mutate(updated);
+    setUser(updated);
   };
 
   return <>
     {/* onClose returns undefined to prevent user from closing the modal without entering name. */}
     <ModalWithBackdrop isOpen={!declined} onClose={() => undefined}>
       <ModalContent>
-        <ModalHeader></ModalHeader>
+        <ModalHeader>Before continuing, please read the following statement:</ModalHeader>
         <ModalBody>
           <VStack spacing={6} marginBottom={10} align='left'>
-            <Text><b></b></Text>
+            <Text>This website is an education platform owned by the <Link isExternal href="">Education</Link> ().
+              To test the quality of automatic meeting summaries, <b>during the beta period, the website will automatically transcribe the entire meeting into text, generate meeting summaries, and save these texts and summaries</b>.</Text>
 
-            <Text></Text>
+            <Text>To ensure personal privacy, strictly limits access to transcribed texts and summaries. Only the user and a small number of staff who have signed confidentiality agreements can access this data.
+              On the &quot;Who Can See My Data&quot; page, you can see the list of all authorized personnel.</Text>
 
-            <Text></Text>
+            <Text>We will never provide the above data to any third party.</Text>
           </VStack>
         </ModalBody>
         <ModalFooter>
-          <Button onClick={() => setDeclined(true)}></Button>
+          <Button onClick={() => setDeclined(true)}>Decline</Button>
           <Spacer />
-          <Button variant='brand' onClick={handleSubmit}></Button>
+          <Button variant='brand' onClick={handleSubmit}>I have read and agree to use this website</Button>
         </ModalFooter>
       </ModalContent>
     </ModalWithBackdrop>
@@ -57,10 +62,10 @@ export default function ConsentModal() {
       <ModalContent>
         <ModalHeader> </ModalHeader>
         <ModalBody>
-          <Text></Text>
+          <Text>You have declined to continue using the website. Please close the browser window.</Text>
         </ModalBody>
         <ModalFooter>
-          <Button onClick={() => setDeclined(false)}></Button>
+          <Button onClick={() => setDeclined(false)}>Reconsider</Button>
         </ModalFooter>
       </ModalContent>
     </ModalWithBackdrop>

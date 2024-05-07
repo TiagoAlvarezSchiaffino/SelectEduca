@@ -41,7 +41,8 @@ export default function Page() {
       setIsLoading(false);
     }
   };
-
+  
+  // TODO: Use EditableWithIcon
   const EditableControls = () => {
     const {
       isEditing,

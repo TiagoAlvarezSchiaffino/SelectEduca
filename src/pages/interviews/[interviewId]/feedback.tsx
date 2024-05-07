@@ -59,7 +59,7 @@ export default widePage(() => {
         </GridItem>
         <GridItem>
           {i.type == "MenteeInterview" ? 
-            <MenteeApplicant userId={i.interviewee.id} showTitle readonly /> 
+            <MenteeApplicant userId={i.interviewee.id} readonly /> 
             : 
             <Text>(The mentor application material page has not been implemented yet)</Text>
           }

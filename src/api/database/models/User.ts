@@ -55,7 +55,7 @@ class User extends Model {
   roles: Role[];
 
   @Column(DATE)
-  consentFormAcceptedAt: Date | null;
+  consentFormAcceptedAt: string | null;
 
   @Column(DATE)
   menteeInterviewerTestLastPassedAt: string | null;
