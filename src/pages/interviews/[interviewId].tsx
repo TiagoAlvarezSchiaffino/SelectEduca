@@ -17,7 +17,6 @@ import { widePage } from 'AppPage';
 
 export default widePage(() => {
   const interviewId = parseQueryStringOrUnknown(useRouter(), 'interviewId');
-  // See Editor()'s comment on the reason for `catchTime: 0`
   const { data } = trpcNext.interviews.get.useQuery(interviewId, { cacheTime: 0 });
   const [me] = useUserContext();
 
@@ -27,11 +26,11 @@ export default widePage(() => {
   return <Flex direction="column" gap={sectionSpacing}>
     <MobileExperienceAlert />
 
-    <Heading size="md">{formatUserName(i.interviewee.name, "formal")}</Heading>
+    <Heading size="md">Candidate: {formatUserName(i.interviewee.name)}</Heading>
 
     <Box>
       <Link isExternal href="">
-        <ExternalLinkIcon />
+        Inspection Dimensions and Reference Question Bank <ExternalLinkIcon />
       </Link>
     </Box>
 
@@ -40,11 +39,11 @@ export default widePage(() => {
       gap={sectionSpacing}
     >
       {i.feedbacks
-        // Fix dislay order
+        // Fix display order
         .sort((f1, f2) => compareUUID(f1.id, f2.id))
         .map(f => <GridItem key={f.id}>
         <Flex direction="column" gap={sectionSpacing}>
-          <Heading size="md">{formatUserName(f.interviewer.name, "formal")}</Heading>
+          <Heading size="md">{formatUserName(f.interviewer.name)}</Heading>
           <InterviewFeedbackEditor interviewFeedbackId={f.id} readonly={me.id !== f.interviewer.id} />
         </Flex>
       </GridItem>)}
@@ -55,7 +54,7 @@ export default widePage(() => {
           {i.type == "MenteeInterview" ?
             <MenteeApplicant userId={i.interviewee.id} showTitle readonly />
             : 
-            <Text></Text>
+            <Text>(The mentor application material page has not been implemented yet)</Text>
           }
         </Flex>
       </GridItem>
@@ -69,7 +68,7 @@ function DecisionEditor({ interviewId, decision, etag }: {
   etag: number,
 }) {
   return <>
-    <Heading size="md"></Heading>
+    <Heading size="md">Interview Discussion</Heading>
     <InterviewDecisionEditor interviewId={interviewId} decision={decision} etag={etag} />
   </>;
 }

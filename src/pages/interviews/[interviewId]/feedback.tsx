@@ -37,6 +37,7 @@ export default widePage(() => {
   if (!data) return <Loader />;
 
   const i = data.interviewWithGroup;
+
   const getMyFeedbackId = () => {
     const feedbacks = i.feedbacks.filter(f => f.interviewer.id === me.id);
     invariant(feedbacks.length == 1);
@@ -44,8 +45,8 @@ export default widePage(() => {
   };
 
   return <>
-    <PageBreadcrumb current={formatUserName(i.interviewee.name, "formal")} parents={[{
-      name: "", link: "/interviews/mine",
+    <PageBreadcrumb current={formatUserName(i.interviewee.name)} parents={[{
+      name: "My Interview", link: "/interviews/mine",
     }]}/>
 
     {!interviewerTestPassed() ? <PassTestFirst /> :
@@ -60,7 +61,7 @@ export default widePage(() => {
           {i.type == "MenteeInterview" ? 
             <MenteeApplicant userId={i.interviewee.id} showTitle readonly /> 
             : 
-            <Text></Text>
+            <Text>(The mentor application material page has not been implemented yet)</Text>
           }
         </GridItem>
       </Grid>
@@ -70,8 +71,8 @@ export default widePage(() => {
 
 function PassTestFirst() {
   return <Flex direction="column" gap={paragraphSpacing}>
-    <b></b>
-    <p><Link isExternal href=""></Link></p>
+    <b>Please complete the interviewer test first</b>
+    <p>After passing the <Link isExternal href="">&quot;Interview Process and Standard Test&quot;</Link>, refresh this page to view the interview information.</p>
   </Flex>;
 }
 
@@ -91,22 +92,22 @@ function Instructions({ interviewers }: {
   const marginEnd = 1.5;
   return <Flex direction="column" gap={sectionSpacing}>
     <UnorderedList>
-      <ListItem><Icon as={BsWechat} marginX={1.5} /></ListItem>
+      <ListItem>Initiate a video group chat on <Icon as={BsWechat} marginX={1.5} />WeChat.</ListItem>
       {first !== null && <>
         <ListItem>
-          <mark>{first ? "1  4" : "5  8"} </mark>；
-          {formatUserName(other?.name ?? null, "friendly")}{first ? "5  8" : "1  4"} 
+          You are responsible for asking questions for dimensions {first ? "1 to 4" : "5 to 8"};
+          {formatUserName(other?.name ?? null, "friendly")} is responsible for questions for dimensions {first ? "5 to 8" : "1 to 4"}.
         </ListItem>
-        <ListItem><mark></mark></ListItem>
+        <ListItem>Provide evaluations and overall comments for <mark>all eight dimensions</mark>.</ListItem>
       </>}
       <ListItem>
         <Link isExternal href="">
-          <ExternalLinkIcon />
+          Inspection Dimensions and Reference Question Bank <ExternalLinkIcon />
         </Link>
       </ListItem>
       <ListItem>
         <Link isExternal href="">
-          <ExternalLinkIcon />
+          Interview Guidelines <ExternalLinkIcon />
         </Link>
       </ListItem>
     </UnorderedList>

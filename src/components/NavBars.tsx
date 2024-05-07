@@ -197,14 +197,14 @@ const Topbar = ({ onOpen, ...rest }: TopbarProps) => {
                   size={'sm'}
                   bg="brand.a"
                   color="white"
-                  name={user.name || ""}
+                  name={formatUserName(user.name)}
                 />
                 <Text 
                   display={{ base: 'none', [sidebarBreakpoint]: 'flex' }}
                   marginLeft="2"
                   fontSize="sm"
                 >
-                  {user.name || ""}
+                  {formatUserName(user.name)}
                 </Text>
                 <Box display={{ base: 'none', [sidebarBreakpoint]: 'flex' }}>
                   <FiChevronDown />

@@ -26,12 +26,7 @@ import {
   Tab,
   TabPanels,
   TabPanel,
-  Editable,
-  EditablePreview,
-  EditableInput,
   Switch,
-  useEditableControls,
-  IconButton,
   Box,
   UnorderedList,
   ListItem,
@@ -69,8 +64,8 @@ export default widePage(() => {
   return <Flex direction='column' gap={6}>
     <TabsWithUrlParam isLazy>
       <TabList>
-        <Tab>{type == "MenteeInterview" ? "" : ""}</Tab>
-        <Tab></Tab>
+        <Tab>{type == "MenteeInterview" ? "Students" : "Mentors"} Candidate List</Tab>
+        <Tab>Interview Discussion Group</Tab>
       </TabList>
 
       <TabPanels>
@@ -85,7 +80,6 @@ export default widePage(() => {
           {!calibrations ? <Loader /> : 
             <Calibrations type={type} calibrations={calibrations} refetch={() => {
               refetchCalibrations();
-              // When calibration name changes, interviews may need a refetch as well.
               refetchInterview();
             }} />
           }
@@ -105,8 +99,8 @@ function Applicants({ type, applicants, interviews, refetchInterviews }: {
     <Table>
       <Thead>
         <Tr>
-          <Th></Th><Th></Th><Th></Th><Th></Th>
-          <Th></Th><Th></Th><Th></Th>
+          <Th>Candidate</Th><Th>Pinyin</Th><Th>Source (Hover to see full text)</Th><Th>Application</Th>
+          <Th>Interviewer</Th><Th>Interview Discussion Group</Th><Th>Interview Settings</Th><Th>Interview Details</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -116,7 +110,7 @@ function Applicants({ type, applicants, interviews, refetchInterviews }: {
       </Tbody>
     </Table>
 
-    <Text marginTop={sectionSpacing} color="grey" fontSize="sm"><CheckIcon /></Text>
+    <Text marginTop={sectionSpacing} color="grey" fontSize="sm"><CheckIcon /> Indicates interviewers who have filled out feedback.</Text>
   </TableContainer>;
 }
 
@@ -126,7 +120,6 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
   interviews: Interview[],
   refetchInterviews: () => any,
 }) {
-  // TODO: it's duplicative to fetch the applicant again
   const { data } = trpcNext.users.getApplicant.useQuery({ userId: applicant.id, type });
   const source = (data?.application as Record<string, any> | null)?.[menteeSourceField];
 
@@ -134,11 +127,6 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
   invariant(matches.length <= 1);
   const interview = matches.length ? matches[0] : null;
 
-  /**
-   * undefined: close interview editor
-   * null: create a new interview
-   * otherwise: edit the existing interview
-   */
   const [interviewInEditor, setInterviewInEditor] = useState<Interview | null | undefined>(undefined);
 
   const TdEditLink = ({ children }: TableCellProps) => <TdLink href="#" onClick={() => setInterviewInEditor(interview)}>
@@ -156,7 +144,7 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
 
     <Tr key={applicant.id} _hover={{ bg: "white" }}>
       <TdEditLink>
-        {formatUserName(applicant.name, "formal")}
+        {formatUserName(applicant.name)}
       </TdEditLink>
       <TdEditLink>{toPinyin(applicant.name ?? "")}</TdEditLink>
       <TdEditLink>
@@ -169,15 +157,15 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
       </TdLink>
       <TdEditLink><Wrap spacing="2">
         {interview && interview.feedbacks.map(f => <WrapItem key={f.id}>
-          {formatUserName(f.interviewer.name, "formal")}
+          {formatUserName(f.interviewer.name)}
           {f.feedbackUpdatedAt && <CheckIcon marginStart={1} />}
         </WrapItem>)}
       </Wrap></TdEditLink>
       <TdEditLink>
-      <TdEditLink><EditIcon /></TdEditLink>
-      {interview && <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink>}
+        {interview && interview.calibration?.name}
       </TdEditLink>
-      {interview ? <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink> : <Td />}
+      <TdEditLink>{interview ? <EditIcon /> : <AddIcon />}</TdEditLink>
+      {interview && <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink>}
     </Tr>
   </>;
 }
@@ -197,13 +185,10 @@ function InterviewEditor({ type, applicant, interview, onClose }: {
   const { data: calibrations } = trpcNext.calibrations.list.useQuery(type);
   // When selecting "-“ <Select> emits "".
   const [calibrationId, setCalibrationId] = useState<string>(interview?.calibration?.id || "");
-  
-  const isValid = () => interviewerIds.length > 0;
 
   const save = async () => {
     setSaving(true);
     try {
-      invariant(isValid());
       const cid = calibrationId.length ? calibrationId : null;
       if (interview) {
         await trpc.interviews.update.mutate({
@@ -223,27 +208,24 @@ function InterviewEditor({ type, applicant, interview, onClose }: {
 
   return <ModalWithBackdrop isOpen onClose={onClose}>
     <ModalContent>
-      <ModalHeader>{interview ? "" : "创建"}{type == "MenteeInterview" ? "": ""}</ModalHeader>
+      <ModalHeader>{interview ? "Edit" : "Create"} {type == "MenteeInterview" ? "Student" : "Mentor"} Interview</ModalHeader>
       <ModalCloseButton />
       <ModalBody>
         <VStack spacing={6}>
           <FormControl>
-            <FormLabel></FormLabel>
-            <Text>{formatUserName(applicant.name, "formal")}</Text>
+            <FormLabel>Candidate</FormLabel>
+            <Text>{formatUserName(applicant.name)}</Text>
           </FormControl>
           <FormControl>
-            <FormLabel></FormLabel>
+            <FormLabel>Interviewer</FormLabel>
             <UserSelector
               isMulti 
               onSelect={userIds => setInterviewerIds(userIds)}
-              initialValue={!interview ? [] : interview.feedbacks.map(f => ({
-                label: f.interviewer.name ?? "",
-                value: f.interviewer.id,
-              }))}
+              initialValue={!interview ? [] : interview.feedbacks.map(f => f.interviewer)}
             />
           </FormControl>
           <FormControl>
-            <FormLabel></FormLabel>
+            <FormLabel>Interview Discussion Group</FormLabel>
             <Select placeholder="-"
               onChange={e => setCalibrationId(e.target.value)}
               value={calibrationId}
@@ -254,9 +236,8 @@ function InterviewEditor({ type, applicant, interview, onClose }: {
         </VStack>
       </ModalBody>
       <ModalFooter>
-        <Button variant='brand' 
-          isDisabled={!isValid()}
-          isLoading={saving} onClick={save}></Button>
+        <Button variant='brand'
+          isLoading={saving} onClick={save}>Save</Button>
       </ModalFooter>
     </ModalContent>
   </ModalWithBackdrop>;
@@ -272,7 +253,7 @@ function Calibrations({ type, calibrations, refetch }: {
     let name: string;
     let count = 1;
     do {
-      name = `(${count++})`;
+      name = `New Interview Group (${count++})`;
     } while (calibrations.some(c => c.name === name));
     await trpc.calibrations.create.mutate({ type, name });
     refetch();
@@ -286,20 +267,21 @@ function Calibrations({ type, calibrations, refetch }: {
 
   return <Flex direction="column" gap={paragraphSpacing}>
     <Box>
+      Description:
       <UnorderedList>
-        <ListItem></ListItem>
-        <ListItem></ListItem>
-        <ListItem></ListItem>
-        <ListItem></ListItem>
+        <ListItem>Use the &quot;Edit Interview&quot; feature in the candidate list to assign an interview discussion group to each candidate.</ListItem>
+        <ListItem>If candidate A belongs to discussion group C, then all interviewers for A are participants of C.</ListItem>
+        <ListItem>Participants of C can access application materials and interview feedback records for all candidates in C.</ListItem>
+        <ListItem>When C is &quot;Active&quot;, participants can see and access C in &quot;My Interviews&quot; page.</ListItem>
       </UnorderedList>
     </Box>
 
-    <Box><Button leftIcon={<AddIcon />} onClick={create}></Button></Box>
+    <Box><Button leftIcon={<AddIcon />} onClick={create}>Create Interview Group</Button></Box>
 
     <TableContainer><Table>
       <Thead>
         <Tr>
-          <Th></Th><Th></Th><Th></Th><Th></Th>
+          <Th>Name</Th><Th>Status</Th><Th>Creation Date</Th><Th>Access</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -309,11 +291,13 @@ function Calibrations({ type, calibrations, refetch }: {
           .map(c => {
             return <Tr key={c.id}>
               <Td>
-                <EditableCalibrationName calibration={c} update={update} />
+                <EditableWithIcon mode="input" defaultValue={c.name} maxWidth={60} 
+                  onSubmit={v => update(c, v, c.active)} 
+                />
               </Td>
               <Td>
                 <Switch isChecked={c.active} onChange={e => update(c, c.name, e.target.checked)} />
-                {" "} {c.active ? "" : ""}
+                {" "} {c.active ? "Active" : "Inactive"}
               </Td>
               <Td>
                 {c.createdAt && prettifyDate(c.createdAt)}
@@ -327,20 +311,4 @@ function Calibrations({ type, calibrations, refetch }: {
       </Tbody>
     </Table></TableContainer>
   </Flex>;
-}
-
-function EditableCalibrationName({ calibration: c, update }: {
-  calibration: Calibration,
-  update: (c: Calibration, name: string, active: boolean) => void,
-}) {
-  const EditableControls = () => {
-    const { isEditing, getEditButtonProps } = useEditableControls();
-    return isEditing ? null : <IconButton aria-label='Edit' icon={<EditIcon />} {...getEditButtonProps()} />;
-  };
-
-  return <Editable defaultValue={c.name} maxWidth={60} onSubmit={v => update(c, v, c.active)}>
-    <EditablePreview />
-    <EditableInput />
-    <EditableControls />
-  </Editable>;
 }

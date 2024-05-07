@@ -199,7 +199,7 @@ export async function updateInterview(id: string, type: InterviewType, calibrati
     }
     for (const f of i.feedbacks) {
       if (f.feedbackUpdatedAt && !interviewerIds.includes(f.interviewer.id)) {
-        throw generalBadRequestError(`${formatUserName(f.interviewer.name, "formal")}`);
+        throw generalBadRequestError(`Interviewer ${formatUserName(f.interviewer.name)} has already submitted feedback and cannot be removed`);
       }
   }
 
