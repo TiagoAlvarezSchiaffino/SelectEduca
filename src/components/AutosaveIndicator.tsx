@@ -1,4 +1,3 @@
-
 import { CheckIcon, RepeatIcon, WarningIcon } from '@chakra-ui/icons';
 import { Center, CenterProps, Text } from '@chakra-ui/react';
 import React, { useEffect } from 'react';
@@ -18,14 +17,14 @@ export default function AutosaveIndicator({ state, ...rest }: CenterProps & {
         {errors.length > 0 ?
           <><WarningIcon {...iconProps} color="red"/><Text fontSize="sm" color="red">{errors[0].toString()}</Text></>
           :
-          <><RepeatIcon {...iconProps} color="disabled"/><Text fontSize="sm" color="disabled">...</Text></>
+          <><RepeatIcon {...iconProps} color="disabled"/><Text fontSize="sm" color="disabled">Saving...</Text></>
         }
       </Center>
     </motion.div>
   </> : state.virgin ? null : 
     <motion.div initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: 3 }}>
       <Center {...rest}>
-        <CheckIcon {...iconProps} color="green" /><Text fontSize="sm" color="green"></Text>
+        <CheckIcon {...iconProps} color="green" /><Text fontSize="sm" color="green">Saved</Text>
       </Center>
     </motion.div>;
 }
@@ -33,7 +32,7 @@ export default function AutosaveIndicator({ state, ...rest }: CenterProps & {
 function LeavePagePrompt() {
   const router = useRouter();
   useEffect(() => {
-    const warningText = "";
+    const warningText = "Saving in progress. Are you sure you want to leave this page?";
     const handleWindowClose = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       return (e.returnValue = warningText);

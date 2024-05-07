@@ -6,9 +6,6 @@ import _ from "lodash";
 const autosaveDelayMs = 500;
 const retryIntervalSec = 8;
 
-/**
- * TODO: use type template
- */
 export default function Autosaver({ data, onSave }: {
   data: any,
   onSave: (data: any) => Promise<void>,
@@ -70,7 +67,7 @@ async function saveWithRetry(
       break;
     } catch (e) {
       console.error(`Autosaver: error during saving. retry in ${retryIntervalSec} secs:`, e);
-      setError(``);
+      setError(`Save failed, automatically retrying.`);
       await sleep(retryIntervalSec * 1000);
     }
   }

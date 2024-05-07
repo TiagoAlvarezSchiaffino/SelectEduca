@@ -20,13 +20,9 @@ import {
   mentorshipInclude, 
   mentorshipWithNotesAttributes,
   mentorshipWithGroupInclude,
-  chatRoomAttributes,
-  chatRoomInclude
 } from "api/database/models/attributesAndIncludes";
 import { createGroup } from "./groups";
 import invariant from "tiny-invariant";
-import { zChatRoom } from "shared/ChatRoom";
-import User from "shared/User";
 
 const create = procedure
   .use(authUser('PartnershipManager'))
@@ -174,87 +170,6 @@ const getWithAssessmentsDeprecated = procedure
   return res;
 });
 
-const getRoom = procedure
-  .use(authUser())
-  .input(z.object({
-    mentorshipId: z.string(),
-  }))
-  .output(zChatRoom)
-  .query(async ({ ctx, input: { mentorshipId } }) =>
-{
-  while (true) {
-    const r = await db.ChatRoom.findOne({
-      where: { mentorshipId },
-      attributes: chatRoomAttributes,
-      include: [...chatRoomInclude, {
-        association: "mentorship",
-        attributes: mentorshipAttributes,
-        include: mentorshipInclude,
-      }],
-    });
-
-    if (!r) {
-      await db.ChatRoom.create({ mentorshipId });
-      continue;
-    }
-
-    if (r.mentorship) checkChatRoomPermission(ctx.user, r.mentorship.mentor.id);
-    return r;
-  }
-});
-
-const createMessage = procedure
-  .use(authUser())
-  .input(z.object({
-    roomId: z.string(),
-    markdown: z.string(),
-  }))
-  .mutation(async ({ ctx, input: { roomId, markdown } }) => 
-{
-  await sequelize.transaction(async transaction => {
-    const r = await db.ChatRoom.findByPk(roomId, {
-      attributes: [],
-      include: [{
-        association: "mentorship",
-        attributes: mentorshipAttributes,
-        include: mentorshipInclude,
-      }],
-    });
-    if (!r) throw notFoundError("Discussion Space", roomId);
-
-    if (r.mentorship) checkChatRoomPermission(ctx.user, r.mentorship.mentor.id);
-
-    await db.ChatMessage.create({ roomId, markdown, userId: ctx.user.id }, { transaction });
-  });
-});
-
-/**
- * Only the user who created the message can update it
- */
-const updaateMessage = procedure
-  .use(authUser())
-  .input(z.object({
-    messageId: z.string(),
-    markdown: z.string(),
-  }))
-  .mutation(async ({ ctx, input: { messageId, markdown } }) => 
-{
-  if (!markdown) throw generalBadRequestError("Message content cannot be empty");
-
-  await sequelize.transaction(async transaction => {
-    const m = await db.ChatMessage.findByPk(messageId, {
-      attributes: ["id", "userId"],
-    });
-    if (!m) throw notFoundError("Discussion Message", messageId);
-    if (m.userId !== ctx.user.id) throw noPermissionError("Discussion Message", messageId);
-    await m.update({ markdown });
-  });
-});
-
-function checkChatRoomPermission(me: User, mentorId: string) {
-  if (!isPermitted(me.roles, "MentorCoach") && me.id !== mentorId) throw noPermissionError("Discussion Space");
-}
-
 export default router({
   create,
   get,
@@ -263,10 +178,4 @@ export default router({
   listMineAsMentor,
   listMineAsCoach,
   updatePrivateMentorNotes,
-
-  internalChat: router({
-    getRoom,
-    createMessage,
-    updaateMessage,
-  }),
 });
