@@ -6,12 +6,12 @@ import { emailRoleIgnoreError } from "../sendgrid";
 import menteeApplicationFields from "../../shared/menteeApplicationFields";
 
 export default procedure
-    .input(z.record(z.string(), z.any()))
-    .mutation(async ({ ctx, input }) => submit(input, ctx.baseUrl));
+  .input(z.record(z.string(), z.any()))
+  .mutation(async ({ ctx, input }) => submit(input, ctx.baseUrl));
 
 export async function submit({ form, entry }: Record<string, any>, baseUrl: string) {
   if (form !== "FBTWTe" && form !== "S74k0V") {
-    throw generalBadRequestError(`form id ${form} is not suppoted.`);
+    throw generalBadRequestError(`form id ${form} is not supported.`);
   }
 
   const application: Record<string, any> = {};
@@ -32,5 +32,5 @@ export async function submit({ form, entry }: Record<string, any>, baseUrl: stri
     roles: ["Mentee"]
   }, "upsert");
 
-  emailRoleIgnoreError("UserManager", "", `${name}`, baseUrl);
+  emailRoleIgnoreError("UserManager", "New Student Application", `Name: ${name}`, baseUrl);
 }
