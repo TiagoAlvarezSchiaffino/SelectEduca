@@ -4,7 +4,7 @@ import { Select, WrapItem } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import _ from "lodash";
 
-type BooleanLabelType = "" | "" | "";
+type BooleanLabelType = "Yes/No" | "Already/Not yet" | "Has/Doesn't have";
 
 /**
  * Should be wrapped by a `<Wrap align="center">`
@@ -47,11 +47,11 @@ export default function UserFilterSelector({ filter, onChange }: {
   };
 
   return <>
-    <WrapItem><b></b></WrapItem>
-    <WrapItem>{booleanSelect("hasMenteeApplication", "")}</WrapItem>
-    <WrapItem></WrapItem>
-    <WrapItem>{booleanSelect("isMenteeInterviewee", "")}</WrapItem>
-    <WrapItem></WrapItem>
+    <WrapItem><b>Filter Users:</b></WrapItem>
+    <WrapItem>{booleanSelect("hasMenteeApplication", "Already")}</WrapItem>
+    <WrapItem>Submitted student applications</WrapItem>
+    <WrapItem>{booleanSelect("isMenteeInterviewee", "Already")}</WrapItem>
+    <WrapItem>Interviewing students</WrapItem>
   </>;
 }
 
@@ -64,8 +64,8 @@ function BooleanSelect({ value, type, onChange }: {
   const change = (s: string) => onChange(s === "none" ? undefined : s === "yes" ? true : false);
 
   return <Select value={value2str(value)} onChange={e => change(e.target.value)}>
-    <option value='none'>{type == "" ? "" : type == "" ? "" : ""}</option>
-    <option value='yes'>{type == "" ? "" : type == "" ? "" : ""}</option>
-    <option value='no'>{type == "" ? "" : type == "" ? "" : ""}</option>
+    <option value='none'>{type == "Yes/No" ? "Yes or No" : type == "Already" ? "Already or Not yet" : "Has or Doesn't have"}</option>
+    <option value='yes'>{type == "Yes/No" ? "Yes" : type == "Already" ? "Already" : "Has"}</option>
+    <option value='no'>{type == "Yes/No" ? "No" : type == "Already" ? "Not yet" : "Doesn't have"}</option>
   </Select>;
 }
