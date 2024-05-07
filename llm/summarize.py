@@ -38,7 +38,7 @@ headers_post = ["Authorization: Bearer {}".format(os.environ['INTEGRATION_AUTH_T
 
 def get_list(url, headers, params):
     """
-    api
+    Call API to get original documents
     """
     r = requests.get(url, headers=headers, params={"input": json.dumps(params)}).json()
 
@@ -47,7 +47,7 @@ def get_list(url, headers, params):
 
 def post_summary(url, headers, transcriptId, summaryKey, result_summary):
     """
-    api
+    Call API to upload text summary
     """
 
     post_data = {'transcriptId': transcriptId,
@@ -76,21 +76,23 @@ def post_summary(url, headers, transcriptId, summaryKey, result_summary):
 
 def preprocess(txt, name, person_dict):
     """
+    Read the speaker from the text and mark it: ABCDE, etc., up to 20 speakers.
     INPUT:
-        txt:
-        name:
-        person_dict:{}
+        txt: Original text
+        name: Speaker
+        person_dict: {Speaker: Mark}
     RETURN：
         df:
-        {dialogs: ABCDE
-        time: }
+        {dialogs: Original dialogue marked ABCDE, etc., removing blank lines
+        time: Original dialogue time}
+
     """
 
     tm = []
     txtAB = []
     for t in txt:
         if len(t.strip()) > 0:
-            tm.append(t[t.find("("):t.find(")") + 1])  #
+            tm.append(t[t.find("("):t.find(")") + 1])  # Time
             flag = 0
             for n in name:
                 if t[:t.find("(")].strip().find(n) >= 0:
@@ -106,18 +108,19 @@ def preprocess(txt, name, person_dict):
 
 def section_summarize(df, section_len, part_len):
     """
-    section, section
+    Divide section, section summary, full text summary, full text topic extraction
     INPUT:
-        df: preprocess()df
-        section_len: section
-        part_len: 
+        df: preprocess() result df
+        section_len: section length
+        part_len: Unit length used for full text summary
     RETURN:
-        df_s: section
-        summary_total: 
-        first_summary：
-      summary_bytheme: 
+        df_s: Time, summary, and topic of each section
+        summary_total: Full text summary
+        first_summary: Full text summary topic
+        summary_bytheme: Summary by topic
+
     """
-    # section
+    # Divide section
 
     section = ''
     sections = []
@@ -127,7 +130,7 @@ def section_summarize(df, section_len, part_len):
         if i % 2 == 0 and i + 1 < df.shape[0]:
             section = section + df.dialogs[i] + df.dialogs[i + 1]
 
-            if len(section) < section_len:  # section500
+            if len(section) < section_len:  # If the cumulative number of dialogue characters in the section is less than 500, continue to merge the next round of dialogue
                 continue
             else:
                 tm_end = df.iloc[i + 1].time  # section end time
@@ -137,17 +140,17 @@ def section_summarize(df, section_len, part_len):
                 tm_start = df.iloc[i + 2].time  # next section start time
     df_s = pd.DataFrame({"tm_section": tm_section, "dialogue_section": sections})
 
-    # section
+    # Generate section summary
 
     summary = []
     for s in sections:
-        prompt = ":" + s + ":"
+        prompt = "Please summarize the following sentence in English:" + s + "Summary:"
         response, history = model.chat(tokenizer, prompt, history=[])
         summary.append(response)
 
     df_s["section_summary"] = summary
 
-    # section，part_len
+    # Merge section summaries and generate summaries for every part_len characters
 
     text = ""
     part = []
@@ -158,21 +161,21 @@ def section_summarize(df, section_len, part_len):
 
     summary_total = ""
     for p in part:
-        prompt = ":" + p + ":"
+        prompt = "Please summarize the following sentence in English:" + p + "Summary:"
         response, _ = model.chat(tokenizer, prompt, history=[])
         summary_total += response
 
-    #
-    prompt = "list:" + summary_total
+    # Extract full text topics
+    prompt = "Please use the list format to list the topic words extracted from the following sentence:" + summary_total
     response, _ = model.chat(tokenizer, prompt, history=[])
     first_summary = response
     print(first_summary)
 
-    #
+    # Generate summaries by topic words
     summary_bytheme = []
     for l in first_summary.split("\n"):
         print(l)
-        prompt = "{}{}:".format(summary_total, l[l.find(".") + 1:])
+        prompt = "Please extract the part describing {} in the original text {}:".format(summary_total, l[l.find(".") + 1:])
         response, _ = model.chat(tokenizer, prompt, history=[])
         summary_bytheme.append(l)
         summary_bytheme.append(response)
@@ -185,23 +188,26 @@ def section_summarize(df, section_len, part_len):
 if __name__ == '__main__':
     for part_len in [1000, 1200, 1500]:
         for write_mode in ["short", "long"]:
-            # transcript list
+            # Get transcript list
             summaryKey = "{}_summary_{}".format(write_mode, part_len)
-            params = {"key": "原始文字", "excludeTranscriptsWithKey": summaryKey}
+            params = {"key": "Original text", "excludeTranscriptsWithKey": summaryKey}
             data = get_list(url_get, headers_get, params)  ##transcriptId,summary
             # print (data)
 
+            # Summary generation
             for d in data:
 
                 transid = d["transcriptId"]  # transciptId
-                txt = d["summary"].split('\n')
+                txt = d["summary"].split('\n')  # Original text
 
+                # Identify speaker, up to 20 speaker names, using ABCDE to represent
                 name = set()
                 for t in txt[:1000]:
                     if len(t.strip()) > 0:
                         name.add(t[:t.find("(")].strip())
                 name = list(name)
 
+                # Person dict
                 person = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S",
                           "T"]  # 20
                 person_dict = {}
@@ -209,17 +215,19 @@ if __name__ == '__main__':
                     person_dict[name[i]] = person[i]
                 print(person_dict)
 
+                # Summary processing
                 # section_len = 500
                 df = preprocess(txt, name, person_dict)
 
                 for section_len in [500]:
                     df_s, summary_total, summary_bytheme, first_summary = section_summarize(df, section_len, part_len)
                     if write_mode == "short":
-                        result_summary = "\n:\n" + "\n".join(summary_bytheme)
+                        result_summary = "\nText summary:\n" + "\n".join(summary_bytheme)
                     else:
-                        result_summary = ":\n{}\n".format(first_summary) + "\n\n" + summary_total
+                        result_summary = "Discussion topic:\n{}\n".format(first_summary) + "\nText summary:\n" + summary_total
 
-                    for n in name: 
+                    for n in name:  # Replace original person name
                         result_summary = re.sub(person_dict[n], "{{" + n + "}}", result_summary)
+                    # Upload summary
                     post_summary(url_post, headers_post, transid, summaryKey, result_summary)
                     print("{} with {} is done".format(transid, summaryKey))
