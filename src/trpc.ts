@@ -24,7 +24,9 @@ const errorToastLink: TRPCLink<ApiRouter> = () => {
         },
         error(err: TRPCClientError<ApiRouter>) {
           console.log('TRPC got an error:', err);
-          toast.error(`！${err.message}`);
+          if (err.data?.code !== "CONFLICT") {
+            toast.error(`Oops！${err.message}`);
+          }
           observer.error(err);
         },
         complete() {
@@ -46,7 +48,7 @@ export const links = [
         Authorization: `Bearer ${localStorage.getItem('_authing_token')}`,
       };
     },
-    maxURLLength: 2083, // a suitable size
+    maxURLLength: 2083,
   }),
 ];
 
