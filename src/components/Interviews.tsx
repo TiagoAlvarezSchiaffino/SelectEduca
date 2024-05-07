@@ -17,7 +17,7 @@ import Loader from 'components/Loader';
 import { formatUserName, compareUUID, toPinyin } from 'shared/strings';
 import { Interview } from 'shared/Interview';
 import { useUserContext } from 'UserContext';
-import { CheckIcon, EditIcon, ViewIcon } from '@chakra-ui/icons';
+import { CheckIcon, ViewIcon } from '@chakra-ui/icons';
 import TrLink from 'components/TrLink';
 import { sectionSpacing } from 'theme/metrics';
 import {
@@ -49,7 +49,6 @@ export default function Interviews({ interviews, forCalibration }: {
           <Th>Discussion Result</Th>
           <Th>Discussion Comments (Hover for Full Text)</Th>
         </>}
-        <Th>Enter</Th>
       </Tr></Thead>
       <Tbody>
       
@@ -82,7 +81,6 @@ export default function Interviews({ interviews, forCalibration }: {
               <Td><ViewIcon /></Td>
             </>
             :
-            <Td><EditIcon /></Td>
           }
         </TrLink>;
       })}
