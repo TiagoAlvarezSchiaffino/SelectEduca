@@ -3,17 +3,22 @@ import z from "zod";
 
 export const AllRoles = [
   'SystemAlertSubscriber',
-  'PrivilegedRoleManager',
+  'RoleManager',
   'UserManager',
   'GroupManager',
   'SummaryEngineer',
-  'PartnershipManager',
-  'PartnershipAssessor',
+  'MentorshipManager',
+  'MentorshipAssessor',
   'InterviewManager',
   'Mentor',
   'Mentee',
   'Interviewer',
   'MentorCoach',
+
+  // Deprecated
+  'PrivilegedRoleManager',
+  'PartnershipManager',
+  'PartnershipAssessor',
 ] as const;
 
 export const RoleProfiles: { [key: string]: {
@@ -30,7 +35,7 @@ export const RoleProfiles: { [key: string]: {
     actions: 'Receive and handle alerts for system abnormal events',
     privilegedUserDataAccess: false,
   },
-  PrivilegedRoleManager: {
+  RoleManager: {
     displayName: 'Role Manager',
     actions: 'Manage user roles',
     privilegedUserDataAccess: false,
@@ -50,12 +55,12 @@ export const RoleProfiles: { [key: string]: {
     actions: 'Develop automatic meeting summary function',
     privilegedUserDataAccess: true,
   },
-  PartnershipManager: {
+  MentorshipManager: {
     displayName: 'One-on-One Mentor Manager',
     actions: 'Manage mentor matching',
     privilegedUserDataAccess: false,
   },
-  PartnershipAssessor: {
+  MentorshipAssessor: {
     displayName: 'One-on-One Mentor Assessor',
     actions: 'Track and assess the effectiveness of one-on-one mentorship',
     privilegedUserDataAccess: true,
@@ -89,6 +94,23 @@ export const RoleProfiles: { [key: string]: {
     privilegedUserDataAccess: true,
     automatic: true,
   },
+
+  // Deprecated
+    PrivilegedRoleManager: {
+      displayName: 'Deprecated',
+      actions: 'Manage user roles',
+      privilegedUserDataAccess: false,
+    },
+    PartnershipManager: {
+      displayName: 'Deprecated',
+      actions: 'Manage mentor partnerships',
+      privilegedUserDataAccess: false,
+    },
+    PartnershipAssessor: {
+      displayName: 'Deprecated',
+      actions: 'Track assessment of one-on-one mentoring effectiveness',
+      privilegedUserDataAccess: false,
+    },
 };
 
 type Role = ArrayElement<typeof AllRoles>;

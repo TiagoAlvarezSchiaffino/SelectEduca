@@ -107,7 +107,7 @@ const update = procedure
 {
   checkUserFields(input.name, input.email);
 
-  const isUserOrPRManager = isPermitted(ctx.user.roles, ['UserManager', 'PrivilegedRoleManager']);
+  const isUserOrRoleManager = isPermitted(ctx.user.roles, ['UserManager', 'RoleManager']);
   const isSelf = ctx.user.id === input.id;
   if (!isUserOrPRManager && !isSelf) {
     throw noPermissionError("User", input.id);
