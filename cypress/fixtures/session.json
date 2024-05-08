@@ -1,0 +1,29 @@
+{
+    "user": {
+        "roles": [
+            "SystemAlertSubscriber",
+            "RoleManager",
+            "UserManager",
+            "GroupManager",
+            "SummaryEngineer",
+            "MentorshipManager",
+            "MentorshipAssessor",
+            "InterviewManager",
+            "Mentor",
+            "Mentee",
+            "Interviewer",
+            "MentorCoach",
+            "PrivilegedRoleManager",
+            "PartnershipManager",
+            "PartnershipAssessor"
+        ],
+        "id": "",
+        "name": "abcd",
+        "wechat": null,
+        "sex": null,
+        "email": "abcd@gmail.com",
+        "consentFormAcceptedAt": "",
+        "menteeInterviewerTestLastPassedAt": null
+    },
+    "expires": ""
+  }
