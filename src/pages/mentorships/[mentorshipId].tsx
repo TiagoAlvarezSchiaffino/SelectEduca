@@ -3,10 +3,9 @@ import { formatUserName, parseQueryStringOrUnknown, prettifyDate } from "shared/
 import trpc, { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
 import {
-  Text, TabList, TabPanels, Tab, TabPanel, Tooltip, Tbody, Td, Table,
+  Text, TabList, TabPanels, Tab, TabPanel, Tbody, Td, Table,
 } from '@chakra-ui/react';
 import GroupBar from 'components/GroupBar';
-import { QuestionIcon } from '@chakra-ui/icons';
 import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
 import MobileExperienceAlert from 'components/MobileExperienceAlert';
 import MenteeApplicant from 'components/MenteeApplicant';
@@ -48,12 +47,7 @@ function MenteeTabs({ mentorshipId, menteeId, groupId }: {
 
   return <TabsWithUrlParam isLazy>
     <TabList>
-      <Tab>
-        Mentor Notes
-        <Tooltip label="Students cannot see the content of the notes. See 'Who can see my data' page for details.">
-          <QuestionIcon color="gray" marginStart={2} />
-        </Tooltip>
-      </Tab>
+      <Tab>Internal Discussion</Tab>
       <Tab>Call Summary</Tab>
       <Tab>Application Materials</Tab>
       <Tab>Annual Feedback</Tab>
@@ -61,6 +55,9 @@ function MenteeTabs({ mentorshipId, menteeId, groupId }: {
 
     <TabPanels>
       <TabPanel>
+        <Text color="grey" marginBottom={paragraphSpacing}>
+          Record student situations and interact with senior mentors here. Students cannot see the content of this page.
+        </Text>
         <ChatRoom mentorshipId={mentorshipId} />
       </TabPanel>
       <TabPanel>

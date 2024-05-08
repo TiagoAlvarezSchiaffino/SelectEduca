@@ -53,9 +53,16 @@ import {
       {!mentorships ? <Loader /> : <TableContainer><Table>
         <Thead>
           <Tr>
-          <Th>Student</Th><Th>Mentor</Th><Th>Senior Mentor</Th><Th></Th><Th>Last Call</Th><Th>Pinyin (For Search)</Th>
+            <Th></Th>
+            <Th>Student</Th>
+            <Th>Mentor</Th>
+            <Th>Senior Mentor</Th>
+            <Th>Recent Mentor-Student Communication</Th>
+            <Th>Recent Internal Discussion</Th>
+            <Th>Pinyin (for Search)</Th>
           </Tr>
         </Thead>
+
         <Tbody>
         {mentorships.map(m => <MentorshipTableRow
           key={m.id} showCoach showPinyin mentorship={m} edit={setMentorshipInEdit}

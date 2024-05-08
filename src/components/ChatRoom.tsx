@@ -28,7 +28,6 @@ export default function Room({ mentorshipId } : {
   const { data: room } = trpcNext.chat.getRoom.useQuery({ mentorshipId });
 
   return !room ? <Loader /> : <VStack spacing={paragraphSpacing * 1.5} align="start">
-    {!room.messages.length && <Text color="grey">No discussion content. Click the button to add:</Text>}
 
     <MessageCreator roomId={room.id} />
 
@@ -89,7 +88,7 @@ function Editor({ roomId, message, onClose, ...rest }: {
     try {
       if (message) {
         invariant(!roomId);
-        await trpc.chat.updaateMessage.mutate({ messageId: message.id, markdown });
+        await trpc.chat.updateMessage.mutate({ messageId: message.id, markdown });
       } else {
         invariant(roomId);
         await trpc.chat.createMessage.mutate({ roomId, markdown });
