@@ -3,12 +3,9 @@ import { formatUserName, parseQueryStringOrUnknown, prettifyDate } from "shared/
 import trpc, { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
 import {
-  Grid, GridItem, Text, TabList, TabPanels, Tabs, Tab, TabPanel, Tooltip, Textarea, Tbody, Td, Table,
+  Text, TabList, TabPanels, Tab, TabPanel, Tooltip, Tbody, Td, Table,
 } from '@chakra-ui/react';
 import GroupBar from 'components/GroupBar';
-import { sidebarBreakpoint } from 'components/Navbars';
-import { AutosavingMarkdownEditor } from 'components/MarkdownEditor';
-import { PrivateMentorNotes } from 'shared/Partnership';
 import { QuestionIcon } from '@chakra-ui/icons';
 import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
 import MobileExperienceAlert from 'components/MobileExperienceAlert';
@@ -39,58 +36,9 @@ export default widePage(() => {
       <PageBreadcrumb current={`Student: ${formatUserName(m.mentee.name)}, Mentor: ${formatUserName(m.mentor.name)}`} />
     }
 
-    <Grid gap={10} templateColumns={{ 
-      base: "1fr", 
-      [sidebarBreakpoint]: "2fr 1fr", // "0.618fr 0.382fr",
-    }}>
-      <GridItem>
-        <MenteeTabs mentorshipId={mentorshipId} menteeId={m.mentee.id} groupId={m.group.id} />
-      </GridItem>
-      <GridItem>
-        <MentorPrivateNotes
-          mentorshipId={mentorshipId}
-          notes={m.privateMentorNotes}
-          readonly={!iAmTheMentor}
-        />
-      </GridItem>
-    </Grid>
+    <MenteeTabs mentorshipId={mentorshipId} menteeId={m.mentee.id} groupId={m.group.id} />
   </>;
 });
-
-function MentorPrivateNotes({ mentorshipId, notes, readonly }: { 
-  mentorshipId: string,
-  notes: PrivateMentorNotes | null,
-  readonly: boolean,
-}) {
-
-  const save = async (editedMemo: string) => {
-    await trpc.partnerships.updatePrivateMentorNotes.mutate({ 
-      id: mentorshipId, 
-      privateMentorNotes: { memo: editedMemo },
-    });
-  };
-
-  return <Tabs isFitted>
-    <TabList>
-      <Tab>
-        Mentor Notes
-        <Tooltip label="Students cannot see the content of the notes. See 'Who can see my data' page for details.">
-          <QuestionIcon color="gray" marginStart={2} />
-        </Tooltip>
-      </Tab>
-    </TabList>
-
-    <TabPanels>
-      <TabPanel>
-        {readonly ?
-          <Textarea isReadOnly value={notes?.memo || ""} minHeight={200} />
-          :
-          <AutosavingMarkdownEditor key={mentorshipId} initialValue={notes?.memo || ""} onSave={save} />
-        }
-      </TabPanel>
-    </TabPanels>
-  </Tabs>;
-}
 
 function MenteeTabs({ mentorshipId, menteeId, groupId }: {
   mentorshipId: string,
@@ -98,23 +46,28 @@ function MenteeTabs({ mentorshipId, menteeId, groupId }: {
   groupId: string,
 }) {
 
-  return <TabsWithUrlParam isFitted isLazy>
+  return <TabsWithUrlParam isLazy>
     <TabList>
+      <Tab>
+        Mentor Notes
+        <Tooltip label="Students cannot see the content of the notes. See 'Who can see my data' page for details.">
+          <QuestionIcon color="gray" marginStart={2} />
+        </Tooltip>
+      </Tab>
       <Tab>Call Summary</Tab>
       <Tab>Application Materials</Tab>
-      <Tab>Internal Discussion</Tab>
       <Tab>Annual Feedback</Tab>
     </TabList>
 
     <TabPanels>
       <TabPanel>
+        <ChatRoom mentorshipId={mentorshipId} />
+      </TabPanel>
+      <TabPanel>
         <Transcripts groupId={groupId} />
       </TabPanel>
       <TabPanel>
         <MenteeApplicant userId={menteeId} readonly />
-      </TabPanel>
-      <TabPanel>
-        <InternalChatRoom {...{ mentorshipId }} />
       </TabPanel>
       <TabPanel>
         <AssessmentsTable {...{ mentorshipId }} />
