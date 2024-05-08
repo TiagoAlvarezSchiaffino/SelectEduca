@@ -1,6 +1,6 @@
 import { Td } from '@chakra-ui/react';
 import React from 'react';
-import { PartnershipWithGroupAndNotes } from 'shared/Partnership';
+import { MentorshipWithGroup } from 'shared/Mentorship';
 import { formatUserName, prettifyDate, toPinyin } from 'shared/strings';
 import TrLink from 'components/TrLink';
 import moment from 'moment';
@@ -9,10 +9,10 @@ import TdLink from './TdLink';
 import EditIconButton from './EditIconButton';
 
 export function MentorshipTableRow({ mentorship: m, showCoach, showPinyin, edit }: {
-  mentorship: PartnershipWithGroupAndNotes;
+  mentorship: MentorshipWithGroup;
   showCoach?: boolean,
   showPinyin?: boolean,
-  edit?: (m: PartnershipWithGroupAndNotes) => void,
+  edit?: (m: MentorshipWithGroup) => void,
 }) {
   const { data: coach } = trpcNext.users.getCoach.useQuery({ userId: m.mentor.id });
 

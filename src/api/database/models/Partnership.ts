@@ -15,8 +15,6 @@ import {
   import { CreationOptional, JSONB, UUID, UUIDV4 } from "sequelize";
   import User from "./User";
   import Assessment from "./Assessment";
-  import ZodColumn from "../modelHelpers/ZodColumn";
-  import { PrivateMentorNotes, zPrivateMentorNotes } from "../../../shared/Partnership";
   import Group from "./Group";
 
   /**
@@ -52,9 +50,6 @@ import {
   
     @BelongsTo(() => User, { foreignKey: 'menteeId' })
     mentee: User;
-  
-    @ZodColumn(JSONB, zPrivateMentorNotes.nullable())
-    privateMentorNotes: PrivateMentorNotes | null;
   
     @HasOne(() => Group)
     group: Group;
