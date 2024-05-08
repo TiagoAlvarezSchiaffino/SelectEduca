@@ -25,10 +25,10 @@ const mentees: TestUser[] = [{
 }];
 
 const mentors: TestUser[] = [{
-  name: 'Instructor C',
+  name: 'Mentor C',
   email: 'mentor-a@test.foo',
 }, {
-  name: 'Instructor D',
+  name: 'Mentor D',
   email: 'mentor-b@test.foo',
 }];
 
@@ -37,14 +37,18 @@ const allUsers = [...mentees, ...mentors];
 main().then();
 
 async function main() {
-  const mgrs = await getUserManagers();
-  if (mgrs.length == 0) {
-    console.error('ERROR: No uesr is found. Please follow README.md and log into your local server first.');
-    process.exit(1);
+  let users = await getUserManagers();
+  if (users.length == 0) {
+    users = await User.findAll();
+    if (users.length !== 1) {
+      console.error('ERROR: Zero or multiple users are found and none of them are UserManagers. Please follow README.md and log into your local server first.');
+      process.exit(1);
+    }
   }
-  await upgradeUsers(mgrs);
+
+  await upgradeUsers(users);
   await generateUsers();
-  await generateGroupsAndSummaries(mgrs);
+  await generateGroupsAndSummaries(users);
   // This make sure the process doesn't hang waiting for connection closure.
   await sequelize.close();
 }
@@ -105,7 +109,7 @@ async function generateSummaries(users: TestUser[]) {
   const start = moment('2024-4-24', 'YYYY-MM-DD');
   const end = start.clone().add(33, 'minute');
 
-  let md = '\n\n### Title 3\nContent **bold**.\n\n1. List *italic*\n2. List ~~strikethrough~~\n\n';
+  let md = '\n\n### Third Title\nBody **bold**.\n\n1. List *italic*\n2. List ~~strike~~\n\n';
   for (let i = 0; i < users.length; i++) {
     md = md + `{{name${i}}}\n\n`;
   }
