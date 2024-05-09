@@ -54,7 +54,8 @@ const create = procedure
 
     // Create groups
     invariant(mentorship);
-    await createGroup(null, [mentorId, menteeId], [], mentorship.id, null, null, null, transaction);
+    await createGroup(null, [mentorId, menteeId], [], mentorship.id, null, null,
+      null, transaction);
   });
 });
 
@@ -64,6 +65,29 @@ const list = procedure
   .query(async () => 
 {
   return await db.Mentorship.findAll({ 
+    attributes: mentorshipAttributes,
+    include: mentorshipInclude,
+  });
+});
+
+/**
+ * If the current user is a MentorCoach, return all mentorships of the mentee.
+ * Otherwise, return only the mentorship of the mentee where the current user
+ * is the mentor.
+ */
+const listForMentee = procedure
+  .use(authUser())
+  .input(z.string())
+  .output(z.array(zMentorship))
+  .query(async ({ ctx, input: menteeId }) => 
+{
+  return await db.Mentorship.findAll({
+    where: {
+      menteeId,
+      ...isPermitted(ctx.user.roles, "MentorCoach") ? {} : {
+        mentorId: ctx.user.id
+      }
+    },
     attributes: mentorshipAttributes,
     include: mentorshipInclude,
   });
@@ -111,7 +135,8 @@ const get = procedure
     attributes: mentorshipAttributes,
     include: mentorshipInclude,
   });
-  if (!res || (res.mentor.id !== ctx.user.id && !isPermitted(ctx.user.roles, "MentorCoach"))) {
+  if (!res || (res.mentor.id !== ctx.user.id &&
+    !isPermitted(ctx.user.roles, "MentorCoach"))) {
     throw noPermissionError("one-to-one matching", id);
   }
   return res;
@@ -123,4 +148,5 @@ export default router({
   list,
   listMineAsMentor,
   listMineAsCoach,
+  listForMentee,
 });

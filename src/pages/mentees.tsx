@@ -61,11 +61,11 @@ function MenteeTable({ users, refetch }: {
         <Tr>
           <Th>State</Th>
           <Th>Name</Th>
-          <Th>Pinyin (easy to find)</Th>
           <Th>Tutor</Th>
           <Th>Senior Tutor</Th>
           <Th>Recent phone calls between teachers and students</Th>
           <Th>Recent internal notes</Th>
+          <Th>Pinyin (easy to find)</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -108,11 +108,11 @@ function MenteeTable({ users, refetch }: {
         {u.name} <ChevronRightIcon />
       </Link></Td>
   
-      <Td>{pinyin}</Td>
-  
       <MentorshipCells menteeId={u.id} addPinyin={addPinyin} />
   
       <MostRecentChatMessageCell menteeId={u.id} />
+
+      <Td>{pinyin}</Td>
     </Tr>;
   }
   
