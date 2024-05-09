@@ -36,7 +36,6 @@ import UserChip from './UserChip';
 import { MinUser } from 'shared/User';
 import { Group, isOwned } from 'shared/Group';
 import { ChevronRightIcon, QuestionIcon } from '@chakra-ui/icons';
-import QuestionIconTooltip from './QuestionIconTooltip';
 import { publicGroupDescription } from 'pages/groups';
 
 export default function GroupBar({
@@ -140,18 +139,16 @@ function GroupTagOrName({ group }: { group: Group }) {
     </Box>
     :
     <HStack>
-      {group.archived && <Tag color="white" bgColor="gray.800">Archived</Tag>}
-
       {group.public && <Tooltip label={publicGroupDescription}>
         <Tag color="white" bgColor="green.400">
           Public
           <QuestionIcon color="white" marginStart={2} />
         </Tag>
       </Tooltip>}
-      
       <Text color='grey' fontSize='sm'>
         {formatGroupName(group.name, group.users.length)}
       </Text>
+      {group.archived && <Tag color="white" bgColor="gray.800">Archived</Tag>}
     </HStack>;
 }
 

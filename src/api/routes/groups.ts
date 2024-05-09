@@ -6,7 +6,7 @@ import { Includeable, Transaction } from "sequelize";
 import invariant from "tiny-invariant";
 import _ from "lodash";
 import Role, { isPermitted } from "../../shared/Role";
-import sequelizeInstance from "../database/sequelizeInstance";
+import sequelize from "../database/sequelize";
 import { formatUserName, formatGroupName } from "../../shared/strings";
 import nzh from 'nzh';
 import { email } from "../sendgrid";
@@ -23,8 +23,8 @@ const create = procedure
   }))
   .mutation(async ({ ctx, input }) =>
 {
-  await sequelizeInstance.transaction(async t => {
-    const g = await createGroup(null, input.userIds, [], null, null, null, t);
+  await sequelize.transaction(async t => {
+    const g = await createGroup(null, input.userIds, [], null, null, null, null, t);
     await emailNewUsersOfGroupIgnoreError(ctx, g.id, input.userIds);
   });
 });
@@ -43,7 +43,6 @@ const update = procedure
 export async function updateGroup(id: string, name: string | null, 
   isPublic: boolean, userIds: string[], transaction: Transaction) 
 {
-
   const addUserIds: string[] = [];
   const group = await db.Group.findByPk(id, {
     // SQL complains that "FOR UPDATE cannot be applied to the nullable side of an outer join" if GroupUser is included.
@@ -51,7 +50,7 @@ export async function updateGroup(id: string, name: string | null,
     transaction,
     lock: true,
   });
-  if (!group) throw notFoundError("", id);
+  if (!group) throw notFoundError("Group", id);
 
   const groupUsers = await db.GroupUser.findAll({
     where: { groupId: id },
@@ -67,6 +66,7 @@ export async function updateGroup(id: string, name: string | null,
       deleted = true;
     }
   }
+
   // Update group itself
   await group.update({
     // Set to null if the input is an empty string.
@@ -94,27 +94,52 @@ export async function updateGroup(id: string, name: string | null,
   return addUserIds;
 }
 
+async function getGroupWithIdOnly(groupId: string) {
+  const group = await db.Group.findByPk(groupId, {
+    attributes: ["id"],
+  });
+  if (!group) throw notFoundError("Group", groupId);
+  return group;
+}
+
 const destroy = procedure
   .use(authUser('GroupManager'))
   .input(z.object({ groupId: z.string().uuid() }))
   .mutation(async ({ input }) => 
 {
-  const group = await db.Group.findByPk(input.groupId);
-  if (!group) throw notFoundError("", input.groupId);
-
+  const g = await getGroupWithIdOnly(input.groupId);
   // Need a transaction for cascading destroys
-  await sequelizeInstance.transaction(async (t) => {
-    await group.destroy({ transaction: t });
-  });
+  await sequelize.transaction(async transaction => await g.destroy({ transaction }));
+});
+
+const archive = procedure
+  .use(authUser('GroupManager'))
+  .input(z.object({ groupId: z.string().uuid() }))
+  .mutation(async ({ input }) => 
+{
+  const g = await getGroupWithIdOnly(input.groupId);
+  await g.update({ archived: true });
+});
+
+const unarchive = procedure
+  .use(authUser('GroupManager'))
+  .input(z.object({ groupId: z.string().uuid() }))
+  .mutation(async ({ input }) => 
+{
+  const g = await getGroupWithIdOnly(input.groupId);
+  await g.update({ archived: false });
 });
 
 /**
- * Unowned groups are the ones not assoicated with a partnership.
+ * @param includeUnowned Whether to include unowned groups. A group is unowned iff. its partnershipId is null.
  */
-const listMyUnowned = procedure
+const listMine = procedure
   .use(authUser())
+  .input(z.object({ 
+    includeOwned: z.boolean(),
+  }))
   .output(z.array(zGroup))
-  .query(async ({ ctx }) => 
+  .query(async ({ ctx, input }) => 
 {
   return (await db.GroupUser.findAll({
     where: { 
@@ -124,36 +149,41 @@ const listMyUnowned = procedure
       model: db.Group,
       attributes: groupAttributes,
       include: groupInclude,
-      where: input.includeOwned ? {} : whereUnowned,
+      where: { archived: false, ...input.includeOwned ? {} : whereUnowned },
     }]
   })).map(groupUser => groupUser.group);
 });
 
 /**
- * @returns All groups if `userIds` is empty, otherwise return groups that has all the given users.
+ * @param userIds Return all the groups if `userIds` is empty, otherwise groups that contains the given users.
+ * @param includeUnowned Whether to include unowned groups. A group is unowned iff. its partnershipId is null.
  */
 const list = procedure
   .use(authUser(['GroupManager']))
   .input(z.object({ 
     userIds: z.string().array(),
     includeOwned: z.boolean(),
+    includeArchived: z.boolean(),
   }))
   .output(z.array(zGroup))
-  .query(async ({ input: { userIds, includeOwned } }) => 
-    {
-      const where = includeOwned ? {} : whereUnowned;
-    
-      if (userIds.length === 0) {
-        return await db.Group.findAll({ 
-          attributes: groupAttributes,
-          include: groupInclude,
-          where,
-        });
-      } else {
-        const gs = await findGroups(userIds, 'inclusive', groupInclude, where);
-        return gs as Group[];
-      }
+  .query(async ({ input: { userIds, includeOwned, includeArchived } }) => 
+{
+  const where = { 
+    ...includeArchived ? {} : { archived: false }, 
+    ...includeOwned ? {} : whereUnowned
+  };
+
+  if (userIds.length === 0) {
+    return await db.Group.findAll({ 
+      attributes: groupAttributes,
+      include: groupInclude,
+      where,
     });
+  } else {
+    const gs = await findGroups(userIds, 'inclusive', groupInclude, where);
+    return gs as Group[];
+  }
+});
 
 /**
  * @returns all the groups with non-zero transcripts
@@ -183,21 +213,22 @@ const get = procedure
     attributes: groupAttributes,
     include: groupInclude,
   });
-  if (!g) throw notFoundError("", id);
+  if (!g) throw notFoundError("Group", id);
   checkPermissionForGroup(ctx.user, g);
   return g;
 });
 
-const groups = router({
+export default router({
   create,
   update,
+  archive,
+  unarchive,
   destroy,
   list,
-  listMyUnowned,
+  listMine,
   listForSummaryEngineer,
   get,
 });
-export default groups;
 
 export function checkPermissionForGroup(u: User, g: Group) {
   if (!isPermittedForGroup(u, g)) throw noPermissionError("Group", g.id);
@@ -247,11 +278,13 @@ export async function createGroup(
   partnershipId: string | null, 
   interviewId: string | null, 
   calibrationId: string | null,
+  coacheeId: string | null,
   transaction: Transaction): Promise<Group>
 {
-  invariant(!partnershipId || !interviewId);
+  invariant(!partnershipId || !interviewId || !calibrationId || !coacheeId);
 
-  const g = await db.Group.create({ name, roles, partnershipId, interviewId, calibrationId }, { transaction });
+  const g = await db.Group.create({ name, roles, partnershipId, interviewId, calibrationId, coacheeId },
+    { transaction });
   await db.GroupUser.bulkCreate(userIds.map(userId => ({
     userId,
     groupId: g.id,
@@ -276,10 +309,10 @@ async function emailNewUsersOfGroup(ctx: any, groupId: string, newUserIds: strin
       attributes: ['id', 'name', 'email'],
     }]
   });
-  if (!group) throw notFoundError('', groupId);
+  if (!group) throw notFoundError('Group', groupId);
 
   const formatNames = (names: (string | null)[]) =>
-    names.slice(0, 3).join('') + (names.length > 3 ? `${nzh.cn.encodeS(names.length)}` : '');
+    names.slice(0, 3).join('、') + (names.length > 3 ? `Wait${nzh.cn.encodeS(names.length)}people` : '');
 
   const personalizations = newUserIds
   // Don't send emails to self.
