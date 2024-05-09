@@ -17,7 +17,7 @@ import { createGroup } from "./groups";
 import invariant from "tiny-invariant";
 
 const create = procedure
-  .use(authUser('MentorshipManager'))
+  .use(authUser('MenteeManager'))
   .input(z.object({
     mentorId: z.string(),
     menteeId: z.string(),
@@ -25,14 +25,14 @@ const create = procedure
   .mutation(async ({ input: { mentorId, menteeId } }) => 
 {
   if (!isValidMentorshipIds(menteeId, mentorId)) {
-    throw generalBadRequestError('Invalid user ID');
+    throw generalBadRequestError('Invalid userID');
   }
 
   await sequelize.transaction(async transaction => {
     const mentor = await db.User.findByPk(mentorId, { lock: true, transaction });
     const mentee = await db.User.findByPk(menteeId, { lock: true, transaction });
     if (!mentor || !mentee) {
-      throw generalBadRequestError('Invalid user ID');
+      throw generalBadRequestError('Invalid userID');
     }
 
     // Assign appropriate roles.
@@ -43,18 +43,29 @@ const create = procedure
 
     let mentorship;
     try {
-      mentorship = await db.Partnership.create({
+      mentorship = await db.Mentorship.create({
         mentorId, menteeId
       }, { transaction });
     } catch (e: any) {
       if ('name' in e && e.name === "SequelizeUniqueConstraintError") {
-        throw alreadyExistsError("One-to-one match");
+        throw alreadyExistsError("one-to-one matching");
       }
     }
 
     // Create groups
     invariant(mentorship);
     await createGroup(null, [mentorId, menteeId], [], mentorship.id, null, null, null, transaction);
+  });
+});
+
+const list = procedure
+  .use(authUser('MenteeManager'))
+  .output(z.array(zMentorship))
+  .query(async () => 
+{
+  return await db.Mentorship.findAll({ 
+    attributes: mentorshipAttributes,
+    include: mentorshipInclude,
   });
 });
 
@@ -79,7 +90,7 @@ const listMineAsMentor = procedure
   .output(z.array(zMentorship))
   .query(async ({ ctx }) => 
 {
-  return await db.Partnership.findAll({
+  return await db.Mentorship.findAll({
     where: { mentorId: ctx.user.id },
     attributes: mentorshipAttributes,
     include: mentorshipInclude,
@@ -96,12 +107,12 @@ const get = procedure
   .output(zMentorship)
   .query(async ({ ctx, input: id }) => 
 {
-  const res = await db.Partnership.findByPk(id, {
+  const res = await db.Mentorship.findByPk(id, {
     attributes: mentorshipAttributes,
     include: mentorshipInclude,
   });
   if (!res || (res.mentor.id !== ctx.user.id && !isPermitted(ctx.user.roles, "MentorCoach"))) {
-    throw noPermissionError("One-to-one match", id);
+    throw noPermissionError("one-to-one matching", id);
   }
   return res;
 });
@@ -109,6 +120,7 @@ const get = procedure
 export default router({
   create,
   get,
+  list,
   listMineAsMentor,
   listMineAsCoach,
 });

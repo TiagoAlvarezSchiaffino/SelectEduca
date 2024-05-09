@@ -13,17 +13,18 @@ import {
 import NextLink from 'next/link';
 import { useUserContext } from 'UserContext';
 import { isPermitted } from 'shared/Role';
-import yuanjianLogo224x97 from '../../public/img/yuanjian-logo-224x97.png';
 import Image from "next/image";
 import { useRouter } from 'next/router';
 import { trpcNext } from 'trpc';
-import { Partnership } from 'shared/Partnership';
+import { Mentorship } from 'shared/Mentorship';
 import {
   MdPerson,
   MdGroups,
   MdScience,
   MdChevronRight, 
   MdFace, 
+  MdFace5, 
+  MdOutlineSyncAlt, 
   MdVideocam,
   MdSupervisorAccount,
   MdMic
@@ -43,70 +44,77 @@ export interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
   {
-    name: '',
+    name: 'My Meeting',
     path: '/',
     icon: MdVideocam,
     // match "/", "/groups/.*" but not "/groups/lab.*". "?" is a lookahead sign
     regex: /^\/$|\/groups\/(?!lab).*/,
   },
   {
-    name: '',
+    name: 'Senior Tutor Page',
     path: '/coachees',
     icon: MdSupervisorAccount,
     regex: /^\/coachees/,
     role: 'MentorCoach',
   },
   {
-    name: 'Student profile',
-    path: '/mentees?menteeStatus=current students',
+    name: 'Student Profile',
+    path: '/mentees?menteeStatus=CurrentStudents',
     icon: AttachmentIcon,
     regex: /^\/mentees/,
     role: 'MenteeManager',
   },
   {
-    name: '',
+    name: 'My Interview',
     path: '/interviews/mine',
     icon: MdMic,
     regex: /^\/interviews\/mine/,
     role: 'Interviewer',
   },
   {
-    name: '',
+    name: 'Abstract R&D',
     path: '/groups/lab',
     icon: MdScience,
     regex: /^\/groups\/lab/,
     role: 'SummaryEngineer',
   },
   {
-    name: '',
+    name: 'Manage Users',
     path: '/users',
     icon: MdPerson,
     regex: /^\/users/,
     role: 'UserManager',
   },
   {
-    name: '',
+    name: 'Manage Meeting Groups',
     path: '/groups',
     icon: MdGroups,
     regex: /^\/groups$/,
     role: 'GroupManager',
   },
   {
-    name: 'Manage student interviews',
+    name: 'Manage Student Interviews',
     path: '/interviews?type=mentee',
     icon: MdFace5,
     regex: /^\/interviews\?type=mentee/,
     role: 'MenteeManager',
   },
+  {
+    name: 'Manage one-to-one',
+    path: '/mentorships',
+    icon: MdOutlineSyncAlt,
+    regex: /^\/mentorships$/,
+    role: 'MenteeManager',
+  },
 ];
 
-function partnerships2Items(partnerships: Partnership[] | undefined): SidebarItem[] {
-  if (!partnerships) return [];
-  return partnerships.map(p => ({
+function mentorships2Items(mentorships: Mentorship[] | undefined): SidebarItem[] {
+  if (!mentorships) return [];
+  return mentorships.map(p => ({
     name: formatUserName(p.mentee.name),
     icon: MdFace,
-    path: `/partnerships/${p.id}`,
-    regex: new RegExp(`^\/partnerships\/${p.id}`),
+    path: `/mentorships/${p.id}`,
+    regex: new RegExp(`^\/mentorships\/${p.id}`),
   }));
 }
 
@@ -119,9 +127,9 @@ interface SidebarProps extends BoxProps {
 const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
   const [me] = useUserContext();
   // Save an API call if the user is not a mentor.
-  const { data: partnerships } = isPermitted(me.roles, "Mentor") ? 
-    trpcNext.partnerships.listMineAsMentor.useQuery() : { data: undefined };
-  const partnershipItems = partnerships2Items(partnerships);
+  const { data: mentorships } = isPermitted(me.roles, "Mentor") ? 
+    trpcNext.mentorships.listMineAsMentor.useQuery() : { data: undefined };
+  const mentorshipItems = mentorships2Items(mentorships);
 
   return (
     <Box
@@ -140,17 +148,16 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
         justifyContent="space-between"
       >
         <Box display={{ base: 'none', [sidebarBreakpoint]: 'flex' }}>
-          <NextLink href="" target="_blank">
+          <NextLink href="http://.org" target="_blank">
             <Image
-              src={Logo224x97} 
+              src={} 
               alt="" 
               width={112}
               priority
               />
             </NextLink>
         </Box>
-        <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }}
-          onClick={onClose} />
+        <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }} onClick={onClose} />
       </Flex>
       <Box height={{
         base: 0,
@@ -163,8 +170,7 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
       
       {mentorshipItems?.length > 0 && <Divider marginY={2} />}
 
-      {mentorshipItems.map(item => <SidebarRow key={item.path} item={item}
-        onClose={onClose} />)}
+      {mentorshipItems.map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
     </Box>
   );
 };

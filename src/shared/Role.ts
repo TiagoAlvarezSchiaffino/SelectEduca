@@ -6,7 +6,6 @@ export const AllRoles = [
   'UserManager',
   'GroupManager',
   'SummaryEngineer',
-  'MentorshipManager',
   'MentorshipAssessor',
   'MenteeManager',
   'Mentor',
@@ -16,6 +15,7 @@ export const AllRoles = [
 
   // Deprecated
   'InterviewManager',
+  'MentorshipManager',
 ] as const;
 
 export const RoleProfiles: { [key: string]: {
@@ -51,11 +51,6 @@ export const RoleProfiles: { [key: string]: {
     displayName: 'Summary Engineer',
     actions: 'Develop automatic meeting summary function',
     privilegedUserDataAccess: true,
-  },
-  MentorshipManager: {
-    displayName: 'One-on-One Mentor Manager',
-    actions: 'Manage mentor matching',
-    privilegedUserDataAccess: false,
   },
   MentorshipAssessor: {
     displayName: 'One-on-One Mentor Assessor',
@@ -96,6 +91,11 @@ export const RoleProfiles: { [key: string]: {
     InterviewManager: {
       displayName: 'Deprecated',
       actions: 'Manage user roles',
+      privilegedUserDataAccess: false,
+    },
+    MentorshipManager: {
+      displayName: 'Deprecated',
+      actions: 'Management Mentor Match',
       privilegedUserDataAccess: false,
     },
 };
