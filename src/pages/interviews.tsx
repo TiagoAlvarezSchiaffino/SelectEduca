@@ -96,11 +96,15 @@ function Applicants({ type, applicants, interviews, refetchInterviews }: {
   refetchInterviews: () => any,
 }) {
   return <TableContainer>
+    <Text marginBottom={sectionSpacing} color="grey" fontSize="sm">
+      Click on the candidate to edit the interviewer and interview discussion group:  
+    </Text>
+
     <Table size="sm">
       <Thead>
         <Tr>
           <Th>Candidate</Th><Th>Pinyin</Th><Th>Source (Hover to see full text)</Th><Th>Application</Th>
-          <Th>Interviewer</Th><Th>Interview Discussion Group</Th><Th>Interview Settings</Th><Th>Interview Details</Th>
+          <Th>Interview discussion group</Th><Th>Application information</Th><Th>Interview page</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -110,7 +114,9 @@ function Applicants({ type, applicants, interviews, refetchInterviews }: {
       </Tbody>
     </Table>
 
-    <Text marginTop={sectionSpacing} color="grey" fontSize="sm"><CheckIcon /> Indicates interviewers who have filled out feedback.</Text>
+    <Text marginTop={sectionSpacing} color="grey" fontSize="sm">
+      <CheckIcon /> Indicates the interviewer who has filled out the interview feedback.
+    </Text>
   </TableContainer>;
 }
 
@@ -168,8 +174,6 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
       <TdLink href={`/applicants/${applicant.id}?type=${type == "MenteeInterview" ? "mentee" : "mentor"}`}>
         Application information <ChevronRightIcon />
       </TdLink>
-
-      <TdEditLink>Interview setting{interview ? <EditIcon /> : <AddIcon />}</TdEditLink>
 
       {interview && <TdLink href={`/interviews/${interview.id}`}>
         Interview page <ChevronRightIcon />

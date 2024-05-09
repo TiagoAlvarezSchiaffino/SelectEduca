@@ -1,206 +1,393 @@
 import { procedure, router } from "../trpc";
-import { authIntegration, authUser } from "../auth";
 import { z } from "zod";
+import Role, { AllRoles, RoleProfiles, isPermitted, zRoles } from "../../shared/Role";
 import db from "../database/db";
-import { getRecordURLs, listRecords } from "../TencentMeeting";
-import { TRPCError } from "@trpc/server";
-import { safeDecodeMeetingSubject } from "./meetings";
-import apiEnv from "api/apiEnv";
-import { groupAttributes, groupInclude, summaryAttributes } from "api/database/models/attributesAndIncludes";
-import { zSummary } from "shared/Summary";
-import { notFoundError } from "api/errors";
-import { checkPermissionForGroupHistory } from "./groups";
-import Handlebars from "handlebars";
-import { getSummariesAndNameMap } from "./transcripts";
+import { Op } from "sequelize";
+import { authUser } from "../auth";
+import User, { zMinUser, zUser, zUserFilter } from "../../shared/User";
+import { Name, toPinyin } from "../../shared/strings";
+import invariant from 'tiny-invariant';
+import { email } from "../sendgrid";
+import { formatUserName } from '../../shared/strings';
+import { generalBadRequestError, noPermissionError, notFoundError, notImplemnetedError } from "../errors";
+import Interview from "api/database/models/Interview";
+import { InterviewType, zInterviewType } from "shared/InterviewType";
+import { 
+  minUserAttributes, 
+  userAttributes, 
+} from "../database/models/attributesAndIncludes";
+import { getCalibrationAndCheckPermissionSafe } from "./calibrations";
+import sequelize from "api/database/sequelize";
+import { createGroup, updateGroup } from "./groups";
 
-const crudeSummaryKey = "Raw Text";
-
-export interface CrudeSummaryDescriptor {
-  groupId: string,
-  transcriptId: string,
-  startedAt: number,
-  endedAt: number,
-  url: string,
-};
-
-/**
- * See docs/Summarization.md for details.
- * 
- * @param excludeTranscriptsWithKey If specified, exclude summaries for the transcripts that already have summaries
- * identified by this key.
- * 
- * TODO: rename function to something like listRawTranscripts, hardcode key to use raw transcript's summary key.
- */
-const listForIntegration = procedure
-  .use(authIntegration())
+const create = procedure
+  .use(authUser('UserManager'))
   .input(z.object({
-    key: z.string(),
-    excludeTranscriptsWithKey: z.string().optional(),
+    name: z.string(),
+    email: z.string(),
+    roles: zRoles,
   }))
-  .output(z.array(zSummary))
-  .query(async ({ input }) => 
+  .mutation(async ({ ctx, input }) => 
 {
-  // TODO: Optimize and use a single query to return final results.
-  const summaries = await db.Summary.findAll({ 
-    where: { 
-      summaryKey: input.key,
-    },
-    attributes: summaryAttributes,
+  checkUserFields(input.name, input.email);
+  checkPermissionForManagingRoles(ctx.user.roles, input.roles);
+  await db.User.create({
+    name: input.name,
+    pinyin: toPinyin(input.name),
+    email: input.email,
+    roles: input.roles,
   });
-
-  const skippedTranscriptIds = !input.excludeTranscriptsWithKey ? [] : (await db.Summary.findAll({
-    where: { summaryKey: input.excludeTranscriptsWithKey },
-    attributes: ['transcriptId'],
-  })).map(s => s.transcriptId);
-
-  return summaries.filter(s => !skippedTranscriptIds.includes(s.transcriptId));
 });
 
 /**
- * @returns a list of summaries with handlerbar names substituted with real user names using SuammaryNameMap.
+ * Returned users are ordered by Pinyin.
  */
 const list = procedure
-  .use(authUser())
-  .input(z.string())
-  .output(z.array(zSummary))
-  .query(async ({ ctx, input: transcriptId }) => 
+  .use(authUser(['UserManager', 'GroupManager', 'InterviewManager']))
+  .input(zUserFilter)
+  .output(z.array(zUser))
+  .query(async ({ input: filter }) =>
 {
-  const t = await db.Transcript.findByPk(transcriptId, {
-    attributes: ["transcriptId"],
+  if (filter.hasMentorApplication) throw notImplemnetedError();
+
+  // Force typescript checking
+  const interviewType: InterviewType = "MenteeInterview";
+
+  const res = await db.User.findAll({ 
+    order: [['pinyin', 'ASC']],
+
+    where: {
+      ...filter.containsRoles === undefined ? {} : {
+        [Op.and]: filter.containsRoles.map(r => ({
+          roles: { [Op.contains]: r }
+        }))
+      },
+
+      ...filter.menteeStatus === undefined ? {} : {
+        menteeStatus: filter.menteeStatus
+      },
+
+      ...filter.hasMenteeApplication === undefined ? {} : {
+        menteeApplication: { 
+          ...filter.hasMenteeApplication ? { [Op.ne]: null } : { [Op.eq]: null }
+        },
+      },
+
+      ...filter.matchesNameOrEmail === undefined ? {} : {
+        [Op.or]: [
+          { pinyin: { [Op.iLike]: `%${filter.matchesNameOrEmail}%` } },
+          { name: { [Op.iLike]: `%${filter.matchesNameOrEmail}%` } },
+          { email: { [Op.iLike]: `%${filter.matchesNameOrEmail}%` } },
+        ],
+      },
+    },
+
+    include: [      
+      ...filter.isMenteeInterviewee === undefined ? [] : [{
+        model: Interview,
+        attributes: ["id"],
+        ...filter.isMenteeInterviewee ? { where: { type: interviewType } } : {},
+      }],
+    ],
+  });
+
+  return filter.isMenteeInterviewee == false ?
+    res.filter(u => u.interviews.length == 0) : res;
+});
+
+const update = procedure
+  .use(authUser())
+  .input(zUser)
+  .mutation(async ({ input, ctx }) => 
+{
+  checkUserFields(input.name, input.email);
+
+  const isUserOrRoleManager = isPermitted(ctx.user.roles, ['UserManager', 'RoleManager']);
+  const isSelf = ctx.user.id === input.id;
+  // Non-user- and non-role-managers can only update their own profile.
+  if (!isUserOrRoleManager && !isSelf) {
+    throw noPermissionError("User", input.id);
+  }
+
+  const user = await db.User.findByPk(input.id);
+  if (!user) {
+    throw notFoundError("User", input.id);
+  }
+
+  const rolesToAdd = input.roles.filter(r => !user.roles.includes(r));
+  const rolesToRemove = user.roles.filter(r => !input.roles.includes(r));
+  checkPermissionForManagingRoles(ctx.user.roles, [...rolesToAdd, ...rolesToRemove]);
+
+  if (!isSelf) {
+    await emailUserAboutNewManualRoles(ctx.user.name ?? "", user, input.roles, ctx.baseUrl);
+  }
+
+  invariant(input.name);
+  await user.update({
+    name: input.name,
+    pinyin: toPinyin(input.name),
+    consentFormAcceptedAt: input.consentFormAcceptedAt,
+
+    // fields that only user or role managers can change
+    ...isUserOrRoleManager ? {
+      roles: input.roles,
+      email: input.email,
+      menteeStatus: input.menteeStatus,
+    } : {},
+  });
+});
+
+/**
+ * Only the user themselves, MentorCoach, and MentorshipManager have access to this API.
+ */
+const getCoach = procedure
+  .use(authUser())
+  .input(z.object({
+    userId: z.string(),
+  }))
+  .output(zMinUser.nullable())
+  .query(async ({ ctx, input: { userId } }) =>
+{
+  if (ctx.user.id !== userId && !isPermitted(ctx.user.roles, ["MentorCoach", "MentorshipManager"])) {
+    throw noPermissionError("Matching with senior mentors", userId);
+  }
+
+  const u = await db.User.findByPk(userId, {
+    attributes: [],
     include: [{
-      model: db.Group,
-      attributes: groupAttributes,
-      include: groupInclude,
+      association: "coach",
+      attributes: minUserAttributes,
     }]
   });
 
-  if (!t) throw notFoundError("Meeting Transcript", transcriptId);
+  if (!u) throw notFoundError("User", userId);
+  return u.coach;
+});
 
-  checkPermissionForGroupHistory(ctx.user, t.group);
+const setCoach = procedure
+  .use(authUser("MentorshipManager"))
+  .input(z.object({
+    userId: z.string(),
+    coachId: z.string(),
+  }))
+  .mutation(async ({ input: { userId, coachId } }) =>
+{
+  await sequelize.transaction(async transaction => {
+    const u = await db.User.findByPk(userId, {
+      attributes: ["id", "coachId"],
+      transaction,
+      lock: true,
+    });
+    if (!u) throw notFoundError("User", userId);
+    const oldCoachId = u.coachId;
+    await u.update({ coachId }, { transaction });
 
-  const { nameMap, summaries } = await getSummariesAndNameMap(transcriptId);
+    // Update role
+    // TODO: Remove role from previous coach?
+    const coach = await db.User.findByPk(coachId, { lock: true, transaction });
+    if (!coach) throw notFoundError("User", coachId);
+    coach.roles = [...coach.roles.filter(r => r != "MentorCoach"), "MentorCoach"];
+    await coach.save({ transaction });
 
-  // create a mapping object of { [handlebars]: [userNames] } for handlebar.js to compile
-  const handlebarInput : Record<string, string> = {};
-  for (const nm of nameMap) {
-    handlebarInput[nm.handlebarName] = `**${nm.user ? nm.user.name : nm.handlebarName}**`;
-  }
-
-  for (const summary of summaries) {
-    try {
-      // Compile and update summary
-      summary.summary = Handlebars.compile(summary.summary)(handlebarInput);
-    } catch (error) {
-      // If there's an error compiling, keep and return the original summaries
-      console.error("Error compiling Handlebars template for summary:", summary.transcriptId, summary.summaryKey);
+    // create or update group
+    if (oldCoachId) {
+      const gs = await db.Group.findAll({
+        where: { coacheeId: userId },
+        attributes: ["id", "public"],
+      });
+      invariant(gs.length == 1);
+      await updateGroup(gs[0].id, null, gs[0].public, [userId, coachId],
+          transaction);
+    } else {
+      await createGroup(null, [userId, coachId], [], null, null, null, userId, transaction);
     }
-  }
-
-  return summaries;
+  });
 });
 
 /**
-* See docs/Summarization.md for details.
+ * Only InterviewManagers, MentorCoaches, mentor of the applicant, interviewers of the applicant, and participants of
+ * the calibration (only if the calibration is active) are allowed to call this route.
+ * 
+ * If the user is not an InterviewManager, contact information is redacted.
  */
-const write = procedure
-  .use(authIntegration())
-  .input(zSummary)
+const getApplicant = procedure
+  .use(authUser())
+  .input(z.object({
+    userId: z.string(),
+    type: zInterviewType,
+  }))
+  .output(z.object({
+    user: zUser,
+    application: z.record(z.string(), z.any()).nullable(),
+  }))
+  .query(async ({ ctx, input: { userId, type } }) =>
+{
+  if (type !== "MenteeInterview") throw notImplemnetedError();
+
+  const user = await db.User.findByPk(userId, {
+    attributes: [...userAttributes, "menteeApplication"],
+  });
+  if (!user) throw notFoundError("User", userId);
+
+  const ret: { user: User, application: Record<string, any> | null } = { user, application: user.menteeApplication };
+
+  if (isPermitted(ctx.user.roles, "InterviewManager")) return ret;
+
+  // Redact
+  user.email = "redacted@redacted.com";
+  user.wechat = "redacted";
+
+  if (isPermitted(ctx.user.roles, "MentorCoach")) return ret;
+
+  // Check if the user is the mentor
+  const mentorship = await db.Partnership.findOne({
+    where: { menteeId: userId },
+    attributes: ["mentorId"],
+  });
+  if (mentorship && mentorship.mentorId == ctx.user.id) return ret;
+
+  // Check if the user is an interviewer
+  const myInterviews = await db.Interview.findAll({
+    where: {
+      type,
+      intervieweeId: userId,
+    },
+    attributes: [],
+    include: [{
+      model: db.InterviewFeedback,
+      attributes: [],
+      where: { interviewerId: ctx.user.id },
+    }],
+  });
+  if (myInterviews.length) return ret;
+
+  // Check if the user is a calibration participant
+  const allInterviews = await db.Interview.findAll({
+    where: {
+      type: type,
+      intervieweeId: userId,
+    },
+    attributes: ["calibrationId"],
+  });
+  for (const i of allInterviews) {
+    if (i.calibrationId && await getCalibrationAndCheckPermissionSafe(ctx.user, i.calibrationId)) return ret;
+  }
+
+  throw noPermissionError("Application information", user.id);
+});
+
+const updateApplication = procedure
+  .use(authUser("InterviewManager"))
+  .input(z.object({
+    userId: z.string(),
+    type: zInterviewType,
+    application: z.record(z.string(), z.any()),
+  }))
+  .mutation(async ({ input }) =>
+{
+  const [cnt] = await db.User.update({
+    [input.type == "MenteeInterview" ? "menteeApplication" : "mentorApplication"]: input.application,
+  }, { where: { id: input.userId } });
+  invariant(cnt <= 1);
+  if (!cnt) throw notFoundError("User", input.userId);
+});
+
+/**
+ * List all users and their roles who have privileged user data access. See RoleProfile.privilegeUserDataAccess for an
+ * explanation.
+ */
+const listPriviledgedUserDataAccess = procedure
+  .use(authUser())
+  .output(z.array(z.object({
+    name: z.string().nullable(),
+    roles: zRoles,
+  })))
+  .query(async () => 
+{
+  return await db.User.findAll({ 
+    // TODO: Optimize with postgres `?|` operator
+    where: {
+      [Op.or]: AllRoles.filter(r => RoleProfiles[r].privilegedUserDataAccess).map(r => ({
+        roles: { [Op.contains]: r }
+      })),
+    },
+    attributes: ['name', 'roles'],
+  });
+});
+
+const destroy = procedure
+  .use(authUser("UserManager"))
+  .input(z.object({
+    id: z.string(),
+  }))
   .mutation(async ({ input }) => 
 {
-  if (input.summaryKey === crudeSummaryKey) {
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: `Summaries with key "${crudeSummaryKey}" are read-only`,
-    });
-  }
-  // By design, this statement fails if the transcript doesn't exist.
-  await db.Summary.upsert({
-    transcriptId: input.transcriptId,
-    summaryKey: input.summaryKey,
-    summary: input.summary,
+  await sequelize.transaction(async transaction => {
+    const user = await db.User.findByPk(input.id, { transaction });
+    if (!user) throw notFoundError("User", input.id);
+
+    // Because we soft-delete a user, rename the user's email address before destroying to make sure next time the user
+    // logs in with the same email, account creation will not fail.
+    let i = 0;
+    while (true) {
+      const email = `deleted-${i++}+${user.email}`;
+      if (!await db.User.findOne({
+        where: { email }, 
+        paranoid: false,
+        transaction,
+      })) {
+        await user.update({ email }, { transaction });
+        await user.destroy({ transaction });
+        break;
+      }
+    }
   });
 });
 
 export default router({
-  list: listForIntegration,
-  listToBeRenamed: list,  // TODO: rename to `list`
-  write,
+  create,
+  list,
+  update,
+  listPriviledgedUserDataAccess,
+  getApplicant,
+  updateApplication,
+  destroy,
+
+  getCoach,
+  setCoach,
 });
 
-export async function saveCrudeSummary(meta: CrudeSummaryDescriptor, summary: string) {
-  // `upsert` not `insert` because the system may fail after inserting the transcript row and before inserting the 
-  // summary.
-  await db.Transcript.upsert({
-    transcriptId: meta.transcriptId,
-    groupId: meta.groupId,
-    startedAt: meta.startedAt,
-    endedAt: meta.endedAt,
-  });
-  await db.Summary.create({
-    transcriptId: meta.transcriptId,
-    summaryKey: crudeSummaryKey,
-    summary
-  });
+function checkUserFields(name: string | null, email: string) {
+  if (!isName(name)) {
+    throw generalBadRequestError("Name is invalid.");
+  }
+
+  if (!z.string().email().safeParse(email).success) {
+    throw generalBadRequestError("The email address is invalid.");
+  }
 }
 
-/**
- * Returns crude summaries that 1) were created in the last 31 days, and 2) only exist in Tencent Meeting but not 
- * locally. 31 days are the max query range allowed by Tencent. 
- * 
- * Note that the returned URLs are valid only for a short period of time.
- */
-export async function findMissingCrudeSummaries(): Promise<CrudeSummaryDescriptor[]> {
-  const ret: CrudeSummaryDescriptor[] = [];
-  for (const tmUserId of apiEnv.TM_USER_IDS) {
-    const promises = (await listRecords(tmUserId))
-      // Only interested in meetings that are ready to download.
-      .filter(meeting => meeting.state === 3)
-      .map(async meeting => {
-        // Only interested in meetings that refers to valid groups.
-        const groupId = safeDecodeMeetingSubject(meeting.subject);
-        if (!groupId || !(await db.Group.count({ where: { id: groupId } }))) {
-          console.log(`Ignoring invalid meeting subject or non-existing group "${meeting.subject}"`);
-          return;
-        }
-
-        if (!meeting.record_files) return;
-
-        // Have start and end times cover all record files.
-        let startTime = Number.MAX_VALUE;
-        let endTime = Number.MIN_VALUE;
-        for (const file of meeting.record_files) {
-          startTime = Math.min(startTime, file.record_start_time);
-          endTime = Math.max(endTime, file.record_end_time);
-        }
-
-        const record = await getRecordURLs(meeting.meeting_record_id, tmUserId);
-        const promises = record.record_files.map(async file => {
-          // Only interested in records that we don't already have.
-          const transcriptId = file.record_file_id;
-          if (await db.Summary.count({
-            where: {
-              transcriptId,
-              summaryKey: crudeSummaryKey,
-            }
-          }) > 0) {
-            console.log(`Ignoring existing crude summaries for transcript "${transcriptId}"`);
-            return;
-          }
-
-          file.meeting_summary?.filter(summary => summary.file_type === 'txt')
-            .map(summary => {
-              ret.push({
-                groupId,
-                startedAt: startTime,
-                endedAt: endTime,
-                transcriptId,
-                url: summary.download_address,
-              });
-            });
-        });
-        await Promise.all(promises);
-      });
-    await Promise.all(promises);
+function checkPermissionForManagingRoles(userRoles: Role[], subjectRoles: Role[]) {
+  if (subjectRoles.length && !isPermitted(userRoles, "RoleManager")) {
+    throw noPermissionError("User");
   }
-  return ret;
+}
+
+async function emailUserAboutNewManualRoles(userManagerName: string, user: User, roles: Role[], baseUrl: string) {
+  const added = roles.filter(r => !user.roles.includes(r)).filter(r => !RoleProfiles[r].automatic);
+  for (const r of added) {
+    const rp = RoleProfiles[r];
+    await email('d-7b16e981f1df4e53802a88e59b4d8049', [{
+      to: [{ 
+        name: formatUserName(user.name, 'formal'), 
+        email: user.email 
+      }],
+      dynamicTemplateData: {
+        'roleDisplayName': rp.displayName,
+        'roleActions': rp.actions,
+        'name': formatUserName(user.name, 'friendly'),
+        'manager': userManagerName,
+      }
+    }], baseUrl);
+  }
 }
