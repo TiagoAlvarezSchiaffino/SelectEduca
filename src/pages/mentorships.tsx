@@ -50,7 +50,7 @@ import {
         refetch();
       }} />}
   
-      {!mentorships ? <Loader /> : <TableContainer><Table>
+      {!mentorships ? <Loader /> : <TableContainer><Table size="sm">
         <Thead>
           <Tr>
             <Th></Th>
