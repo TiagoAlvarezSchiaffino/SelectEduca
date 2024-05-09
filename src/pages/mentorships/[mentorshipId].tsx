@@ -30,12 +30,15 @@ export default widePage(() => {
     <MobileExperienceAlert marginBottom={paragraphSpacing} />
 
     {iAmTheMentor ?
-      <GroupBar group={m.group} showJoinButton showGroupName={false} marginBottom={sectionSpacing + 2} />
+      <GroupBar group={m.group} showJoinButton showGroupName={false}
+      marginBottom={sectionSpacing + 2} />
       :
-      <PageBreadcrumb current={`Student: ${formatUserName(m.mentee.name)}, Mentor: ${formatUserName(m.mentor.name)}`} />
+      <PageBreadcrumb current={`Student：${formatUserName(m.mentee.name)}，` +
+        `Tutor： ${formatUserName(m.mentor.name)}`} />
     }
 
-    <MenteeTabs mentorshipId={mentorshipId} menteeId={m.mentee.id} groupId={m.group.id} />
+    <MenteeTabs mentorshipId={mentorshipId} menteeId={m.mentee.id}
+      groupId={m.group.id} />
   </>;
 });
 
@@ -44,7 +47,6 @@ function MenteeTabs({ mentorshipId, menteeId, groupId }: {
   menteeId: string,
   groupId: string,
 }) {
-
   return <TabsWithUrlParam isLazy>
     <TabList>
       <Tab>Internal Discussion</Tab>

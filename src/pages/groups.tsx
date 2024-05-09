@@ -77,7 +77,7 @@ export default function Page() {
         </Button>
       </WrapItem>
       <WrapItem alignItems="center">
-        <Checkbox isChecked={includeOwned} onChange={e => setIncludOwned(e.target.checked)}>Show Managed Groups</Checkbox>
+        <Checkbox isChecked={includeOwned} onChange={e => setIncludeOwned(e.target.checked)}>Show Managed Groups</Checkbox>
         <QuestionIconTooltip label="Managed groups are automatically created through functionalities such as one-on-one mentor matching and student interviews. Other groups are called Free Groups." />
       </WrapItem>
       <WrapItem alignItems="center">

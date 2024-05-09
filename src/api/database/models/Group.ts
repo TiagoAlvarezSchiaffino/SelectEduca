@@ -36,7 +36,6 @@ class Group extends Model {
   @Column(UUID)
   id: CreationOptional<string>;
 
-  @AllowNull(true)
   @Column(STRING)
   name: string | null;
 
@@ -46,7 +45,6 @@ class Group extends Model {
 
   // A user is a member of this group if they are associated with this group via GroupUser,
   // or isPermitted(user.roles, roles) is true.
-  @AllowNull(true)
   @Column(ARRAY(STRING))
   roles: Role[];
   

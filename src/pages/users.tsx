@@ -18,33 +18,33 @@ import {
   FormErrorMessage,
   Stack,
   Checkbox,
-  Box,
   Tag,
   Wrap,
   WrapItem,
   Flex,
+  TableContainer,
   Divider,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import { trpcNext } from "../trpc";
-import UserProfile from 'shared/UserProfile';
+import User, { UserFilter } from 'shared/User';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
-import { toPinyin } from 'shared/strings';
+import { Name, toPinyin } from 'shared/strings';
 import Role, { AllRoles, RoleProfiles, isPermitted } from 'shared/Role';
 import trpc from 'trpc';
 import { useUserContext } from 'UserContext';
 import { AddIcon, EditIcon } from '@chakra-ui/icons';
 import Loader from 'components/Loader';
 import z from "zod";
-import User, { UserFilter } from 'shared/User';
 import UserFilterSelector from 'components/UserFilterSelector';
 
 export default function Page() {
   const [filter, setFilter] = useState<UserFilter>({});
-  const { data: users, refetch } = trpcNext.users.list.useQuery<User[] | null>(filter);  const [userBeingEdited, setUserBeingEdited] = useState<UserProfile | null>(null);
+  const { data: users, refetch } = trpcNext.users.list.useQuery<User[] | null>(filter);
+  const [userBeingEdited, setUserBeingEdited] = useState<User | null>(null);
   const [creatingNewUser, setCreatingNewUser] = useState(false);
   const [me] = useUserContext();
-  
+
   const closeUserEditor = () => {
     setUserBeingEdited(null);
     setCreatingNewUser(false);
@@ -57,52 +57,54 @@ export default function Page() {
 
     <Flex direction='column' gap={6}>
       <Wrap spacing={4} align="center">
-        <Button variant='brand' leftIcon={<AddIcon />} onClick={() => setCreatingNewUser(true)}></Button>
+        <Button variant='brand' leftIcon={<AddIcon />} onClick={() => setCreatingNewUser(true)}>Create new user</Button>
         <Divider orientation="vertical" />
         <UserFilterSelector filter={filter} onChange={f => setFilter(f)} />
       </Wrap>
 
       {!users ? <Loader /> :
-        <Table minWidth={200}>
-          <Thead>
-            <Tr>
-              <Th></Th>
-              <Th></Th>
-              <Th></Th>
-              <Th></Th>
-              <Th />
-            </Tr>
-          </Thead>
-          <Tbody>
-            {users.map((u: any) => (
-              <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer' _hover={{ bg: "white" }}>
-                <Td><EditIcon /></Td>
-                <Td>{u.email}</Td>
-                <Td>{u.name} {me.id === u.id ? "" : ""}</Td>
-                <Td>{toPinyin(u.name ?? '')}</Td>
-                <Td>
-                  <Wrap>
-                  {u.roles.map((r: Role) => {
+        <TableContainer>
+          <Table size="sm">
+            <Thead>
+              <Tr>
+                <Th>Edit</Th>
+                <Th>E-mail</Th>
+                <Th>Name</Th>
+                <Th>Pinyin</Th>
+                <Th>Role</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {users.map((u: any) => (
+                <Tr key={u.id} onClick={() => setUserBeingEdited(u)} cursor='pointer' _hover={{ bg: "white" }}>
+                  <Td><EditIcon /></Td>
+                  <Td>{u.email}</Td>
+                  <Td>{u.name} {me.id === u.id ? "（Me）" : ""}</Td>
+                  <Td>{toPinyin(u.name ?? '')}</Td>
+                  <Td>
+                    <Wrap>
+                      {u.roles.map((r: Role) => {
                         const rp = RoleProfiles[r];
                         return <WrapItem key={r}>
-                          <Tag bgColor={rp.privileged ? "orange" : "brand.c"} color="white">
+                          <Tag bgColor={rp.automatic ? "brand.c" : "orange"} color="white">
                             {rp.displayName}
                           </Tag>
                         </WrapItem>;
                       })}
-                  </Wrap>
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-    }
+                    </Wrap>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </TableContainer>
+      }
     </Flex>
   </>;
 };
 
 function UserEditor(props: {
-  user?: UserProfile, // When absent, create a new user.
+  user?: User, // When absent, create a new user.
   onClose: () => void,
 }) {
   const u = props.user ?? {
@@ -116,6 +118,7 @@ function UserEditor(props: {
   const [name, setName] = useState(u.name || '');
   const [roles, setRoles] = useState(u.roles);
   const [saving, setSaving] = useState(false);
+  const validName = Name(name);
   const validEmail = z.string().email().safeParse(email).success;
 
   const setRole = (e: any) => {
@@ -142,11 +145,10 @@ function UserEditor(props: {
   };
 
   const deleteUser = async () => {
-    if (props.user && window.confirm("")) {
-      await trpc.users.remove.mutate({ id: props.user.id });
+    if (props.user && window.confirm("Are you sure you want to delete this user?")) {
+      await trpc.users.destroy.mutate({ id: props.user.id });
       props.onClose();
-  }
-
+    }
   };
 
   return <ModalWithBackdrop isOpen onClose={props.onClose}>
@@ -158,16 +160,16 @@ function UserEditor(props: {
           <FormControl isRequired isInvalid={!validEmail}>
             <FormLabel>Email</FormLabel>
             <Input type='email' value={email} onChange={e => setEmail(e.target.value)} />
-            <FormErrorMessage></FormErrorMessage>
+            <FormErrorMessage>A valid email address is required.</FormErrorMessage>
           </FormControl>
           <FormControl isRequired isInvalid={!validName}>
-            <FormLabel></FormLabel>
+            <FormLabel>Name</FormLabel>
             <Input value={name} onChange={e => setName(e.target.value)} />
-            <FormErrorMessage></FormErrorMessage>
+            <FormErrorMessage>Name is required.</FormErrorMessage>
           </FormControl>
 
           {isPermitted(me.roles, "RoleManager") && <FormControl>
-            <FormLabel></FormLabel>
+            <FormLabel>Role</FormLabel>
             <Stack>
               {AllRoles.map(r => {
                 const rp = RoleProfiles[r];
@@ -179,14 +181,18 @@ function UserEditor(props: {
               })}
             </Stack>
           </FormControl>}
-          
+
+          <FormControl>
+            <small>*It is a role automatically managed by the system. Under normal circumstances, please do not modify it manually to avoid causing usage problems.</small>
+          </FormControl>
         </VStack>
       </ModalBody>
       <ModalFooter>
         <Flex justifyContent="space-between" width="100%">
-          <Button variant='outline' colorScheme='red' onClick={deleteUser}></Button>
-          <Button variant='brand' isLoading={saving} onClick={save} isDisabled={!validEmail || !validName}></Button>
-        </Flex>      </ModalFooter>
+          <Button variant='outline' colorScheme='red' onClick={deleteUser}>Delete</Button>
+          <Button variant='brand' isLoading={saving} onClick={save} isDisabled={!validEmail || !validName}>Save</Button>
+        </Flex>
+      </ModalFooter>
     </ModalContent>
   </ModalWithBackdrop>;
 }

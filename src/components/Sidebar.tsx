@@ -96,13 +96,6 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     name: '',
-    path: '/interviews?type=mentor',
-    icon: MdFaceUnlock,
-    regex: /^\/interviews\?type=mentor/,
-    role: 'InterviewManager',
-  },
-  {
-    name: '',
     path: '/partnerships',
     icon: MdOutlineSyncAlt,
     regex: /^\/partnerships$/,
