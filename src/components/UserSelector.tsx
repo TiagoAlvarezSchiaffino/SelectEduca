@@ -51,5 +51,9 @@ export default function UserSelector(props: {
       setValue(value);
       if (isMulti) props.onSelect((value as Option[]).map(o => o.value));
       else props.onSelect(value ? [(value as Option).value] : []);
-    }} />;
+    }}
+
+    menuPortalTarget={document.body}
+    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+  />;
 }
