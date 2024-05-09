@@ -47,16 +47,16 @@ import {
         <Tbody>
           <Tr>
             <Td></Td>
-            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('SummaryEngineer')}、{dp('InterviewManager')}
+            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('SummaryEngineer')}、{dp('MenteeManager')}
           </Td>
           </Tr>
           <Tr>
             <Td></Td>
-            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('InterviewManager')}</Td>
+            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('MenteeManager')}</Td>
           </Tr>
           <Tr>
             <Td></Td>
-            <Td>{dp('SummaryEngineer')}</Td>
+            <Td>{dp('MenteeEngineer')}</Td>
           </Tr>
           <Tr>
             <Td>Transcripts and minutes of individual calls between tutor and student.</Td>

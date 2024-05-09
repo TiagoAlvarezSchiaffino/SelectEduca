@@ -8,16 +8,14 @@ export const AllRoles = [
   'SummaryEngineer',
   'MentorshipManager',
   'MentorshipAssessor',
-  'InterviewManager',
+  'MenteeManager',
   'Mentor',
   'Mentee',
   'Interviewer',
   'MentorCoach',
 
   // Deprecated
-  'PrivilegedRoleManager',
-  'PartnershipManager',
-  'PartnershipAssessor',
+  'InterviewManager',
 ] as const;
 
 export const RoleProfiles: { [key: string]: {
@@ -64,9 +62,9 @@ export const RoleProfiles: { [key: string]: {
     actions: 'Track and assess the effectiveness of one-on-one mentorship',
     privilegedUserDataAccess: true,
   },
-  InterviewManager: {
-    displayName: 'Interview Manager',
-    actions: 'Manage mentor and student interviews',
+  MenteeManager: {
+    displayName: 'Student Administrator',
+    actions: 'Manage student information, student interview information, one-to-one tutor matching information, etc.',
     privilegedUserDataAccess: true,
   },
   Mentor: {
@@ -95,19 +93,9 @@ export const RoleProfiles: { [key: string]: {
   },
 
   // Deprecated
-    PrivilegedRoleManager: {
+    InterviewManager: {
       displayName: 'Deprecated',
       actions: 'Manage user roles',
-      privilegedUserDataAccess: false,
-    },
-    PartnershipManager: {
-      displayName: 'Deprecated',
-      actions: 'Manage mentor partnerships',
-      privilegedUserDataAccess: false,
-    },
-    PartnershipAssessor: {
-      displayName: 'Deprecated',
-      actions: 'Track assessment of one-on-one mentoring effectiveness',
       privilegedUserDataAccess: false,
     },
 };

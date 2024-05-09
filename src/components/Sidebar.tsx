@@ -92,11 +92,11 @@ const sidebarItems: SidebarItem[] = [
     role: 'GroupManager',
   },
   {
-    name: '',
-    path: '/partnerships',
-    icon: MdOutlineSyncAlt,
-    regex: /^\/partnerships$/,
-    role: 'MentorshipManager',
+    name: 'Manage student interviews',
+    path: '/interviews?type=mentee',
+    icon: MdFace5,
+    regex: /^\/interviews\?type=mentee/,
+    role: 'MenteeManager',
   },
 ];
 
