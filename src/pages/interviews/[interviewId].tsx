@@ -52,7 +52,7 @@ export default widePage(() => {
         <Flex direction="column" gap={sectionSpacing}>
           <DecisionEditor interviewId={i.id} decision={i.decision} etag={data.etag} />
           {i.type == "MenteeInterview" ?
-            <MenteeApplicant userId={i.interviewee.id} readonly />
+            <MenteeApplicant userId={i.interviewee.id} showTitle />
             : 
             <Text>(The mentor application material page has not been implemented yet)</Text>
           }

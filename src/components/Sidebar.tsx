@@ -58,7 +58,7 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     name: 'Student profile',
-    path: '/mentees',
+    path: '/mentees?menteeStatus=current students',
     icon: AttachmentIcon,
     regex: /^\/mentees/,
     role: 'UserManager',

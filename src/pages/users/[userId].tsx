@@ -31,7 +31,7 @@ function UserTabs({ user }: {
 
     <TabPanels>
       <TabPanel>
-        <MenteeApplicant userId={user.id} readonly />
+        <MenteeApplicant userId={user.id} />
       </TabPanel>
     </TabPanels>
   </TabsWithUrlParam>;

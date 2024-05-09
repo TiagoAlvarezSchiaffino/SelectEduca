@@ -5,41 +5,54 @@ import {
   UnorderedList,
   ListItem,
   Heading,
+  Text,
+  useClipboard,
+  Tooltip,
 } from '@chakra-ui/react';
-import React from 'react';
-import { DownloadIcon } from '@chakra-ui/icons';
+import React, { useEffect } from 'react';
+import { CopyIcon, DownloadIcon } from '@chakra-ui/icons';
 import Loader from 'components/Loader';
 import trpc, { trpcNext } from 'trpc';
 import menteeApplicationFields from 'shared/menteeApplicationFields';
 import z from "zod";
-import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
+import { sectionSpacing } from 'theme/metrics';
 import { formatUserName } from 'shared/strings';
 import invariant from "tiny-invariant";
 import EditableWithIcon from "components/EditableWithIcon";
 import User from 'shared/User';
+import { useUserContext } from 'UserContext';
+import { isPermitted } from 'shared/Role';
+import NextLink from "next/link";
+import { toast } from 'react-toastify';
 
-export default function MenteeApplicant({ userId, showName, showContact, readonly } : {
+export default function MenteeApplicant({ userId, showTitle, useNameAsTitle } :
+{
   userId: string,
-  readonly: boolean
-  showName?: boolean,
-  showContact?: boolean,
+  showTitle?: boolean,
+  useNameAsTitle?: boolean, // Valid only if showTitle is true
 }) {
-  const { data, refetch } = trpcNext.users.getApplicant.useQuery({ userId, type: "MenteeInterview" });
+  const { data, refetch } = trpcNext.users.getApplicant.useQuery({
+    userId, type: "MenteeInterview"
+  });
 
   return !data ? <Loader /> :
-    <LoadedApplicant user={data.user} application={data.application} showName={showName} showContact={showContact}
-      readonly={readonly} refetch={refetch}
+  <LoadedApplicant user={data.user} application={data.application}
+    showTitle={showTitle} useNameAsTitle={useNameAsTitle} refetch={refetch}
     />;
 }
 
-function LoadedApplicant({ user, application, showName, showContact, readonly, refetch } : {
+function LoadedApplicant({ user, application, showTitle, useNameAsTitle,
+  refetch
+} : {
   user: User,
   application: Record<string, any> | null,
-  readonly: boolean
   refetch: () => void,
-  showName?: boolean,
-  showContact?: boolean,
+  showTitle?: boolean,
+  useNameAsTitle?: boolean,
 }) {
+  const [me] = useUserContext();
+  const isMenteeManager = isPermitted(me.roles, "InterviewManager");
+
   const update = async (name: string, value: string) => {
     const updated = structuredClone(application ?? {});
     updated[name] = value;
@@ -52,25 +65,58 @@ function LoadedApplicant({ user, application, showName, showContact, readonly, r
   };
 
   return <Flex direction="column" gap={sectionSpacing}>
-    <Heading size="md">{showName ? `${formatUserName(user.name, "formal")}` : "Application Materials"}</Heading>
+    {showTitle && <Heading size="md">{useNameAsTitle ?
+      `${formatUserName(user.name)}` : "Application materials"}</Heading>}
 
-    <FieldRow name="Gender" readonly value={user.genre ?? ''} />
+    {user.genre && <FieldRow name="Gender" readonly value={user.genre} />}
+      <ContactFieldRow isMenteeManager={isMenteeManager} 
+        name="WeChat" value={user.wechat ?? '(WeChat not provided)'} />
+      <ContactFieldRow isMenteeManager={isMenteeManager}
+        name="Mail" value={user.email} />
 
-    {showContact && <>
-      <FieldRow name="WeChat" readonly value={user.wechat ?? ''} />
-      <FieldRow name="Email" readonly value={user.email} />
-    </>}
-
-    {!application ? "No application data." : menteeApplicationFields.map(f => {
-      invariant(application);
-      if (f.name in application) {
-        return <FieldRow readonly={readonly} key={f.name} name={f.name}
-          // @ts-ignore
-          value={application[f.name]}
-          update={v => update(f.name, v)}
-        />;
+    {!application ? <Text color="grey">No application materials.</Text> :
+      menteeApplicationFields.map(f => {
+        invariant(application);
+        if (f.name in application) {
+          return <FieldRow readonly={!isMenteeManager} key={f.name} name={f.name}
+            value={application[f.name]}
+            update={v => update(f.name, v)}
+          />;
+        }
       }
-    })}
+    )}
+  </Flex>;
+}
+
+function ContactFieldRow({ isMenteeManager, name, value }: { 
+  isMenteeManager: boolean,
+  name: string,
+  value: string 
+}) {
+  // clipboard doesn't support copying of empty strings
+  invariant(value !== "");
+  const { onCopy, hasCopied } = useClipboard(value);
+
+  useEffect(() => {
+    if (hasCopied) toast.success("The content has been copied to the clipboard.");
+  }, [hasCopied]);
+
+  return <Flex direction="column">
+    <Box>
+      <b>{name}{' '}</b>
+      {!isMenteeManager && <>
+        （Only<Link as={NextLink} href="/who-can-see-my-data">Student administrator</Link>
+        Can view）
+      </>}
+    </Box>
+    <Box>
+      ••••••••••••{' '}
+      {isMenteeManager &&
+        <Tooltip label="Copy content to clipboard">
+          <CopyIcon onClick={onCopy} cursor="pointer" />
+        </Tooltip>
+      }
+    </Box>
   </Flex>;
 }
 
@@ -80,9 +126,11 @@ function FieldRow({ name, value, readonly, update }: {
   readonly: boolean,
   update?: (value: string) => Promise<void>,  // required only if !readonly
 }) {
-  return <Flex direction="column" gap={paragraphSpacing}>
+  return <Flex direction="column">
     <Box><b>{name}</b></Box>
-    <Box><FieldValueCell value={value} readonly={readonly} update={update} /></Box>
+    <Box>
+      <FieldValueCell value={value} readonly={readonly} update={update} />
+    </Box>
   </Flex>;
 }
 

@@ -63,7 +63,7 @@ import {
             <Th>Mentor</Th>
             <Th>Senior Mentor</Th>
             <Th>Recent Mentor-Student Communication</Th>
-            <Th>Recent Internal Discussion</Th>
+            <Th>Recent internal notes</Th>
             <Th>Pinyin (for Search)</Th>
           </Tr>
         </Thead>

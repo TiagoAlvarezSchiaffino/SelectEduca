@@ -34,7 +34,7 @@ function MenteeTabs({ mentorship }: {
   return <TabsWithUrlParam isLazy>
     <TabList>
       <Tab>One-on-one tutor call</Tab>
-      <Tab>Internal Discussion</Tab>
+      <Tab>Internal Notes</Tab>
       <Tab>Application Materials</Tab>
       <Tab>Annual Feedback</Tab>
     </TabList>
@@ -50,7 +50,7 @@ function MenteeTabs({ mentorship }: {
         <ChatRoom mentorshipId={mentorship.id} />
       </TabPanel>
       <TabPanel>
-        <MenteeApplicant userId={mentorship.mentee.id} readonly />
+        <MenteeApplicant userId={mentorship.mentee.id} />
       </TabPanel>
       <TabPanel>
         <AssessmentsTable mentorshipId={mentorship.id} />

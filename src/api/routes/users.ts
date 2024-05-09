@@ -226,8 +226,9 @@ const setMentorCoach = procedure
 });
 
 /**
- * Only InterviewManagers, MentorCoaches, mentor of the applicant, interviewers of the applicant, and participants of
- * the calibration (only if the calibration is active) are allowed to call this route.
+ * Only InterviewManagers, MentorCoaches, mentor of the applicant, interviewers
+ * of the applicant, and participants of the calibration (only if the calibration
+ * is active) are allowed to call this route.
  * 
  * If the user is not an InterviewManager, contact information is redacted.
  */
@@ -250,8 +251,9 @@ const getApplicant = procedure
   });
   if (!user) throw notFoundError("User", userId);
 
-  const ret: { user: User, application: Record<string, any> | null } = { user, application: user.menteeApplication };
-
+  const ret: { user: User, application: Record<string, any> | null } = { 
+    user, application: user.menteeApplication
+  };
   if (isPermitted(ctx.user.roles, "InterviewManager")) return ret;
 
   // Redact
