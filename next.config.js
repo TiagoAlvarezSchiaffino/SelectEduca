@@ -3,10 +3,13 @@ const nextConfig = {
     reactStrictMode: true,
     swcMinify: true,
     output: 'standalone',
+    
+    experimental: {
+    serverMinification: false,
+    },
   };
   
   module.exports = nextConfig;
-
 
 // Injected content via Sentry wizard below
 

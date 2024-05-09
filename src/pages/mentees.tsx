@@ -22,6 +22,7 @@ import {
   import { MenteeStatus } from 'shared/MenteeStatus';
   import NextLink from "next/link";
   import { ChevronRightIcon } from '@chakra-ui/icons';
+  import { sectionSpacing } from 'theme/metrics';
 
 const fixedFilter: UserFilter = { containsRoles: ["Mentee"] };
   
@@ -49,6 +50,9 @@ export default function Page() {
         {!users ? <Loader /> :
           <TableContainer>
             <MenteeTable users={users} onChangeStatus={onChangeStatus}/>
+            <Text fontSize="sm" color="grey" marginTop={sectionSpacing}>
+              Common <b>{users.length}</b> Name
+            </Text>
           </TableContainer>
         }
       </Flex>

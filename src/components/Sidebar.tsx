@@ -24,8 +24,6 @@ import {
   MdScience,
   MdChevronRight, 
   MdFace, 
-  MdFace5,
-  MdOutlineSyncAlt, 
   MdVideocam,
   MdSupervisorAccount,
   MdMic
@@ -95,13 +93,6 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     name: '',
-    path: '/interviews?type=mentee',
-    icon: MdFace5,
-    regex: /^\/interviews\?type=mentee/,
-    role: 'InterviewManager',
-  },
-  {
-    name: '',
     path: '/partnerships',
     icon: MdOutlineSyncAlt,
     regex: /^\/partnerships$/,
@@ -158,7 +149,8 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
               />
             </NextLink>
         </Box>
-        <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }} onClick={onClose} />
+        <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }}
+          onClick={onClose} />
       </Flex>
       <Box height={{
         base: 0,
@@ -169,9 +161,10 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
         .filter(item => isPermitted(me.roles, item.role))
         .map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
       
-      {partnershipItems?.length > 0 && <Divider marginY={2} />}
+      {mentorshipItems?.length > 0 && <Divider marginY={2} />}
 
-      {partnershipItems.map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
+      {mentorshipItems.map(item => <SidebarRow key={item.path} item={item}
+        onClose={onClose} />)}
     </Box>
   );
 };

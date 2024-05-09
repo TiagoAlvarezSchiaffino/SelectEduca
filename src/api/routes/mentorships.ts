@@ -58,17 +58,6 @@ const create = procedure
   });
 });
 
-const list = procedure
-  .use(authUser('MentorshipManager'))
-  .output(z.array(zMentorship))
-  .query(async () => 
-{
-  return await db.Partnership.findAll({ 
-    attributes: mentorshipAttributes,
-    include: mentorshipInclude,
-  });
-});
-
 const listMineAsCoach = procedure
   .use(authUser())
   .output(z.array(zMentorship))
@@ -120,7 +109,6 @@ const get = procedure
 export default router({
   create,
   get,
-  list,
   listMineAsMentor,
   listMineAsCoach,
 });

@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { UserFilter } from 'shared/User';
-import { Select, WrapItem } from '@chakra-ui/react';
+import { Link, Select, WrapItem } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import _ from "lodash";
-import { AllMenteeStatuses, MenteeStatus, zMenteeStatus } from 'shared/MenteeStatus';
-import MenteeStatusSelect, { ANY_MENTEE_STATUS, NULL_MENTEE_STATUS } from './MenteeStatusSelect';
+import { zMenteeStatus } from 'shared/MenteeStatus';
+import MenteeStatusSelect, { NULL_MENTEE_STATUS } from './MenteeStatusSelect';
+import NextLink from "next/link";
 
 type BooleanLabelType = "Yes/No" | "Already/Not yet" | "Has/Doesn't have";
 
@@ -73,6 +74,9 @@ export default function UserFilterSelector({ filter, fixedFilter, onChange }: {
     <WrapItem>Submitted student applications</WrapItem>
     <WrapItem>{booleanSelect("isMenteeInterviewee", "Already")}</WrapItem>
     <WrapItem>Interviewing students</WrapItem>
+    <WrapItem>
+      <Link as={NextLink} href="/interviews?type=mentee">(Management interview)</Link>
+    </WrapItem>
   </>;
 }
 
