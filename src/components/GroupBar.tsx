@@ -21,6 +21,8 @@ import {
   ButtonProps,
   SimpleGridProps,
   Tag,
+  HStack,
+  Tooltip,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import trpc from "../trpc";
@@ -33,7 +35,9 @@ import { sidebarBreakpoint } from './Navbars';
 import UserChip from './UserChip';
 import { MinUser } from 'shared/User';
 import { Group, isOwned } from 'shared/Group';
-import { ChevronRightIcon } from '@chakra-ui/icons';
+import { ChevronRightIcon, QuestionIcon } from '@chakra-ui/icons';
+import QuestionIconTooltip from './QuestionIconTooltip';
+import { publicGroupDescription } from 'pages/groups';
 
 export default function GroupBar({
   group, showSelf, showJoinButton, showTranscriptLink, abbreviateOnMobile, abbreviateOnDesktop, showGroupName, ...rest
@@ -90,9 +94,9 @@ export default function GroupBar({
       {showJoinButton &&
         <Box>
           <JoinButton
-            isLoading={isJoiningMeeting} loadingText={'...'}
+            isLoading={isJoiningMeeting} loadingText={'Joining...'}
             onClick={async () => launchMeeting(group.id)}
-          ></JoinButton>
+          >Join</JoinButton>
         </Box>
       }
 
@@ -114,7 +118,6 @@ export default function GroupBar({
                   Details <ChevronRightIcon />
                 </LinkOverlay>
               </Text>
-              </Text>
             </Center>
           </>}
         </Flex>
@@ -128,11 +131,28 @@ function GroupTagOrName({ group }: { group: Group }) {
     // Without this Box the tag will fill the whole grid row
     <Box justifyItems="left">
       <Tag color="white" bgColor="gray">
-        {group.partnershipId ? "" : group.calibrationId ? "" : "" }
+        {group.partnershipId ? "One-on-One Mentor" :
+          group.calibrationId ? "Interview Discussion" :
+            group.coacheeId ? "Senior Mentor" :
+              group.interviewId ? "Interview" :
+                "FIXME" }
       </Tag>
     </Box>
     :
-    <Text color='grey' fontSize='sm'>{formatGroupName(group.name, group.users.length)}</Text>;
+    <HStack>
+      {group.archived && <Tag color="white" bgColor="gray.800">Archived</Tag>}
+
+      {group.public && <Tooltip label={publicGroupDescription}>
+        <Tag color="white" bgColor="green.400">
+          Public
+          <QuestionIcon color="white" marginStart={2} />
+        </Tag>
+      </Tooltip>}
+      
+      <Text color='grey' fontSize='sm'>
+        {formatGroupName(group.name, group.users.length)}
+      </Text>
+    </HStack>;
 }
 
 export function JoinButton(props: ButtonProps) {
@@ -142,7 +162,7 @@ export function JoinButton(props: ButtonProps) {
     bgColor="white"
     leftIcon={<MdVideocam />}
     {...props}
-  >{props.children ? props.children : ""}</Button>;
+  >{props.children ? props.children : "Join"}</Button>;
 }
 
 export function OngoingMeetingWarning(props: {
@@ -151,14 +171,14 @@ export function OngoingMeetingWarning(props: {
   return (<ModalWithBackdrop isOpen onClose={props.onClose}>
     <ModalOverlay />
     <ModalContent>
-      <ModalHeader></ModalHeader>
+      <ModalHeader>Unable to Join Meeting</ModalHeader>
       <ModalCloseButton />
       <ModalBody>
-        <p><br /><br /></p>
+        <p>Sorry, the maximum number of ongoing meetings has been reached. Please try again later.<br /><br />The system administrator has been notified and will take action promptly.</p>
       </ModalBody>
       <ModalFooter>
         <Button onClick={props.onClose}>
-          
+          Confirm
         </Button>
       </ModalFooter>
     </ModalContent>

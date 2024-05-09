@@ -59,8 +59,13 @@ import {
             <Td>{dp('SummaryEngineer')}</Td>
           </Tr>
           <Tr>
-            <Td></Td>
-            <Td>{dp('SummaryEngineer')}</Td>
+            <Td>Transcripts and minutes of individual calls between tutor and student.</Td>
+            <Td>{dp('SummaryEngineer')}、{dp('MentorshipAssessor')}、
+              {dp('MentorCoach')}（Note: The transcribed text is only collected during the internal testing period of the website.）</Td>
+          </Tr>
+          <Tr>
+            <Td>Transcripts and minutes of other meetings</Td>
+            <Td>{dp('SummaryEngineer')}、Other members of the same meeting group (Note: Transcripts are only collected during the website beta period)</Td>
           </Tr>
         </Tbody>
       </Table>

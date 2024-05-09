@@ -33,12 +33,17 @@ import Loader from 'components/Loader';
 import UserSelector from '../components/UserSelector';
 import QuestionIconTooltip from "../components/QuestionIconTooltip";
 
+
+export const publicGroupDescription = "Public meetings allow all users to join. The users listed below can manage and access meeting history.";
+
 export default function Page() {
   const [userIds, setUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [groupBeingEdited, setGroupBeingEdited] = useState<Group | null>(null);
-  const [includeOwned, setIncludOwned] = useState(false);
-  const { data, refetch } = trpcNext.groups.list.useQuery({ userIds, includeOwned });
+  const [includeOwned, setIncludeOwned] = useState(false);
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const { data, refetch } = trpcNext.groups.list.useQuery(
+    { userIds, includeOwned, includeArchived });
 
   const createGroup = async () => {
     setCreating(true);
@@ -72,8 +77,13 @@ export default function Page() {
         </Button>
       </WrapItem>
       <WrapItem alignItems="center">
-        <Checkbox isChecked={includeOwned} onChange={e => setIncludOwned(e.target.checked)}>Show Hosted Groups</Checkbox>
-        <QuestionIconTooltip label="Hosted Groups are automatically created groups through one-on-one mentor matching, student interviews, etc. Other groups are called Free Groups." />
+        <Checkbox isChecked={includeOwned} onChange={e => setIncludOwned(e.target.checked)}>Show Managed Groups</Checkbox>
+        <QuestionIconTooltip label="Managed groups are automatically created through functionalities such as one-on-one mentor matching and student interviews. Other groups are called Free Groups." />
+      </WrapItem>
+      <WrapItem alignItems="center">
+        <Checkbox isChecked={includeArchived} 
+          onChange={e => setIncludeArchived(e.target.checked)}
+        >Show archived groups</Checkbox>
       </WrapItem>
     </Wrap>
     <VStack divider={<StackDivider />} align='left' marginTop={8} spacing='3'>
@@ -92,13 +102,14 @@ export default function Page() {
   </>;
 };
 
-function GroupEditor(props: { 
+function GroupEditor({ group, onClose }: { 
   group: Group,
   onClose: () => void,
 }) {
-  const [name, setName] = useState<string>(props.group.name || '');
+  const [name, setName] = useState<string>(group.name || '');
+  const [isPublic, setIsPublic] = useState(group.public);
   const [newUserIds, setNewUserIds] = useState<string[]>([]);
-  const [users, setUsers] = useState(props.group.users);
+  const [users, setUsers] = useState(group.users);
   const [working, setWorking] = useState(false);
   const [confirmingDeletion, setConfirmingDeletion] = useState(false);
 
@@ -107,30 +118,48 @@ function GroupEditor(props: {
   const save = async () => {
     setWorking(true);
     try {
-      const group = structuredClone(props.group);
-      group.name = name;
-      group.users = [
+      const cloned = structuredClone(group);
+      cloned.name = name;
+      cloned.public = isPublic;
+      cloned.users = [
         ...newUserIds.map(n => ({ id: n, name: null })),
         ...users,
       ];
-      await trpc.groups.update.mutate(group);
-      props.onClose();
+      await trpc.groups.update.mutate(cloned);
+      onClose();
     } finally {
       setWorking(false);
+    }
+  };
+
+  const archive = async () => {
+    setConfirmingDeletion(false);
+    try {
+      await trpc.groups.archive.mutate({ groupId: group.id });
+    } finally {
+      onClose();
+    }
+  };
+
+  const unarchive = async () => {
+    try {
+      await trpc.groups.unarchive.mutate({ groupId: group.id });
+    } finally {
+      onClose();
     }
   };
 
   const destroy = async () => {
     setConfirmingDeletion(false);
     try {
-      await trpc.groups.destroy.mutate({ groupId: props.group.id });
+      await trpc.groups.destroy.mutate({ groupId: group.id });
     } finally {
-      props.onClose();
+      onClose();
     }
   };
 
   return <>
-    <ModalWithBackdrop isOpen onClose={props.onClose}>
+    <ModalWithBackdrop isOpen onClose={onClose}>
       <ModalContent>
         <ModalHeader>Edit Group</ModalHeader>
         <ModalCloseButton />
@@ -138,12 +167,18 @@ function GroupEditor(props: {
           <VStack spacing={6}>
             <FormControl>
               <FormLabel>Meeting Link</FormLabel>
-              <code>{window.location.origin}/groups/{props.group.id}</code>
+              <code>{window.location.origin}/groups/{group.id}</code>
             </FormControl>
             <FormControl>
               <FormLabel>Group Name</FormLabel>
               <Input value={name} onChange={(e) => setName(e.target.value)}
-                placeholder={`If empty, the default name will be displayed: "${formatGroupName(null, props.group.users.length)}"`} />
+                placeholder={`If empty, default name will be shown: “${formatGroupName(null, group.users.length)}”`}
+              />
+            </FormControl>
+            <FormControl>
+              <Checkbox isChecked={isPublic} 
+                onChange={(e) => setIsPublic(e.target.checked)}
+              >Public: {publicGroupDescription}</Checkbox>
             </FormControl>
             <FormControl>
               <FormLabel>Add Users</FormLabel>
@@ -169,13 +204,24 @@ function GroupEditor(props: {
           </VStack>
         </ModalBody>
         <ModalFooter>
-          <Button onClick={() => setConfirmingDeletion(true)}>Delete Group</Button>
+          {!group.archived ?
+            <Button onClick={() => setConfirmingDeletion(true)}>Delete Group</Button>
+            :
+            <>
+              <Button onClick={() => unarchive()}>Unarchive</Button>
+              <Spacer />
+              <Button onClick={() => setConfirmingDeletion(true)}
+                colorScheme="red">Delete</Button>
+            </>
+          }
           <Spacer />
-          <Button variant='brand' isLoading={working} isDisabled={!isValid} onClick={save}>Save</Button>
+          <Button variant='brand' isLoading={working} isDisabled={!isValid}
+            onClick={save}>Save</Button>
         </ModalFooter>
       </ModalContent>
     </ModalWithBackdrop>
-    {confirmingDeletion && <ConfirmingDeletionModal onConfirm={destroy} onCancel={() => setConfirmingDeletion(false)}/>}
+    {confirmingDeletion && <ConfirmingDeletionModal onConfirm={destroy}
+      onCancel={() => setConfirmingDeletion(false)}/>}
   </>;
 }
 
@@ -188,7 +234,7 @@ function ConfirmingDeletionModal(props: {
       <ModalHeader />
       <ModalCloseButton />
       <ModalBody>
-        Are you sure you want to delete this group? After deletion, the related data will still be retained in the database until manually cleared by the administrator.
+        Are you sure you want to delete this group? After deletion, related data will still be retained in the database until manually cleared by an administrator.
       </ModalBody>
       <ModalFooter>
         <Button onClick={props.onCancel}>Cancel</Button>
