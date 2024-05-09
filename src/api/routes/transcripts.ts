@@ -10,7 +10,7 @@ import {
   transcriptAttributes,
   summaryAttributes
 } from "api/database/models/attributesAndIncludes";
-import { checkPermissionForGroup } from "./groups";
+import { checkPermissionForGroupHistory } from "./groups";
 import invariant from 'tiny-invariant';
 import { Op } from "sequelize";
 import Summary from "api/database/models/Summary";
@@ -33,7 +33,7 @@ const list = procedure
 
   if (!g) throw notFoundError("Group", groupId);
 
-  checkPermissionForGroup(ctx.user, g);
+  checkPermissionForGroupHistory(ctx.user, g);
 
   return g.transcripts;
 });

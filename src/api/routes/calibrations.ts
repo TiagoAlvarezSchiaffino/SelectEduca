@@ -3,11 +3,11 @@ import { authUser } from "../auth";
 import { z } from "zod";
 import db from "../database/db";
 import { InterviewType, zInterviewType } from "../../shared/InterviewType";
-import sequelizeInstance from "../database/sequelizeInstance";
+import sequelize from "../database/sequelize";
 import { createGroup, updateGroup } from "./groups";
 import { generalBadRequestError, noPermissionError, notFoundError } from "../errors";
 import { zCalibration } from "../../shared/Calibration";
-import { calibrationAttributes, interviewInclude, interviewAttributes, calibrationInclude
+import { calibrationAttributes, interviewInclude, interviewAttributes, calibrationInclude, groupAttributes
 } from "../database/models/attributesAndIncludes";
 import { Transaction } from "sequelize";
 import invariant from "tiny-invariant";
@@ -33,7 +33,7 @@ const create = procedure
 export async function createCalibration(type: InterviewType, name: string): Promise<string> 
 {
   if (!name.length) throw generalBadRequestError("");
-  return await sequelizeInstance.transaction(async (transaction) => {
+  return await sequelize.transaction(async (transaction) => {
     const c = await db.Calibration.create({ type, name, active: false }, { transaction });
     await createGroup(null, [], ["InterviewManager"], null, null, c.id, transaction);
     return c.id;
@@ -178,23 +178,26 @@ export async function getCalibrationAndCheckPermissionSafe(me: User, calibration
 
 export async function syncCalibrationGroup(calibrationId: string, transaction: Transaction) {
   const c = await db.Calibration.findByPk(calibrationId, {
-    include: [db.Group, {
-      model: db.Interview,
-      attributes: interviewAttributes,
-      include: interviewInclude,
-    }],
-    transaction,
-  });
-
-  if (!c) throw notFoundError("", calibrationId);
-  invariant(c.interviews.every(i => i.type == c.type));
-
-  const userIds: string[] = [];
-  for (const i of c.interviews) {
-    for (const f of i.feedbacks) {
-      if (!userIds.includes(f.interviewer.id)) userIds.push(f.interviewer.id);
+      include: [{
+        model: db.Group,
+        attributes: groupAttributes,
+      }, {
+        model: db.Interview,
+        attributes: interviewAttributes,
+        include: interviewInclude,
+      }],
+      transaction,
+    });
+    
+    if (!c) throw notFoundError("Interview discussion", calibrationId);
+    invariant(c.interviews.every(i => i.type == c.type));
+    const userIds: string[] = [];
+    for (const i of c.interviews) {
+      for (const f of i.feedbacks) {
+        if (!userIds.includes(f.interviewer.id)) userIds.push(f.interviewer.id);
+      }
     }
-  }
 
-  await updateGroup(c.group.id, null, userIds, transaction);
-}
+    await updateGroup(c.group.id, c.group.name, c.group.public, userIds,
+      transaction);
+  }
