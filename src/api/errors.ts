@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 
 type Kind = "User" | "Group" | "Evaluation" | "One-on-One Match" | "Senior Mentor Match" | "Interview" | "Interview Feedback" | "Application Data" | "Interview Discussion" | "Meeting Transcript"
-  | "Discussion Space" | "Discussion Message";
+  | "Discussion Space" | "Discussion Message" | "Student";
 
 export const notFoundError = (kind: Kind, id: string) =>
   new TRPCError({ code: 'NOT_FOUND', message: `${kind} ${id} does not exist.` });

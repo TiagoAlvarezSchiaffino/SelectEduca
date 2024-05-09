@@ -10,6 +10,7 @@ import TabsWithUrlParam from 'components/TabsWithUrlParam';
 import { widePage } from 'AppPage';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import { MinUser } from 'shared/User';
+import ChatRoom from 'components/ChatRoom';
 
 export default widePage(() => {
   const userId = parseQueryStringOrUnknown(useRouter(), 'userId');
@@ -26,10 +27,14 @@ function UserTabs({ user }: {
 }) {
   return <TabsWithUrlParam isLazy>
     <TabList>
+      <Tab>Internal notes</Tab>
       <Tab>Application materials</Tab>
     </TabList>
 
     <TabPanels>
+      <TabPanel>
+        <ChatRoom menteeId={user.id} />
+      </TabPanel> 
       <TabPanel>
         <MenteeApplicant userId={user.id} />
       </TabPanel>

@@ -22,19 +22,21 @@ import { AddIcon } from '@chakra-ui/icons';
 import invariant from "tiny-invariant";
 import Loader from './Loader';
 
-export default function Room({ mentorshipId } : {
-  mentorshipId: string,
+export default function Room({ menteeId } : {
+  menteeId: string,
 }) {
-  const { data: room } = trpcNext.chat.getRoom.useQuery({ mentorshipId });
+  const { data: room } = trpcNext.chat.getRoom.useQuery({ menteeId });
 
-  return !room ? <Loader /> : <VStack spacing={paragraphSpacing * 1.5} align="start">
+  return !room ? <Loader /> :
+    <VStack spacing={paragraphSpacing * 1.5} align="start">
+      <MessageCreator roomId={room.id} />
 
-    <MessageCreator roomId={room.id} />
-
-    {room.messages.sort((a, b) => moment(a.updatedAt).isAfter(moment(b.updatedAt)) ? -1 : 1)
-      .map(m => <Message key={m.id} message={m} />)
-    }
-  </VStack>;
+      {room.messages.sort((a, b) => moment(a.updatedAt)
+        .isAfter(moment(b.updatedAt)) ? -1 : 1)
+        .map(m => <Message key={m.id} message={m} />)
+      }
+    </VStack>
+  ;
 }
 
 function MessageCreator({ roomId }: {
@@ -42,8 +44,12 @@ function MessageCreator({ roomId }: {
 }) {
   const [editing, setEditing] = useState<boolean>(false);
 
-  return editing ? <Editor roomId={roomId} onClose={() => setEditing(false)} marginTop={componentSpacing} /> : 
-    <Button variant="outline" leftIcon={<AddIcon />} onClick={() => setEditing(true)}>New message</Button>;
+  return editing ?
+    <Editor roomId={roomId} onClose={() => setEditing(false)}
+      marginTop={componentSpacing} />
+    : 
+    <Button variant="outline" leftIcon={<AddIcon />}
+      onClick={() => setEditing(true)}>New message</Button>;
 }
 
 function Message({ message: m }: {
@@ -69,7 +75,8 @@ function Message({ message: m }: {
         </>}
       </HStack>
 
-      {editing ? <Editor message={m} onClose={() => setEditing(false)} /> : <ReactMarkdown>{m.markdown}</ReactMarkdown>}
+      {editing ? <Editor message={m} onClose={() => setEditing(false)} /> :
+        <ReactMarkdown>{m.markdown}</ReactMarkdown>}
     </VStack>
   </HStack>;
 }
@@ -79,7 +86,8 @@ function Editor({ roomId, message, onClose, ...rest }: {
   message?: ChatMessage,
   onClose: Function,
 } & TextareaProps) {
-  const [markdown, setMarkdown] = useState<string>(message ? message.markdown : "");
+  const [markdown, setMarkdown] = useState<string>(
+    message ? message.markdown : "");
   const [saving, setSaving] = useState<boolean>(false);
   const utils = trpcNext.useContext();
 
@@ -105,7 +113,9 @@ function Editor({ roomId, message, onClose, ...rest }: {
       autoFocus background="white" height={200} {...rest} 
     />
     <HStack>
-    <Button onClick={save} isLoading={saving} isDisabled={!markdown} variant="brand" leftIcon={<Icon as={MdSend} />}>
+    <Button onClick={save} isLoading={saving} isDisabled={!markdown}
+        variant="brand" leftIcon={<Icon as={MdSend} />}
+      >
       Confirm
     </Button>
     <Button onClick={() => onClose()} variant="ghost" color="grey">Cancel</Button>

@@ -102,13 +102,12 @@ function ContactFieldRow({ isMenteeManager, name, value }: {
   }, [hasCopied]);
 
   return <Flex direction="column">
-    <Box>
+    <Flex>
       <b>{name}{' '}</b>
-      {!isMenteeManager && <>
-        （Only<Link as={NextLink} href="/who-can-see-my-data">Student administrator</Link>
-        Can view）
-      </>}
-    </Box>
+      {!isMenteeManager && <Text color="grey">
+        （Please contact<Link as={NextLink} href="/who-can-see-my-data">Student Administrator</Link>）
+      </Text>}
+    </Flex>
     <Box>
       ••••••••••••{' '}
       {isMenteeManager &&

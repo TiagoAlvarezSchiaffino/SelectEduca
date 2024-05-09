@@ -4,7 +4,7 @@ import Role, { AllRoles, RoleProfiles, isPermitted, zRoles } from "../../shared/
 import db from "../database/db";
 import { Op } from "sequelize";
 import { authUser } from "../auth";
-import User, { zMinUser, zUser, zUserFilter } from "../../shared/User";
+import User, { MinUser, zMinUser, zUser, zUserFilter } from "../../shared/User";
 import { Name, toPinyin } from "../../shared/strings";
 import invariant from 'tiny-invariant';
 import { email } from "../sendgrid";
