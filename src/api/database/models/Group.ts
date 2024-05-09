@@ -26,7 +26,11 @@ import Interview from "./Interview";
 import Calibration from "./Calibration";
 import Role from "shared/Role";
 
-@Table({ paranoid: true, tableName: "groups", modelName: "group" })
+@Table({
+  paranoid: true,
+  tableName: "groups",
+  modelName: "group",
+})
 @Fix
 class Group extends Model {
   @Unique
