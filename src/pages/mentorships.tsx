@@ -37,18 +37,23 @@ import {
   
     const { data: mentorships, refetch } = trpcNext.mentorships.list.useQuery();
   
-    // undefined: editor is closed. null: create a new mentorship. non-nul: edit an existing mentorship
-    const [ mentorshipInEdit, setMentorshipInEdit ] = useState<Mentorship | null | undefined>(undefined);
+    // undefined: editor is closed. null: create a new mentorship. 
+    // non-null: edit an existing mentorship
+    const [ mentorshipInEdit, setMentorshipInEdit ] = 
+      useState<Mentorship | null | undefined>(undefined);
   
     return <Flex direction='column' gap={sectionSpacing}>
       <Box>
-        <Button variant='brand' leftIcon={<AddIcon />} onClick={() => setMentorshipInEdit(null)}>Create One-to-One Match</Button>
+      <Button variant='brand' leftIcon={<AddIcon />} onClick={() =>
+        setMentorshipInEdit(null)}>Create a one-to-one match</Button>
       </Box>
   
-      {mentorshipInEdit !== undefined && <Editor mentorsihp={mentorshipInEdit} onClose={() => {
+      {mentorshipInEdit !== undefined && <Editor mentorsihp={mentorshipInEdit}
+      onClose={() => {
         setMentorshipInEdit(undefined);
         refetch();
-      }} />}
+      }}
+    />}
   
       {!mentorships ? <Loader /> : <TableContainer><Table size="sm">
         <Thead>
