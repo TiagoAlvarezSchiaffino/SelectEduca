@@ -80,7 +80,7 @@ function MenteeTable({ users, onChangeStatus }: {
                 </WrapItem></Wrap>
             </Td>
   
-            <Td><Link as={NextLink} href={`/users/${u.id}`}>
+            <Td><Link as={NextLink} href={`/mentees/${u.id}`}>
               {u.name} <ChevronRightIcon />
             </Link></Td>
             <Td>{toPinyin(u.name ?? '')}</Td>
