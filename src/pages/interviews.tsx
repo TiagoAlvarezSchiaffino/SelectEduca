@@ -41,7 +41,7 @@ import invariant from 'tiny-invariant';
 import { formatUserName, prettifyDate, toPinyin } from 'shared/strings';
 import { useRouter } from 'next/router';
 import { Interview } from 'shared/Interview';
-import { AddIcon, CheckIcon, EditIcon, ViewIcon } from '@chakra-ui/icons';
+import { AddIcon, CheckIcon, ChevronRightIcon, EditIcon, ViewIcon } from '@chakra-ui/icons';
 import { InterviewType } from 'shared/InterviewType';
 import { MinUser } from 'shared/User';
 import { menteeSourceField } from 'shared/menteeApplicationFields';
@@ -96,7 +96,7 @@ function Applicants({ type, applicants, interviews, refetchInterviews }: {
   refetchInterviews: () => any,
 }) {
   return <TableContainer>
-    <Table>
+    <Table size="sm">
       <Thead>
         <Tr>
           <Th>Candidate</Th><Th>Pinyin</Th><Th>Source (Hover to see full text)</Th><Th>Application</Th>
@@ -147,25 +147,33 @@ function Applicant({ type, applicant, interviews, refetchInterviews } : {
         {formatUserName(applicant.name)}
       </TdEditLink>
       <TdEditLink>{toPinyin(applicant.name ?? "")}</TdEditLink>
-      <TdEditLink>
-        {source && <Tooltip label={source}>
-          <Text isTruncated maxWidth="130px">{source}</Text>
-        </Tooltip>}
-      </TdEditLink>
-      <TdLink href={`/applicants/${applicant.id}?type=${type == "MenteeInterview" ? "mentee" : "mentor"}`}>
-        <ViewIcon />
-      </TdLink>
+
       <TdEditLink><Wrap spacing="2">
         {interview && interview.feedbacks.map(f => <WrapItem key={f.id}>
           {formatUserName(f.interviewer.name)}
           {f.feedbackUpdatedAt && <CheckIcon marginStart={1} />}
         </WrapItem>)}
       </Wrap></TdEditLink>
+
+      <TdEditLink>
+        {source && <Tooltip label={source}>
+          <Text isTruncated maxWidth="130px">{source}</Text>
+        </Tooltip>}
+      </TdEditLink>
+
       <TdEditLink>
         {interview && interview.calibration?.name}
       </TdEditLink>
-      <TdEditLink>{interview ? <EditIcon /> : <AddIcon />}</TdEditLink>
-      {interview && <TdLink href={`/interviews/${interview.id}`}><ViewIcon /></TdLink>}
+
+      <TdLink href={`/applicants/${applicant.id}?type=${type == "MenteeInterview" ? "mentee" : "mentor"}`}>
+        Application information <ChevronRightIcon />
+      </TdLink>
+
+      <TdEditLink>Interview setting{interview ? <EditIcon /> : <AddIcon />}</TdEditLink>
+
+      {interview && <TdLink href={`/interviews/${interview.id}`}>
+        Interview page <ChevronRightIcon />
+      </TdLink>}
     </Tr>
   </>;
 }
