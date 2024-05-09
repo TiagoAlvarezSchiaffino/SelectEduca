@@ -14,12 +14,20 @@ export function MentorshipTableRow({ mentorship: m, showCoach, showPinyin, edit 
   showPinyin?: boolean,
   edit?: (m: Mentorship) => void,
 }) {
-  const { data: coach } = trpcNext.users.getCoach.useQuery({ userId: m.mentor.id });
+  // Always fetch coach data even if `!showCoach`, otherwise we have to use
+  // `useEffect`. The latter wouldn't work well because mentorships.tsx has a
+  // call to `utils.users.getCoach.invalidate` which will not trigger
+  // `useEffect` to re-run.
+  const { data: coach } = trpcNext.users.getMentorCoach
+    .useQuery({ userId: m.mentor.id });
 
-  const { data: transcriptLatest } = trpcNext.transcripts.getMostRecentStartedAt.useQuery({ groupId: m.group.id });
-  const transcriptTextAndColor = getDateTextAndColor(transcriptLatest, 45, 60, "No recent calls");
+    const { data: transcriptLatest } = trpcNext.transcripts.getMostRecentStartedAt
+    .useQuery({ groupId: m.group.id });
+  const transcriptTextAndColor = getDateTextAndColor(transcriptLatest, 45, 60,
+    "Not called yet");
 
-  const { data: messageLatest } = trpcNext.chat.getMostRecentMessageUpdatedAt.useQuery({ mentorshipId: m.id });
+  const { data: messageLatest } = trpcNext.chat.getMostRecentMessageUpdatedAt
+    .useQuery({ mentorshipId: m.id });
   const messageTextAndColor = getDateTextAndColor(messageLatest, 60, 90, "No discussions");
 
   const href=`/mentorships/${m.id}`;
