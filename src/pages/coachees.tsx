@@ -16,7 +16,8 @@ import {
   import { formatUserName, prettifyDate } from 'shared/strings';
   import TrLink from 'components/TrLink';
   import moment from 'moment';
-  
+  import { MenteeCell, MentorshipCells, MostRecentChatMessageCell } from './mentees';
+
   export default function Page() {
     const [user] = useUserContext();
   

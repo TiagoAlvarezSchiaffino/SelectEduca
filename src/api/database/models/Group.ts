@@ -21,7 +21,7 @@ import { ARRAY, BOOLEAN, STRING, UUID, UUIDV4 } from "sequelize";
 import GroupUser from "./GroupUser";
 import User from "./User";
 import Transcript from "./Transcript";
-import Partnership from "./Partnership";
+import Mentorship from "./Mentorship";
 import Interview from "./Interview";
 import Calibration from "./Calibration";
 import Role from "shared/Role";
@@ -67,8 +67,8 @@ class Group extends Model {
   @Column(BOOLEAN)
   archived: boolean;
 
-  // A group is said to be "owned" by an interview if this field is non-null.
-  @ForeignKey(() => Interview)
+  // A group is "owned" by a mentorship if this field is non-null.
+  @ForeignKey(() => Mentorship)
   @Column(UUID)
   interviewId: string | null;
 

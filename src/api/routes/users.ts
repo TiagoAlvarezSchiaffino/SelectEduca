@@ -265,17 +265,9 @@ const getApplicant = procedure
   if (await isPermittedForMentee(ctx.user, userId)) return ret;
 
   // Check if the user is an interviewer
-  const myInterviews = await db.Interview.findAll({
-    where: {
-      type,
-      intervieweeId: userId,
-    },
-    attributes: [],
-    include: [{
-      model: db.InterviewFeedback,
-      attributes: [],
-      where: { interviewerId: ctx.user.id },
-    }],
+  const mentorship = await db.Mentorship.findOne({
+    where: { menteeId: userId },
+    attributes: ["mentorId"],
   });
   if (myInterviews.length) return ret;
 

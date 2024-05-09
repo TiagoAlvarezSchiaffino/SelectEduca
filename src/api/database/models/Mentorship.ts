@@ -18,16 +18,17 @@ import {
   import Group from "./Group";
 
   /**
-   * A partnership is a mentee-mentor pair
+   * A mentorship is a mentee-mentor pair
    */
   @Table({
+    tableName: "Partnerships", // TODO: migrate table
     paranoid: true,
     indexes: [{
       unique: true,
       fields: ['mentorId', 'menteeId']
     }]
   })
-  class Partnership extends Model {
+  class Mentorship extends Model {
     @Unique
     @IsUUID(4)
     @PrimaryKey
@@ -58,4 +59,4 @@ import {
     assessments: Assessment[];
   }
   
-  export default Partnership;
+  export default Mentorship;

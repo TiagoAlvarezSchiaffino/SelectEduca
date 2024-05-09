@@ -4,7 +4,7 @@ import _ from "lodash";
 import db from "../database/db";
 import { z } from "zod";
 import { zAssessment } from "../../shared/Assessment";
-import Partnership from "../database/models/Partnership";
+import Partnership from "../database/models/Mentorship";
 import { TRPCError } from "@trpc/server";
 import { noPermissionError, notFoundError } from "../errors";
 import { partnershipInclude } from "api/database/models/attributesAndIncludes";
@@ -68,9 +68,9 @@ const listAllForMentorship = procedure
   .input(z.string())
   .query(async ({ ctx, input: id }) => 
 {
-  const p = await db.Partnership.findByPk(id, { attributes: ["mentorId"] });
+  const p = await db.Mentorship.findByPk(mentorshipId, { attributes: ["mentorId"] });
   if (p?.mentorId !== ctx.user.id && !isPermitted(ctx.user.roles, "MentorCoach")) {
-    throw noPermissionError("", id);
+    throw noPermissionError("one-to-one matching", id);
   }
 
   return await db.Assessment.findAll({
