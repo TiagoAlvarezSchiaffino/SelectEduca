@@ -4,10 +4,10 @@ import trpc, { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
 import {
   Text, TabList, TabPanels, Tab, TabPanel, Tbody, Td, Table,
+  Stack,
 } from '@chakra-ui/react';
 import GroupBar from 'components/GroupBar';
 import { paragraphSpacing, sectionSpacing } from 'theme/metrics';
-import MobileExperienceAlert from 'components/MobileExperienceAlert';
 import MenteeApplicant from 'components/MenteeApplicant';
 import TabsWithUrlParam from 'components/TabsWithUrlParam';
 import Transcripts from 'components/Transcripts';
@@ -16,70 +16,61 @@ import { useUserContext } from 'UserContext';
 import PageBreadcrumb from 'components/PageBreadcrumb';
 import TrLink from 'components/TrLink';
 import ChatRoom from 'components/ChatRoom';
+import { Mentorship } from 'shared/Mentorship';
 
 export default widePage(() => {
   const mentorshipId = parseQueryStringOrUnknown(useRouter(), 'mentorshipId');
   const { data: m } = trpcNext.partnerships.get.useQuery(mentorshipId);
-  const [user] = useUserContext();
 
-  if (!m) return <Loader />;
-
-  const iAmTheMentor = m.mentor.id === user.id;
-
-  return <>
-    <MobileExperienceAlert marginBottom={paragraphSpacing} />
-
-    {iAmTheMentor ?
-      <GroupBar group={m.group} showJoinButton showGroupName={false}
-      marginBottom={sectionSpacing + 2} />
-      :
-      <PageBreadcrumb current={`Student：${formatUserName(m.mentee.name)}，` +
-        `Tutor： ${formatUserName(m.mentor.name)}`} />
-    }
-
-    <MenteeTabs mentorshipId={mentorshipId} menteeId={m.mentee.id}
-      groupId={m.group.id} />
+  return !m ? <Loader /> : <>
+    <PageBreadcrumb current={`${formatUserName(m.mentee.name)}`} />
+    <MenteeTabs mentorship={m} />
   </>;
 });
 
-function MenteeTabs({ mentorshipId, menteeId, groupId }: {
-  mentorshipId: string,
-  menteeId: string,
-  groupId: string,
+function MenteeTabs({ mentorship }: {
+  mentorship: Mentorship,
 }) {
   return <TabsWithUrlParam isLazy>
     <TabList>
+      <Tab>One-on-one tutor call</Tab>
       <Tab>Internal Discussion</Tab>
-      <Tab>Call Summary</Tab>
       <Tab>Application Materials</Tab>
       <Tab>Annual Feedback</Tab>
     </TabList>
 
     <TabPanels>
       <TabPanel>
+        <MentorshipPanel mentorship={mentorship} />
+      </TabPanel>
+      <TabPanel>
         <Text color="grey" marginBottom={paragraphSpacing}>
-          Record student situations and interact with senior mentors here. Students cannot see the content of this page.
+          Record student status or communicate with senior tutors here. Students cannot see this page.
         </Text>
-        <ChatRoom mentorshipId={mentorshipId} />
+        <ChatRoom mentorshipId={mentorship.id} />
       </TabPanel>
       <TabPanel>
-        <Transcripts groupId={groupId} />
+        <MenteeApplicant userId={mentorship.mentee.id} readonly />
       </TabPanel>
       <TabPanel>
-        <MenteeApplicant userId={menteeId} readonly />
-      </TabPanel>
-      <TabPanel>
-        <AssessmentsTable {...{ mentorshipId }} />
+        <AssessmentsTable mentorshipId={mentorship.id} />
       </TabPanel>
     </TabPanels>
   </TabsWithUrlParam>;
 }
 
-function InternalChatRoom({ mentorshipId }: {
-  mentorshipId: string,
+function MentorshipPanel({ mentorship: m }: {
+  mentorship: Mentorship,
 }) {
-  const { data: room } = trpcNext.partnerships.internalChat.getRoom.useQuery({ mentorshipId });
-  return !room ? <Loader /> : <ChatRoom room={room} />;
+  const [me] = useUserContext();
+
+  return <Stack spacing={sectionSpacing} marginTop={sectionSpacing}>
+    {m.mentor.id === me.id ?
+      <GroupBar group={m.group} showJoinButton showGroupName={false} />
+      :
+      <b>Tutor: {formatUserName(m.mentor.name)}</b>}
+    <Transcripts groupId={m.group.id} />
+  </Stack>;
 }
 
 function AssessmentsTable({ mentorshipId }: {
@@ -87,12 +78,10 @@ function AssessmentsTable({ mentorshipId }: {
 }) {
   const router = useRouter();
   const { data: assessments } = trpcNext.assessments.listAllForMentorship.useQuery({ mentorshipId });
-
   const createAndGo = async () => {
-    const id = await trpc.assessments.create.mutate({ partnershipId: mentorshipId });
+    const id = await trpc.assessments.create.mutate({ mentorshipId: mentorshipId });
     router.push(`/mentorships/${mentorshipId}/assessments/${id}`);
   };
-
   return !assessments ? <Loader /> : !assessments.length ? <Text color="grey">No feedback content.</Text> : <Table>
     <Tbody>
       {assessments.map(a => <TrLink key={a.id} href={`/mentorships/${mentorshipId}/assessments/${a.id}`}>

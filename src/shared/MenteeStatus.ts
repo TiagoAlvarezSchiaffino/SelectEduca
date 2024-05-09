@@ -1,10 +1,18 @@
 import z from "zod";
 
+/**
+ * null status means pending screening
+ */
 export const AllMenteeStatuses = [
-  "Waiting for interview",
+  "Initial occupation",
+  "Face evidence",
+
   "Current students",
+  "Scholarship only",
+
   "Active alumni",
   "Exit alumni",
+  "Persuade to quit",
   "Jacky",
 ] as const;
 
