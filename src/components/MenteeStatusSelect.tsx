@@ -4,7 +4,7 @@ import _ from "lodash";
 import { AllMenteeStatuses, MenteeStatus, zMenteeStatus } from 'shared/MenteeStatus';
 
 export const NULL_MENTEE_STATUS = "Pending";
-export const ANY_MENTEE_STATUS = "Any";
+export const ANY_MENTEE_STATUS = "All";
 
 export default function MenteeStatusSelect({
   value: status, showAny, size, onChange 

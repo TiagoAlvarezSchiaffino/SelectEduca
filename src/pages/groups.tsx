@@ -33,8 +33,8 @@ import Loader from 'components/Loader';
 import UserSelector from '../components/UserSelector';
 import QuestionIconTooltip from "../components/QuestionIconTooltip";
 
-
-export const publicGroupDescription = "Public meetings allow all users to join. The users listed below can manage and access meeting history.";
+export const publicGroupDescription = "Public meetings allow anyone with a link to the Yuantu meeting to join the meeting." + 
+  "Only the users listed below have permission to view meeting history.";
 
 export default function Page() {
   const [userIds, setUserIds] = useState<string[]>([]);
