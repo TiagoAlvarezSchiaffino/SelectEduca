@@ -95,7 +95,7 @@ import {
         return;
       }
       const fetch = async () => {
-        const coach = await trpc.users.getCoach.query({ userId: m.mentor.id });
+        const coach = await trpc.users.getMentorCoach.query({ userId: m.mentor.id });
         setOldCoach(coach);
       };
       fetch();
@@ -114,9 +114,9 @@ import {
         }
   
         if (coachId) {
-          await trpc.users.setCoach.mutate({ userId: mentorId, coachId });
+          await trpc.users.setMentorCoach.mutate({ userId: mentorId, coachId });
           // Force UI to refresh coach list.
-          utils.users.getCoach.invalidate({ userId: mentorId });
+          utils.users.getMentorCoach.invalidate({ userId: mentorId });
         }
   
         onClose();

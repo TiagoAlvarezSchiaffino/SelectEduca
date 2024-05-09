@@ -9,6 +9,7 @@ import {
     Flex,
     TableContainer,
     WrapItem,
+    Link,
   } from '@chakra-ui/react';
   import React, { useState } from 'react';
   import trpc, { trpcNext } from "../trpc";
@@ -19,7 +20,9 @@ import {
   import MenteeStatusSelect from 'components/MenteeStatusSelect';
   import invariant from 'tiny-invariant';
   import { MenteeStatus } from 'shared/MenteeStatus';
-  
+  import NextLink from "next/link";
+  import { ChevronRightIcon } from '@chakra-ui/icons';
+
 const fixedFilter: UserFilter = { containsRoles: ["Mentee"] };
   
 export default function Page() {
@@ -73,7 +76,9 @@ function MenteeTable({ users, onChangeStatus }: {
                 </WrapItem></Wrap>
             </Td>
   
-            <Td>{u.name}</Td>
+            <Td><Link as={NextLink} href={`/users/${u.id}`}>
+              {u.name} <ChevronRightIcon />
+            </Link></Td>
             <Td>{toPinyin(u.name ?? '')}</Td>
           </Tr>
         ))}
