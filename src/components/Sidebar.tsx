@@ -23,8 +23,6 @@ import {
   MdScience,
   MdChevronRight, 
   MdFace, 
-  MdFace5, 
-  MdOutlineSyncAlt, 
   MdVideocam,
   MdSupervisorAccount,
   MdMic
@@ -92,13 +90,6 @@ const sidebarItems: SidebarItem[] = [
     regex: /^\/groups$/,
     role: 'GroupManager',
   },
-  {
-    name: 'Manage Student Interviews',
-    path: '/interviews?type=mentee',
-    icon: MdFace5,
-    regex: /^\/interviews\?type=mentee/,
-    role: 'MenteeManager',
-  },
 ];
 
 function mentorships2Items(mentorships: Mentorship[] | undefined): SidebarItem[] {
@@ -150,7 +141,8 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
               />
             </NextLink>
         </Box>
-        <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }} onClick={onClose} />
+        <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }}
+          onClick={onClose} />
       </Flex>
       <Box height={{
         base: 0,
@@ -163,7 +155,8 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
       
       {mentorshipItems?.length > 0 && <Divider marginY={2} />}
 
-      {mentorshipItems.map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
+      {mentorshipItems.map(item => <SidebarRow key={item.path} item={item}
+        onClose={onClose} />)}
     </Box>
   );
 };
