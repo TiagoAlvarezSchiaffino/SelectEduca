@@ -69,27 +69,30 @@ function LoadedApplicant({ user, application, showTitle, useNameAsTitle,
       `${formatUserName(user.name)}` : "Application materials"}</Heading>}
 
     {user.genre && <FieldRow name="Gender" readonly value={user.genre} />}
-      <ContactFieldRow isMenteeManager={isMenteeManager} 
+
+    <ContactFieldRow readable={isMenteeManager} 
         name="WeChat" value={user.wechat ?? '(WeChat not provided)'} />
-      <ContactFieldRow isMenteeManager={isMenteeManager}
+    <ContactFieldRow readable={isMenteeManager}
         name="Mail" value={user.email} />
 
-    {!application ? <Text color="grey">No application materials.</Text> :
-      menteeApplicationFields.map(f => {
-        invariant(application);
-        if (f.name in application) {
-          return <FieldRow readonly={!isMenteeManager} key={f.name} name={f.name}
-            value={application[f.name]}
-            update={v => update(f.name, v)}
-          />;
-        }
+{menteeApplicationFields.map(f => {
+      if (application && f.name in application) {
+        return <FieldRow readonly={!isMenteeManager} key={f.name} name={f.name}
+          value={application[f.name]}
+          update={v => update(f.name, v)}
+        />;
+      } else if (isMenteeManager && f.showForEdits) {
+        return <FieldRow readonly={false} key={f.name} name={f.name}
+          value={''}
+          update={v => update(f.name, v)}
+        />;
       }
-    )}
+})}
   </Flex>;
 }
 
-function ContactFieldRow({ isMenteeManager, name, value }: { 
-  isMenteeManager: boolean,
+function ContactFieldRow({ readable, name, value }: { 
+  readable: boolean,
   name: string,
   value: string 
 }) {
@@ -104,13 +107,13 @@ function ContactFieldRow({ isMenteeManager, name, value }: {
   return <Flex direction="column">
     <Flex>
       <b>{name}{' '}</b>
-      {!isMenteeManager && <Text color="grey">
+      {!readable && <Text color="grey">
         （Please contact<Link as={NextLink} href="/who-can-see-my-data">Student Administrator</Link>）
       </Text>}
     </Flex>
     <Box>
       ••••••••••••{' '}
-      {isMenteeManager &&
+      {readable &&
         <Tooltip label="Copy content to clipboard">
           <CopyIcon onClick={onCopy} cursor="pointer" />
         </Tooltip>

@@ -9,21 +9,25 @@ import {
     ButtonGroup,
   } from '@chakra-ui/react';
   import React from 'react';
-  import { CheckIcon, CloseIcon, EditIcon } from '@chakra-ui/icons';
-  
+  import { CheckIcon, CloseIcon } from '@chakra-ui/icons';
+  import { MdEdit } from 'react-icons/md';
+
   export default function EditableWithIcon({ mode, ...rest }: {
     mode: "input" | "textarea",
   } & EditableProps) {
-    // Show the edit icon when not in editing mode.
     const EditableControls = () => {
-      const { isEditing, getEditButtonProps, getSubmitButtonProps, getCancelButtonProps } = useEditableControls();
+      const { isEditing, getEditButtonProps, getSubmitButtonProps, 
+        getCancelButtonProps } = useEditableControls();
       return isEditing ? 
         <ButtonGroup size='sm'>
-          <IconButton aria-label='Confirm' icon={<CheckIcon />} {...getSubmitButtonProps()} />
-          <IconButton aria-label='Cancel' icon={<CloseIcon />} {...getCancelButtonProps()} />
+          <IconButton aria-label='Confirm' icon={<CheckIcon />}
+            {...getSubmitButtonProps()} />
+          <IconButton aria-label='Cancel' icon={<CloseIcon />}
+            {...getCancelButtonProps()} />
         </ButtonGroup>
         :
-        <IconButton aria-label='Edit' icon={<EditIcon />} {...getEditButtonProps()} />;
+        <IconButton aria-label='Edit' icon={<MdEdit />}
+        {...getEditButtonProps()} />;
     };
   
     return <Editable {...rest}>
