@@ -12,10 +12,6 @@ export const AllRoles = [
   'Mentee',
   'Interviewer',
   'MentorCoach',
-
-  // Deprecated
-  'InterviewManager',
-  'MentorshipManager',
 ] as const;
 
 export const RoleProfiles: { [key: string]: {
@@ -86,18 +82,6 @@ export const RoleProfiles: { [key: string]: {
     privilegedUserDataAccess: true,
     automatic: true,
   },
-
-  // Deprecated
-    InterviewManager: {
-      displayName: 'Deprecated',
-      actions: 'Manage user roles',
-      privilegedUserDataAccess: false,
-    },
-    MentorshipManager: {
-      displayName: 'Deprecated',
-      actions: 'Management Mentor Match',
-      privilegedUserDataAccess: false,
-    },
 };
 
 type Role = typeof AllRoles[number];
