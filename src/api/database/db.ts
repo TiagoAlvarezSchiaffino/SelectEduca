@@ -1,6 +1,3 @@
-/**
- * TODO move rename folder `database` to `db`, rename this file to `db/index.ts`. Register all the models in this file.
- */
 import User from "./models/User";
 import Group from "./models/Group";
 import GroupUser from "./models/GroupUser";
@@ -15,7 +12,6 @@ import Calibration from "./models/Calibration";
 import InterviewFeedbackUpdateAttempt from "./models/InterviewFeedbackUpdateAttempt";
 import ChatRoom from "./models/ChatRoom";
 import ChatMessage from "./models/ChatMessage";
-import SummaryNameMap from "./models/SummaryNameMap";
 
 const db = {
   Mentorship,
@@ -32,7 +28,6 @@ const db = {
   Calibration,
   ChatRoom,
   ChatMessage,
-  SummaryNameMap,
 };
 
 export default db;
