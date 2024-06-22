@@ -2,7 +2,6 @@
     "user": {
         "roles": [
             "SystemAlertSubscriber",
-            "RoleManager",
             "UserManager",
             "GroupManager",
             "SummaryEngineer",
@@ -11,10 +10,7 @@
             "Mentor",
             "Mentee",
             "Interviewer",
-            "MentorCoach",
-            "PrivilegedRoleManager",
-            "PartnershipManager",
-            "PartnershipAssessor"
+            "MentorCoach"
         ],
         "id": "",
         "name": "abcd",

@@ -166,7 +166,7 @@ function UserEditor(props: {
             <FormErrorMessage>Name is required.</FormErrorMessage>
           </FormControl>
 
-          {isPermitted(me.roles, "RoleManager") && <FormControl>
+          {isPermitted(me.roles, "UserManager") && <FormControl>
             <FormLabel>Role</FormLabel>
             <Stack>
               {AllRoles.map(r => {

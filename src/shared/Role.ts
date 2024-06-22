@@ -2,7 +2,6 @@ import z from "zod";
 
 export const AllRoles = [
   'SystemAlertSubscriber',
-  'RoleManager',
   'UserManager',
   'GroupManager',
   'SummaryEngineer',
@@ -12,6 +11,9 @@ export const AllRoles = [
   'Mentee',
   'Interviewer',
   'MentorCoach',
+
+  // Deprecated
+  'RoleManager',
 ] as const;
 
 export const RoleProfiles: { [key: string]: {
@@ -26,11 +28,6 @@ export const RoleProfiles: { [key: string]: {
   SystemAlertSubscriber: {
     displayName: 'System Alert Subscriber',
     actions: 'Receive and handle alerts for system abnormal events',
-    privilegedUserDataAccess: false,
-  },
-  RoleManager: {
-    displayName: 'Role Manager',
-    actions: 'Manage user roles',
     privilegedUserDataAccess: false,
   },
   UserManager: {
@@ -81,6 +78,13 @@ export const RoleProfiles: { [key: string]: {
     actions: 'Assist and evaluate non-senior mentors',
     privilegedUserDataAccess: true,
     automatic: true,
+  },
+
+  // Deprecated
+  RoleManager: {
+    displayName: 'Deprecated',
+    actions: 'Manage user roles',
+    privilegedUserDataAccess: false,
   },
 };
 
