@@ -94,7 +94,7 @@ export default function GroupBar({
         <Box>
           <JoinButton
             isLoading={isJoiningMeeting} loadingText={'Joining...'}
-            onClick={async () => launchMeeting(group.id)}
+            onClick={() => launchMeeting(group.id)}
           >Join</JoinButton>
         </Box>
       }
