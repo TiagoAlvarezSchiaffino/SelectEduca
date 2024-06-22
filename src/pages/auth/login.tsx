@@ -52,6 +52,10 @@ export default function Login() {
         localStorage.setItem(localStorageKeyForLoginEmail, email);
         router.push(`/auth/verify`);
       }
+    } catch (err) {
+      const msg = `Oops, system error, please contact the administrator：${err}`;
+      console.error(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
