@@ -95,7 +95,7 @@ export default function GroupBar({
           <JoinButton
             isLoading={isJoiningMeeting} loadingText={'Joining...'}
             onClick={() => launchMeeting(group.id)}
-          >Join</JoinButton>
+          >join in</JoinButton>
         </Box>
       }
 
@@ -126,30 +126,30 @@ export default function GroupBar({
 }
 
 function GroupTagOrName({ group }: { group: Group }) {
-  return isOwned(group) ?
-    // Without this Box the tag will fill the whole grid row
-    <Box justifyItems="left">
-      <Tag color="white" bgColor="gray">
-        {group.partnershipId ? "One-on-One Mentor" :
-          group.calibrationId ? "Interview Discussion" :
-            group.coacheeId ? "Senior Mentor" :
-              group.interviewId ? "Interview" :
-                "FIXME" }
+  return <HStack>
+    {group.archived && <Tag color="white" bgColor="gray.800">Archived</Tag>}
+
+    {group.public && <Tooltip label={publicGroupDescription}>
+      <Tag color="white" bgColor="green.400">
+        public
+        <QuestionIcon color="white" marginStart={2} />
       </Tag>
-    </Box>
-    :
-    <HStack>
-      {group.public && <Tooltip label={publicGroupDescription}>
-        <Tag color="white" bgColor="green.400">
-          Public
-          <QuestionIcon color="white" marginStart={2} />
-        </Tag>
-      </Tooltip>}
+    </Tooltip>}
+
+    {isOwned(group) ?
+      <Tag color="white" bgColor="gray">
+      {group.partnershipId ? "One-to-one tutor" :
+        group.calibrationId ? "Interview discussion" :
+          group.coacheeId ? "Senior tutor" :
+            group.interviewId ? "interview" :
+              "FIXME" }
+      </Tag>
+      :      
       <Text color='grey' fontSize='sm'>
         {formatGroupName(group.name, group.users.length)}
       </Text>
-      {group.archived && <Tag color="white" bgColor="gray.800">Archived</Tag>}
-    </HStack>;
+    }
+  </HStack>;
 }
 
 export function JoinButton(props: ButtonProps) {
@@ -159,7 +159,7 @@ export function JoinButton(props: ButtonProps) {
     bgColor="white"
     leftIcon={<MdVideocam />}
     {...props}
-  >{props.children ? props.children : "Join"}</Button>;
+  >{props.children ? props.children : "join in"}</Button>;
 }
 
 export function OngoingMeetingWarning(props: {
@@ -168,14 +168,14 @@ export function OngoingMeetingWarning(props: {
   return (<ModalWithBackdrop isOpen onClose={props.onClose}>
     <ModalOverlay />
     <ModalContent>
-      <ModalHeader>Unable to Join Meeting</ModalHeader>
+      <ModalHeader>Unable to join meeting</ModalHeader>
       <ModalCloseButton />
       <ModalBody>
-        <p>Sorry, the maximum number of ongoing meetings has been reached. Please try again later.<br /><br />The system administrator has been notified and will take action promptly.</p>
+        <p>Sorry, the number of simultaneous meetings exceeds the limit. Please try again later.<br /><br />The system administrator has received the notification and will handle it promptly.</p>
       </ModalBody>
       <ModalFooter>
         <Button onClick={props.onClose}>
-          Confirm
+          confirm
         </Button>
       </ModalFooter>
     </ModalContent>

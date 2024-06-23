@@ -124,7 +124,7 @@ export async function createInterview(type: InterviewType, calibrationId: string
       await u.save({ transaction });
     }
 
-    await createGroup(null, [intervieweeId, ...interviewerIds], [], null, i.id, null, transaction);
+    await createGroup(null, [intervieweeId, ...interviewerIds], null, i.id, null, null, transaction);
 
     if (calibrationId) await syncCalibrationGroup(calibrationId, transaction);
     return i.id;
