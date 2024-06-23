@@ -135,7 +135,6 @@ const update = procedure
     ...isUserManager ? {
       roles: input.roles,
       email: input.email,
-      menteeStatus: input.menteeStatus,
     } : {},
   });
 });

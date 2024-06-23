@@ -25,7 +25,8 @@ import {
   MdFace, 
   MdVideocam,
   MdSupervisorAccount,
-  MdMic
+  MdMic,
+  MdLocalLibrary
 } from 'react-icons/md';
 import Role from "../shared/Role";
 import { sidebarBreakpoint, sidebarContentMarginTop, sidebarWidth, topbarHeight } from './Navbars';
@@ -37,7 +38,7 @@ export interface SidebarItem {
   icon: React.ComponentType,
   path: string,
   regex: RegExp,
-  role?: Role,
+  roles?: Role | Role[],
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -53,42 +54,49 @@ const sidebarItems: SidebarItem[] = [
     path: '/coachees',
     icon: MdSupervisorAccount,
     regex: /^\/coachees/,
-    role: 'MentorCoach',
+    roles: 'MentorCoach',
   },
   {
     name: 'Student Profile',
     path: '/mentees?menteeStatus=CurrentStudents',
     icon: AttachmentIcon,
     regex: /^\/mentees/,
-    role: 'MenteeManager',
+    roles: 'MenteeManager',
   },
   {
     name: 'My Interview',
     path: '/interviews/mine',
     icon: MdMic,
     regex: /^\/interviews\/mine/,
-    role: 'Interviewer',
+    roles: 'Interviewer',
+  },
+  {
+    name: 'Resource library',
+    path: '/resources',
+    icon: MdLocalLibrary,
+    regex: /^\/resources$/,
+    roles: ['Mentor', 'Mentee', 'MentorCoach'],
   },
   {
     name: 'Abstract R&D',
     path: '/groups/lab',
     icon: MdScience,
     regex: /^\/groups\/lab/,
-    role: 'SummaryEngineer',
+    roles: 'SummaryEngineer',
   },
   {
     name: 'Manage Users',
     path: '/users',
     icon: MdPerson,
     regex: /^\/users/,
-    role: 'UserManager',
+    roles: 'UserManager',
   },
   {
     name: 'Manage Meeting Groups',
     path: '/groups',
     icon: MdGroups,
     regex: /^\/groups$/,
-    role: 'GroupManager',
+    roles: 'GroupManager',
   },
 ];
 
@@ -150,7 +158,7 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
       }}/>
 
       {sidebarItems
-        .filter(item => isPermitted(me.roles, item.role))
+        .filter(item => isPermitted(me.roles, item.roles))
         .map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
       
       {mentorshipItems?.length > 0 && <Divider marginY={2} />}
