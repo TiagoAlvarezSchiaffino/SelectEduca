@@ -66,12 +66,12 @@ export default function Page() {
 
     <Wrap spacing={6}>
       <WrapItem minWidth={100} alignItems="center">
-        <UserSelector isMulti placeholder="Filter by user, or input two or more users to create a group" onSelect={setUserIds} />
+        <UserSelector isMulti placeholder="Filter by user, or enter one or more users to create a group" onSelect={setUserIds} />
       </WrapItem>
       <WrapItem alignItems="center">
         <Button
           isLoading={creating}
-          isDisabled={userIds.length < 2}
+          isDisabled={userIds.length < 1}
           loadingText='Creating group...'
           variant='brand' onClick={createGroup}>
           Create Free Group
@@ -114,7 +114,7 @@ function GroupEditor({ group, onClose }: {
   const [working, setWorking] = useState(false);
   const [confirmingDeletion, setConfirmingDeletion] = useState(false);
 
-  const isValid = users.length + newUserIds.length > 1;
+  const isValid = users.length + newUserIds.length > 0;
 
   const save = async () => {
     setWorking(true);
@@ -205,7 +205,7 @@ function GroupEditor({ group, onClose }: {
               </FormControl>
             )}
             <FormControl isInvalid={!isValid}>
-              <FormErrorMessage>At least two users are required.</FormErrorMessage>
+              <FormErrorMessage>Requires at least one user.</FormErrorMessage>
             </FormControl>
           </VStack>
         </ModalBody>
