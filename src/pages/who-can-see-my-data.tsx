@@ -47,7 +47,7 @@ import {
         <Tbody>
           <Tr>
             <Td></Td>
-            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('SummaryEngineer')}、{dp('MenteeManager')}
+            <Td>{dp('UserManager')}、{dp('GroupManager')}、{dp('MenteeManager')}
           </Td>
           </Tr>
           <Tr>
@@ -59,13 +59,13 @@ import {
             <Td>{dp('MenteeEngineer')}</Td>
           </Tr>
           <Tr>
-            <Td>Transcripts and minutes of individual calls between tutor and student.</Td>
-            <Td>{dp('SummaryEngineer')}、{dp('MentorshipAssessor')}、
-              {dp('MentorCoach')}（Note: The transcribed text is only collected during the internal testing period of the website.）</Td>
+            <Td>Minutes of the one-on-one tutor’s call with the student</Td>
+            <Td>{dp('GroupManager')}、{dp('MentorshipAssessor')}、
+              {dp('MentorCoach')}</Td>
           </Tr>
           <Tr>
-            <Td>Transcripts and minutes of other meetings</Td>
-            <Td>{dp('SummaryEngineer')}、Other members of the same meeting group (Note: Transcripts are only collected during the website beta period)</Td>
+            <Td>Minute text of other meetings</Td>
+            <Td>{dp('GroupManager')}, other members of the same conference group</Td>
           </Tr>
         </Tbody>
       </Table>

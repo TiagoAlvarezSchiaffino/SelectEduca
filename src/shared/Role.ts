@@ -4,7 +4,6 @@ export const AllRoles = [
   'SystemAlertSubscriber',
   'UserManager',
   'GroupManager',
-  'SummaryEngineer',
   'MentorshipAssessor',
   'MenteeManager',
   'Mentor',
@@ -13,6 +12,7 @@ export const AllRoles = [
   'MentorCoach',
 
   // Deprecated
+  'SummaryEngineer',
   'RoleManager',
 ] as const;
 
@@ -36,13 +36,8 @@ export const RoleProfiles: { [key: string]: {
     privilegedUserDataAccess: true,
   },
   GroupManager: {
-    displayName: 'Group Manager',
-    actions: 'Manage meeting groups',
-    privilegedUserDataAccess: true,
-  },
-  SummaryEngineer: {
-    displayName: 'Summary Engineer',
-    actions: 'Develop automatic meeting summary function',
+    displayName: 'Conference Manager',
+    actions: 'Manage meeting breakouts and meeting minutes',
     privilegedUserDataAccess: true,
   },
   MentorshipAssessor: {
@@ -81,6 +76,11 @@ export const RoleProfiles: { [key: string]: {
   },
 
   // Deprecated
+  SummaryEngineer: {
+    displayName: 'Deprecated',
+    actions: 'Develop automatic meeting summary function',
+    privilegedUserDataAccess: false,
+  },
   RoleManager: {
     displayName: 'Deprecated',
     actions: 'Manage user roles',

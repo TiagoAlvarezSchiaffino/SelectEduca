@@ -23,6 +23,8 @@ import ConsentModal, { consentFormAccepted } from '../components/ConsentModal';
 import ModalWithBackdrop from 'components/ModalWithBackdrop';
 import Loader from 'components/Loader';
 import { isPermitted } from 'shared/Role';
+import NextLink from 'next/link';
+import { sectionSpacing } from 'theme/metrics';
 
 export default function Page() {
   const [user] = useUserContext();

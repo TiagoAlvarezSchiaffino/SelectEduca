@@ -78,13 +78,6 @@ const sidebarItems: SidebarItem[] = [
     roles: ['Mentor', 'Mentee', 'MentorCoach'],
   },
   {
-    name: 'Abstract R&D',
-    path: '/groups/lab',
-    icon: MdScience,
-    regex: /^\/groups\/lab/,
-    roles: 'SummaryEngineer',
-  },
-  {
     name: 'Manage Users',
     path: '/users',
     icon: MdPerson,
@@ -92,7 +85,7 @@ const sidebarItems: SidebarItem[] = [
     roles: 'UserManager',
   },
   {
-    name: 'Manage Meeting Groups',
+    name: 'Management Meeting',
     path: '/groups',
     icon: MdGroups,
     regex: /^\/groups$/,
