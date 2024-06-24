@@ -14,7 +14,7 @@ import invariant from "tiny-invariant";
 import PageLoader from 'components/PageLoader';
 import AppPageContainer from 'components/AppPageContainer';
 import AuthPageContainer from 'components/AuthPageContainer';
-import AppPage from 'AppPage';
+import AppPage, { AppPageType } from 'AppPage';
 
 function App({ Component, pageProps: { session, ...pageProps } }: {
   Component: AppPage,
@@ -29,7 +29,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: {
           <meta name='theme-color' content='#000000' />
         </Head>
 
-        <SwitchBoard wide={Component.wide} {...pageProps}>
+        <SwitchBoard pageType={Component.type} {...pageProps}>
           <Component />
         </SwitchBoard>
 
@@ -52,7 +52,9 @@ function App({ Component, pageProps: { session, ...pageProps } }: {
 
 export default trpcNext.withTRPC(App);
 
-function SwitchBoard({ children, wide, ...rest }: PropsWithChildren & { wide: boolean}) {
+function SwitchBoard({ children, pageType, ...rest }:
+  PropsWithChildren & { pageType: AppPageType }) 
+  {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -73,7 +75,9 @@ function SwitchBoard({ children, wide, ...rest }: PropsWithChildren & { wide: bo
       router.replace("/");
       return null;
     } else {
-      return <AppPageContainer wide={wide} user={session.user} {...rest}>{children}</AppPageContainer>;
+      return <AppPageContainer pageType={pageType} user={session.user} {...rest}>
+        {children}
+      </AppPageContainer>;
     }
   }
 }
