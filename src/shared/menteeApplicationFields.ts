@@ -7,6 +7,10 @@ export type ApplicationField = {
 
 export const menteeSourceField = "Cooperative Agency Source";
 export const menteeAcceptanceYearField = "admission session";
+export const menteeCollegeField = "Current school";
+export const menteeMajorField = "Major";
+export const menteeDegreeField = "Type of study";
+export const menteeFirstYearInCollegeField = "Year of entry into the first year of university";
 
 /**
  * Field order dictates the order the fields are displayed.
@@ -14,11 +18,11 @@ export const menteeAcceptanceYearField = "admission session";
 const menteeApplicationFields: ApplicationField[] = [
   { name: menteeAcceptanceYearField, showForEdits: true, },
   { jsjField: "field_165", jsjProxiedField: "field_165", name: menteeSourceField, showForEdits: true, },
-  { jsjField: "field_149", jsjProxiedField: "field_149", name: "Type of study", showForEdits: true, },
+  { jsjField: "field_149", jsjProxiedField: "field_149", name: "menteeDegreeField", showForEdits: true, },
   { jsjField: "field_161", name: "Is the undergraduate degree the first batch (one book)?", showForEdits: true, },
-  { jsjField: "field_107", jsjProxiedField: "field_108", name: "Current School", showForEdits: true, },
-  { jsjField: "field_108", jsjProxiedField: "field_172", name: "Major", showForEdits: true, },
-  { jsjField: "field_167", jsjProxiedField: "field_167", name: "Year of entry into the first year of university", showForEdits: true, },
+  { jsjField: "field_107", jsjProxiedField: "field_108", name: "menteeCollegeField", showForEdits: true, },
+  { jsjField: "field_108", jsjProxiedField: "field_172", name: "menteeMajorField", showForEdits: true, },
+  { jsjField: "field_167", jsjProxiedField: "field_167", name: "menteeFirstYearInCollegeField", showForEdits: true, },
   { jsjField: "field_169", name: "Expected graduation year", showForEdits: true, },
   { jsjProxiedField: "field_173", name: "Recommended text from partner institutions", showForEdits: true, },
 
