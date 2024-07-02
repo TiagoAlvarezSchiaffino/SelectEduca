@@ -1,9 +1,9 @@
 import { useRouter } from 'next/router';
-import { formatUserName, parseQueryStringOrUnknown } from "shared/strings";
+import { formatUserName, parseQueryStringOrUnknown, prettifyDate } from "shared/strings";
 import { trpcNext } from 'trpc';
 import Loader from 'components/Loader';
 import {
-  TabList, TabPanels, Tab, TabPanel, Stack
+  TabList, TabPanels, Tab, TabPanel, Stack,
 } from '@chakra-ui/react';
 import MenteeApplicant from 'components/MenteeApplicant';
 import TabsWithUrlParam from 'components/TabsWithUrlParam';
@@ -39,12 +39,17 @@ function MenteeTabs({ user, mentorships }: {
   return <TabsWithUrlParam isLazy>
     <TabList>
       {sortedMentorships.length == 1 ?
-        <Tab>one-to-one call{sortedMentorships[0].mentor.id !== me.id &&
-          `【${formatUserName(sortedMentorships[0].mentor.name)}】`}
+        <Tab>
+          {sortedMentorships[0].endedAt !== null && "🏁 "}
+          one-to-one call{sortedMentorships[0].mentor.id !== me.id &&
+            `【${formatUserName(sortedMentorships[0].mentor.name)}】`}
         </Tab>
         :
         sortedMentorships.map(m =>
-          <Tab key={m.id}>one-to-one call{formatMentorshipTabSuffix(m, me.id)}</Tab>
+          <Tab key={m.id}>
+            {m.endedAt !== null && "🏁 "}
+            one-to-one call{formatMentorshipTabSuffix(m, me.id)}
+          </Tab>
         )
       }
       <Tab>internal notes</Tab>
@@ -91,8 +96,15 @@ function MentorshipPanel({ mentorship: m }: {
   const [me] = useUserContext();
 
   return <Stack spacing={sectionSpacing} marginTop={sectionSpacing}>
+    {m.endedAt && <>🏁  {formatMentorshipEndedAtText(m.endedAt)}。</>}
+
     {m.mentor.id === me.id &&
       <GroupBar group={m.group} showJoinButton showGroupName={false} />}
+
     <Transcripts groupId={m.group.id} />
   </Stack>;
+}
+
+export function formatMentorshipEndedAtText(endedAt: string): string {
+  return `The one-to-one teacher-student relationship has ended（${prettifyDate(endedAt)}）`;
 }

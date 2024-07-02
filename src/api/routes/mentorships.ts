@@ -6,7 +6,7 @@ import {
   zMentorship,
 } from "../../shared/Mentorship";
 import { z } from "zod";
-import { alreadyExistsError, generalBadRequestError, noPermissionError } from "../errors";
+import { alreadyExistsError, generalBadRequestError, noPermissionError, notFoundError } from "../errors";
 import sequelize from "../database/sequelize";
 import { isPermitted } from "../../shared/Role";
 import { 
@@ -59,15 +59,17 @@ const create = procedure
   });
 });
 
-const list = procedure
+const update = procedure
   .use(authUser('MenteeManager'))
-  .output(z.array(zMentorship))
-  .query(async () => 
+  .input(z.object({
+    mentorshipId: z.string(),
+    endedAt: z.string().nullable(),
+  }))
+  .mutation(async ({ input: { mentorshipId, endedAt } }) => 
 {
-  return await db.Mentorship.findAll({ 
-    attributes: mentorshipAttributes,
-    include: mentorshipInclude,
-  });
+  const m = await db.Mentorship.findByPk(mentorshipId);
+  if (!m) throw notFoundError("one-to-one matching", mentorshipId);
+  await m.update({ endedAt });
 });
 
 /**
@@ -145,7 +147,7 @@ const get = procedure
 export default router({
   create,
   get,
-  list,
+  update,
   listMineAsMentor,
   listMineAsCoach,
   listForMentee,

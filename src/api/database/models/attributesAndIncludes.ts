@@ -1,14 +1,7 @@
-/**
- * Collect things in this file as opposed to model files to avoid cyclic dependencies.
- */
 import Calibration from "./Calibration";
 import Group from "./Group";
 import InterviewFeedback from "./InterviewFeedback";
 import User from "./User";
-
-/**
- * User
- */
 
 export const minUserAttributes = ['id', 'name'];
 
@@ -44,7 +37,7 @@ export const summaryAttributes = ['transcriptId', 'summaryKey', 'summary'];
  * Mentorship
  */
 
-export const mentorshipAttributes = ['id'];
+export const mentorshipAttributes = ['id', 'endedAt'];
 
 export const mentorshipInclude = [{
   association: 'mentor',
