@@ -15,7 +15,7 @@ import Loader from 'components/Loader';
 import { useUserContext } from 'UserContext';
 import { sectionSpacing } from 'theme/metrics';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
-import { MenteeCell, MentorshipCells, MostRecentChatMessageCell } from './mentees';
+import { MenteeCells, MentorshipCells, MostRecentChatMessageCell } from './mentees';
 
 export default function Page() {
   const [user] = useUserContext();
@@ -32,12 +32,13 @@ export default function Page() {
     {!mentorships ? <Loader /> : <TableContainer><Table>
       <Thead>
         <Tr>
-          <Th>Student</Th><Th>Tutor</Th><Th>Recent phone calls between teachers and students</Th><Th>Recent internal notes</Th>
+          <Th>admission session</Th><Th>student</Th><Th>tutor</Th><Th>Recent phone calls between teachers and students</Th>
+          <Th>Recent internal notes</Th>
         </Tr>
       </Thead>
       <Tbody>
         {mentorships.map(m => <Tr key={m.id} _hover={{ bg: "white" }}>
-          <MenteeCell mentee={m.mentee} />
+          <MenteeCells mentee={m.mentee} />
           <MentorshipCells menteeId={m.mentee.id} readonly />
           <MostRecentChatMessageCell menteeId={m.mentee.id} />
         </Tr>

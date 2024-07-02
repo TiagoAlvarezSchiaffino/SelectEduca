@@ -6,11 +6,13 @@ export type ApplicationField = {
 };
 
 export const menteeSourceField = "Cooperative Agency Source";
+export const menteeAcceptanceYearField = "admission session";
 
 /**
  * Field order dictates the order the fields are displayed.
  */
 const menteeApplicationFields: ApplicationField[] = [
+  { name: menteeAcceptanceYearField, showForEdits: true, },
   { jsjField: "field_165", jsjProxiedField: "field_165", name: menteeSourceField, showForEdits: true, },
   { jsjField: "field_149", jsjProxiedField: "field_149", name: "Type of study", showForEdits: true, },
   { jsjField: "field_161", name: "Is the undergraduate degree the first batch (one book)?", showForEdits: true, },
@@ -18,9 +20,11 @@ const menteeApplicationFields: ApplicationField[] = [
   { jsjField: "field_108", jsjProxiedField: "field_172", name: "Major", showForEdits: true, },
   { jsjField: "field_167", jsjProxiedField: "field_167", name: "Year of entry into the first year of university", showForEdits: true, },
   { jsjField: "field_169", name: "Expected graduation year", showForEdits: true, },
+  { jsjProxiedField: "field_173", name: "Recommended text from partner institutions", showForEdits: true, },
+
+  { jsjField: "field_168", name: "elementary, middle, and high school", },
   { jsjField: "field_156", name: "Resume", },
   { jsjField: "field_162", name: "Resume File", },
-  { jsjProxiedField: "field_173", name: "Recommended text from partner institutions", showForEdits: true, },
   { jsjProxiedField: "field_170", name: "Application Form", },
   { jsjProxiedField: "field_171", name: "Other Application Materials", },
   { jsjField: "field_155", name: "Personal Professional Website URL (Research Group Website, LinkedIn, etc.)", },
