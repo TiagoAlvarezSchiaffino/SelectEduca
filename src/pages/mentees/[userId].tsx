@@ -21,15 +21,15 @@ export default widePage(() => {
   const userId = parseQueryStringOrUnknown(useRouter(), 'userId');
   const { data: u } = trpcNext.users.get.useQuery(userId);
   const { data: mentorships } = trpcNext.mentorships.listForMentee
-  .useQuery(userId);
+    .useQuery(userId);
 
   return !u ? <Loader /> : <>
     <PageBreadcrumb current={`${formatUserName(u.name)}`} />
-    <UserTabs user={u} mentorships={mentorships || []} />
+    <MenteeTabs user={u} mentorships={mentorships || []} />
   </>;
 });
 
-function UserTabs({ user, mentorships }: {
+function MenteeTabs({ user, mentorships }: {
   user: MinUser,
   mentorships: Mentorship[],
 }) {
@@ -38,22 +38,38 @@ function UserTabs({ user, mentorships }: {
 
   return <TabsWithUrlParam isLazy>
     <TabList>
-      <Tab>One-on-one tutor call{sortedMentorships[0].mentor.id !== me.id &&
+      {sortedMentorships.length == 1 ?
+        <Tab>one-to-one call{sortedMentorships[0].mentor.id !== me.id &&
           `【${formatUserName(sortedMentorships[0].mentor.name)}】`}
-      </Tab>
+        </Tab>
+        :
+        sortedMentorships.map(m =>
+          <Tab key={m.id}>one-to-one call{formatMentorshipTabSuffix(m, me.id)}</Tab>
+        )
+      }
+      <Tab>internal notes</Tab>
+      <Tab>Application materials</Tab>
+      {/* <Tab>annual feedback</Tab> */}
     </TabList>
 
     <TabPanels>
+      {sortedMentorships.map(m =>
+        <TabPanel key={m.id}>
+          <MentorshipPanel mentorship={m} />
+        </TabPanel>
+      )}
       <TabPanel>
         <ChatRoom menteeId={user.id} />
       </TabPanel> 
       <TabPanel>
         <MenteeApplicant userId={user.id} />
       </TabPanel>
+      {/* <TabPanel>
+        <AssessmentsTable mentorshipId={mentorship.id} />
+      </TabPanel> */}
     </TabPanels>
   </TabsWithUrlParam>;
 }
-
 
 function sortMentorship(ms: Mentorship[], myUserId: string): Mentorship[] {
   return [
@@ -66,7 +82,7 @@ function sortMentorship(ms: Mentorship[], myUserId: string): Mentorship[] {
 }
 
 function formatMentorshipTabSuffix(m: Mentorship, myUserId: string): string {
-  return `【${m.mentor.id == myUserId ? "Me" : formatUserName(m.mentor.name)}】`;
+  return `【${m.mentor.id == myUserId ? "I" : formatUserName(m.mentor.name)}】`;
 }
 
 function MentorshipPanel({ mentorship: m }: {
