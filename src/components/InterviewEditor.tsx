@@ -16,10 +16,12 @@ import { useRef, useState } from 'react';
 import Autosaver from 'components/Autosaver';
 import _ from "lodash";
 import { TRPCClientError } from '@trpc/client';
-import { Feedback } from "shared/InterviewFeedback";
+import { FeedbackDeprecated } from "shared/InterviewFeedback";
 import { useUserContext } from 'UserContext';
 import { isPermitted } from 'shared/Role';
 
+// TODO: Replace EditorFeedback and EditorFeedbackDimension with Feedback and
+// FeedbackDimension
 export type EditorFeedback = {
   dimensions: EditorFeedbackDimension[],
 };
@@ -90,7 +92,7 @@ export function InterviewFeedbackEditor({ interviewFeedbackId, readonly }: {
 
 export function InterviewDecisionEditor({ interviewId, decision, etag }: { 
   interviewId: string,
-  decision: Feedback | null,
+  decision: FeedbackDeprecated | null,
   etag: number,
 }) {
   const [me] = useUserContext();
@@ -109,7 +111,7 @@ export function InterviewDecisionEditor({ interviewId, decision, etag }: {
 }
 
 function Editor({ defaultFeedback, etag, save, showDimensions, readonly }: {
-  defaultFeedback: Feedback | null,
+  defaultFeedback: FeedbackDeprecated | null,
   etag: number,
   save: (f: EditorFeedback, etag: number) => Promise<number>,
   showDimensions: boolean,

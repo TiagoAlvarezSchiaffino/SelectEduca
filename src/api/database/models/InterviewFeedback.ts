@@ -14,7 +14,7 @@ import {
   import User from "./User";
   import ZodColumn from "../modelHelpers/ZodColumn";
   import { Feedback, zFeedback } from "../../../shared/InterviewFeedback";
-  import Interview from "./Interview";
+  import { FeedbackDeprecated, zFeedbackDeprecated } from "../../../shared/InterviewFeedback";
   
   @Table({
     paranoid: true,
@@ -37,8 +37,8 @@ import {
     @Column(UUID)
     interviewerId: string;
   
-    @ZodColumn(JSONB, zFeedback.nullable())
-    feedback: Feedback | null;
+    @ZodColumn(JSONB, zFeedbackDeprecated.nullable())
+    feedback: FeedbackDeprecated | null;
 
     @Column(DATE)
     feedbackUpdatedAt: string | null;
