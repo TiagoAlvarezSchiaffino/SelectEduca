@@ -1,12 +1,10 @@
-import {
-    Text,
-    Box
-  } from '@chakra-ui/react';
+import { Text, Box } from '@chakra-ui/react';
   import React from 'react';
   import { useUserContext } from "../UserContext";
   import { isPermitted } from 'shared/Role';
   import { fullPage } from 'AppPage';
-  import { topbarHeight } from "../components/Navbars";
+  import { sidebarBreakpoint } from 'components/Navbars';
+  import { sidebarContentMarginTop } from 'components/Sidebar';
 
   export default fullPage(() => {
     const [user] = useUserContext();
@@ -15,8 +13,16 @@ import {
     }
 
     return (
-      <Box h={`calc(100vh - ${topbarHeight})`}>
-        <iframe src="" width="100%" height="100%"/>
+      <Box
+        width="100%"
+        height="100vh"
+        marginTop={{ base: sidebarContentMarginTop, [sidebarBreakpoint]: -sidebarContentMarginTop }}
+      >
+        <iframe
+          src=""
+          width="100%"
+          height="100%"
+        />
       </Box>
     )
   })

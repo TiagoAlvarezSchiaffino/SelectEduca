@@ -1,5 +1,15 @@
 import React from 'react';
+import { signOut } from "next-auth/react";
+import { LockIcon } from '@chakra-ui/icons';
+import { FiChevronRight } from 'react-icons/fi';
 import {
+  Avatar,
+  HStack,
+  Menu,
+  MenuButton,
+  MenuDivider,
+  MenuItem,
+  MenuList,
   Box,
   CloseButton,
   Flex,
@@ -21,18 +31,20 @@ import {
   MdPerson,
   MdGroups,
   MdScience,
-  MdChevronRight, 
-  MdFace, 
+  MdChevronRight,
+  MdFace,
   MdVideocam,
   MdSupervisorAccount,
   MdMic,
   MdLocalLibrary
 } from 'react-icons/md';
 import Role from "../shared/Role";
-import { sidebarBreakpoint, sidebarContentMarginTop, sidebarWidth, topbarHeight } from './Navbars';
+import { sidebarBreakpoint, sidebarWidth } from './Navbars';
 import { formatUserName } from 'shared/strings';
 import { AttachmentIcon } from '@chakra-ui/icons';
 import { PiFlagCheckeredFill } from 'react-icons/pi';
+
+export const sidebarContentMarginTop = 10;
 
 export interface SidebarItem {
   name: string,
@@ -123,7 +135,7 @@ interface SidebarProps extends BoxProps {
 const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
   const [me] = useUserContext();
   // Save an API call if the user is not a mentor.
-  const { data: mentorships } = isPermitted(me.roles, "Mentor") ? 
+  const { data: mentorships } = isPermitted(me.roles, "Mentor") ?
     trpcNext.mentorships.listMineAsMentor.useQuery() : { data: undefined };
   const mentorshipItems = mentorships2Items(mentorships);
 
@@ -137,39 +149,89 @@ const Sidebar = ({ onClose, ...rest }: SidebarProps) => {
       pos="fixed"
       h="full"
       {...rest}>
-      <Flex 
-        height={topbarHeight}
-        alignItems="center"
-        marginX="8" 
+      <Flex
+        direction="column"
         justifyContent="space-between"
-      >
-        <Box display={{ base: 'none', [sidebarBreakpoint]: 'flex' }}>
-          <NextLink href="http://.org" target="_blank">
-            <Image
-              src={} 
-              alt="" 
-              width={112}
-              priority
-              />
-            </NextLink>
+        h="full">
+        <Box>
+          <Flex
+            alignItems="center"
+            marginX="8"
+            marginTop="8"
+            justifyContent="space-between">
+            <Box display={{ base: 'none', [sidebarBreakpoint]: 'flex' }}>
+              <NextLink href="" target="_blank">
+                <Image
+                  src={}
+                  alt="Vision Education Foundation"
+                  width={112}
+                  // Without `priority` we would get a warning from Chrome that this
+                  // image "was detected as the Largest Contentful Paint (LCP).
+                  // Please add the "priority" property if this image is above the
+                  // fold.
+                  priority
+                />
+              </NextLink>
+            </Box>
+            <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }} onClick={onClose} />
+          </Flex>
+          <Box height={{
+            base: 0,
+            [sidebarBreakpoint]: sidebarContentMarginTop - sidebarItemPaddingY,
+          }} />
+
+          {sidebarItems
+            .filter(item => isPermitted(me.roles, item.roles))
+            .map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
+
+          {mentorshipItems?.length > 0 && <Divider marginY={2} />}
+
+          {mentorshipItems.map(item => <SidebarRow key={item.path} item={item}
+            onClose={onClose} />)}
         </Box>
-        <CloseButton display={{ base: 'flex', [sidebarBreakpoint]: 'none' }}
-          onClick={onClose} />
+        <HStack spacing={{ base: '0', [sidebarBreakpoint]: '6' }} >
+          {/* <IconButton
+            size="lg"
+            variant="ghost"
+            aria-label="open menu"
+            icon={<FiBell />}
+            /> */}
+          <Menu>
+            <MenuButton
+              marginX={4}
+              marginBottom={4}
+              paddingLeft={4}
+              py={2}
+              transition="all 0.3s"
+              _focus={{ boxShadow: 'none' }}>
+              <HStack>
+                <Avatar
+                  size={'sm'}
+                  bg="brand.a"
+                  color="white"
+                  name={formatUserName(me.name)} />
+                <Text
+                  display={{ base: 'flex', [sidebarBreakpoint]: 'flex' }}
+                  fontSize="sm">
+                  {formatUserName(me.name)} </Text>
+                <Box display={{ base: 'flex', [sidebarBreakpoint]: 'flex' }}><FiChevronRight /></Box>
+              </HStack>
+            </MenuButton>
+            <MenuList
+              bg={useColorModeValue('white', 'gray.900')}
+              borderColor={useColorModeValue('gray.200', 'gray.700')}>
+              <MenuItem as={NextLink} href='/profile'>personal information</MenuItem>
+              <MenuDivider />
+              <MenuItem as={NextLink} href='/who-can-see-my-data'>
+                <LockIcon marginRight={1} />Who can see my data
+              </MenuItem>
+              <MenuDivider />
+              <MenuItem onClick={() => signOut()}>sign out</MenuItem>
+            </MenuList>
+          </Menu>
+        </HStack>
       </Flex>
-      <Box height={{
-        base: 0,
-        [sidebarBreakpoint]: sidebarContentMarginTop - sidebarItemPaddingY,
-      }}/>
-
-      {sidebarItems
-        .filter(item => isPermitted(me.roles, item.roles))
-        .map(item => <SidebarRow key={item.path} item={item} onClose={onClose} />)}
-      
-      {mentorshipItems?.length > 0 && <Divider marginY={2} />}
-
-      {mentorshipItems.map(item => <SidebarRow key={item.path} item={item}
-        onClose={onClose} />)}
-    </Box>
+      </Box >
   );
 };
 
@@ -181,8 +243,8 @@ const SidebarRow = ({ item, onClose, ...rest }: {
   const router = useRouter();
   const active = item.regex.test(router.pathname) || item.regex.test(router.asPath);
   return (
-    <Link 
-      as={NextLink} 
+    <Link
+      as={NextLink}
       href={item.path}
       color={active ? "brand.c" : "gray.500"}
       fontWeight="bold"
