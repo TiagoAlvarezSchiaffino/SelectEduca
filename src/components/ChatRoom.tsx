@@ -22,7 +22,7 @@ import invariant from "tiny-invariant";
 import Loader from './Loader';
 import MarkdownStyler from './MarkdownStyler';
 
-export default function Room({ menteeId } : {
+export default function Room({ menteeId }: {
   menteeId: string,
 }) {
   const { data: room } = trpcNext.chat.getRoom.useQuery({ menteeId });
@@ -65,8 +65,8 @@ function Message({ message: m }: {
       <HStack minWidth="210px" spacing={componentSpacing}>
         <Text>{name}</Text>
         <Text color="grey">
-          {m.updatedAt && prettifyDate(m.updatedAt)}
-          {m.updatedAt !== m.createdAt && "Updated"}
+          {m.createdAt && `${prettifyDate(m.createdAt)}create`}
+          {m.updatedAt && m.updatedAt !== m.createdAt && ` ｜ ${prettifyDate(m.updatedAt)}replace`}
         </Text>
 
         {!editing && user.id == m.user.id && <>
@@ -110,7 +110,7 @@ function Editor({ roomId, message, onClose, ...rest }: {
 
   return <>
     <Textarea value={markdown} onChange={e => setMarkdown(e.target.value)}
-      autoFocus background="white" height={200} {...rest} 
+      autoFocus background="white" height={200} {...rest}
     />
     <HStack>
     <Button onClick={save} isLoading={saving} isDisabled={!markdown}
